@@ -29,7 +29,9 @@ lazy val domain = project.settings(settings)
     )
   )
 
-lazy val riichi = project.dependsOn(domain)
+lazy val riichi = project
+  .aggregate(domain)
+  .dependsOn(domain)
 
 lazy val it = project
 
@@ -64,6 +66,8 @@ lazy val commonSettings =
     organization := "luckylockup.com",
     organizationName := "Lucky Lockup",
     startYear := Some(2018),
+    mainClass := Some("com.ll.Main"),
+    cancelable in Global := true,
     licenses += ("Do What The Fuck You Want To Public License", url("http://www.wtfpl.net/")),
     scalacOptions ++= Seq(
       "-unchecked",
