@@ -5,7 +5,9 @@ import cats.data.Validated.Valid
 import cats.data._
 import cats.effect.Effect
 import cats.implicits._
+import com.ll.domain.ValidationError
 import com.ll.domain.game.{Event, EventService}
+import com.ll.utils.Logging
 import io.circe._
 import io.circe.generic.auto._
 import io.circe.generic.extras.semiauto._
@@ -17,17 +19,18 @@ import org.http4s.{EntityDecoder, HttpService, QueryParamDecoder}
 import scala.language.higherKinds
 
 
-class EventEndpoints[F[_]: Effect] extends Http4sDsl[F] {
+class EventEndpoints[F[_]: Effect] extends Http4sDsl[F] with Logging {
 
   import javafx.scene.control.Pagination._
 
   implicit val petDecoder: EntityDecoder[F, Event] = jsonOf[F, Event]
 
-  private def createPetEndpoint(eventService: EventService[F]): HttpService[F] =
+  private def createEventEndpoint(eventService: EventService[F]): HttpService[F] =
     HttpService[F] {
       case req @ POST -> Root / "events" =>
-        val action = for {
+        val action: F[Either[ValidationError, Event]] = for {
           event <- req.as[Event]
+          _ = log.info(s"Event is received: $event")
           result <- eventService.save(event).value
         } yield result
 
@@ -41,7 +44,7 @@ class EventEndpoints[F[_]: Effect] extends Http4sDsl[F] {
 
 
   def endpoints(eventService: EventService[F]): HttpService[F] =
-    createPetEndpoint(eventService)
+    createEventEndpoint(eventService)
 }
 
 object EventEndpoints {

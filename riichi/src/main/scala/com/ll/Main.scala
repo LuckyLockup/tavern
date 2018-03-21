@@ -1,9 +1,8 @@
 package com.ll
 
 import cats.effect.IO
-import com.ll.endpoint.{EventEndpoints, HelloWorld}
-import fs2.{Stream, StreamApp}
-import fs2.StreamApp.ExitCode
+import com.ll.endpoint.{EventEndpoints, HelloWorld, WsEndpoints}
+import fs2.{Scheduler, Stream, StreamApp}
 import org.http4s.server.blaze._
 import cats.effect._
 import com.ll.config.{DatabaseConfig, ServerConfig}
@@ -26,11 +25,14 @@ object Main extends StreamApp[IO] {
       conf           <- Stream.eval(ServerConfig.load[F])
       xa             <- Stream.eval(DatabaseConfig.dbTransactor(conf.db))
       _              <- Stream.eval(DatabaseConfig.initializeDb(conf.db, xa))
+      scheduler      <- Scheduler[F](corePoolSize = 2)
       eventRepo      =  DoobieEventRepositoryInterpreter[F](xa)
       eventService   =  EventService[F](eventRepo)
       exitCode       <- BlazeBuilder[F]
         .bindHttp(8080, "localhost")
+        .withWebSockets(true)
         .mountService(EventEndpoints.endpoints[F](eventService), "/")
+        .mountService(WsEndpoints.endpoints[F](scheduler), "/ws")
         .serve
     } yield exitCode
 }

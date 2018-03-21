@@ -4,8 +4,6 @@
 lazy val domain = project.settings(settings)
   .settings(
     libraryDependencies ++= Seq(
-      "org.scalacheck" %% "scalacheck" % versions.scalaCheck,
-      "com.lihaoyi" %% "utest" % versions.utest,
       "org.typelevel" %% "cats-core" % versions.CatsVersion,
       "io.circe" %% "circe-generic" % versions.CirceVersion,
       "io.circe" %% "circe-literal" % versions.CirceVersion,
@@ -33,7 +31,15 @@ lazy val riichi = project
   .aggregate(domain)
   .dependsOn(domain)
 
-lazy val it = project
+lazy val it = project.settings(
+  libraryDependencies ++= Seq(
+    "org.http4s" %% "http4s-blaze-client" % versions.Http4sVersion,
+    "org.http4s" %% "http4s-circe" % versions.Http4sVersion,
+    "org.http4s" %% "http4s-dsl" % versions.Http4sVersion,
+    "org.scalacheck" %% "scalacheck" % versions.ScalaCheckVersion % Test,
+    "org.scalatest" %% "scalatest" % versions.ScalaTestVersion % Test
+  )
+)
 
 // *****************************************************************************
 // Library dependencies

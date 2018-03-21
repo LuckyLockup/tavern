@@ -11,7 +11,6 @@ class DoobieEventRepositoryInterpreter[F[_]: Monad](val xa: Transactor[F])
   extends EventRepositoryAlgebra[F] {
 
   def save(event: Event): F[Event] = {
-    println(event)
     event.pure[F]
   }
 }
