@@ -23,13 +23,18 @@ lazy val domain = project.settings(settings)
       "org.flywaydb" % "flyway-core" % versions.FlywayVersion,
       "com.github.pureconfig" %% "pureconfig" % versions.PureConfigVersion,
       "org.scalacheck" %% "scalacheck" % versions.ScalaCheckVersion % Test,
-      "org.scalatest" %% "scalatest" % versions.ScalaTestVersion % Test
+      "org.scalatest" %% "scalatest" % versions.ScalaTestVersion % Test,
+      "io.monix" %% "monix" % versions.monixVersion
     )
   )
 
 lazy val riichi = project
   .aggregate(domain)
   .dependsOn(domain)
+
+lazy val playground = project
+    .aggregate(domain)
+    .dependsOn(domain)
 
 lazy val it = project.settings(
   libraryDependencies ++= Seq(
@@ -58,6 +63,7 @@ lazy val versions = new {
   val ScalaTestVersion = "3.0.4"
   val FlywayVersion = "4.2.0"
   val PureConfigVersion = "0.9.0"
+  val monixVersion = "3.0.0-RC1"
 }
 
 // *****************************************************************************
