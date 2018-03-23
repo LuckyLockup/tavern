@@ -14,3 +14,17 @@ trait Observer[-A] {
   def onError(Throwable t): Unit
 }
 ```
+
+## Async vs sync
+sync is ok:
+ - data is in memory.
+
+## Other:
+Duality (Iterable vs Observable)
+
+Pro's to use Observable insteaf of Future:
+ - stream
+ - multiple values
+ - composition
+ - single
+ - completable 

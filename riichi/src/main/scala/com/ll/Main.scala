@@ -1,38 +1,44 @@
 package com.ll
 
-import cats.effect.IO
-import com.ll.endpoint.{EventEndpoints, HelloWorld, WsEndpoints}
-import fs2.{Scheduler, Stream, StreamApp}
-import org.http4s.server.blaze._
-import cats.effect._
 import com.ll.config.{DatabaseConfig, ServerConfig}
 import com.ll.domain.game.EventService
 import com.ll.repository.doobie.DoobieEventRepositoryInterpreter
-import fs2.StreamApp.ExitCode
-import fs2.{Stream, StreamApp}
-import org.http4s.server.blaze.BlazeBuilder
+import akka.actor.ActorSystem
+import akka.http.scaladsl.Http
+import akka.stream.ActorMaterializer
+import com.ll.endpoint.HelloWorldEndpoints
+import cats.effect.IO
+import cats.effect._
+import com.ll.utils.Logging
 
 
-object Main extends StreamApp[IO] {
-  import scala.concurrent.ExecutionContext.Implicits.global
+object Main extends App with Logging {
 
-  override def stream(args: List[String], shutdown: IO[Unit]): Stream[IO, ExitCode] =
-    createStream[IO](args, shutdown)
+  override def main(args: Array[String]): Unit = {
+    bootstrap(args.toList)
+  }
 
-  def createStream[F[_]](args: List[String], shutdown: F[Unit])(
-    implicit E: Effect[F]): Stream[F, ExitCode] =
-    for {
-      conf           <- Stream.eval(ServerConfig.load[F])
-      xa             <- Stream.eval(DatabaseConfig.dbTransactor(conf.db))
-      _              <- Stream.eval(DatabaseConfig.initializeDb(conf.db, xa))
-      scheduler      <- Scheduler[F](corePoolSize = 2)
-      eventRepo      =  DoobieEventRepositoryInterpreter[F](xa)
-      eventService   =  EventService[F](eventRepo)
-      exitCode       <- BlazeBuilder[F]
-        .bindHttp(8080, "localhost")
-        .withWebSockets(true)
-        .mountService(EventEndpoints.endpoints[F](eventService), "/")
-        .mountService(WsEndpoints.endpoints[F](scheduler), "/ws")
-        .serve
-    } yield exitCode
+  def bootstrap(args: List[String])(implicit E: Effect[IO]) = {
+    val program: IO[Unit] = for {
+      conf <- ServerConfig.load[IO]
+      xa             <- DatabaseConfig.dbTransactor(conf.db)
+      _              <- DatabaseConfig.initializeDb(conf.db, xa)
+      system = ActorSystem("ll")
+      materializer = ActorMaterializer()(system)
+      eventRepo      =  DoobieEventRepositoryInterpreter[IO](xa)
+      eventService   =  EventService[IO](eventRepo)
+      exitCode       <- IO {
+        log.info("Starting server...")
+        implicit val sys = system
+        implicit val mat = materializer
+        implicit val executionContext = system.dispatcher
+        val route = HelloWorldEndpoints.endpoints[IO]()
+
+        Http().bindAndHandle(route, "localhost", 8080)
+      }
+    } yield ()
+    program.unsafeRunSync()
+  }
+
+
 }

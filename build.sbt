@@ -4,6 +4,8 @@
 lazy val domain = project.settings(settings)
   .settings(
     libraryDependencies ++= Seq(
+      "com.typesafe.akka" %% "akka-http" % versions.AkkaHttp,
+      "com.typesafe.akka" %% "akka-stream" % versions.AkkaStream,
       "org.typelevel" %% "cats-core" % versions.CatsVersion,
       "io.circe" %% "circe-generic" % versions.CirceVersion,
       "io.circe" %% "circe-literal" % versions.CirceVersion,
@@ -16,15 +18,11 @@ lazy val domain = project.settings(settings)
       "org.tpolecat" %% "doobie-scalatest" % versions.DoobieVersion,
       "org.tpolecat" %% "doobie-hikari" % versions.DoobieVersion,
       "com.h2database" % "h2" % versions.H2Version,
-      "org.http4s" %% "http4s-blaze-server" % versions.Http4sVersion,
-      "org.http4s" %% "http4s-circe" % versions.Http4sVersion,
-      "org.http4s" %% "http4s-dsl" % versions.Http4sVersion,
       "ch.qos.logback" % "logback-classic" % versions.LogbackVersion,
       "org.flywaydb" % "flyway-core" % versions.FlywayVersion,
       "com.github.pureconfig" %% "pureconfig" % versions.PureConfigVersion,
       "org.scalacheck" %% "scalacheck" % versions.ScalaCheckVersion % Test,
-      "org.scalatest" %% "scalatest" % versions.ScalaTestVersion % Test,
-      "io.monix" %% "monix" % versions.monixVersion
+      "org.scalatest" %% "scalatest" % versions.ScalaTestVersion % Test
     )
   )
 
@@ -32,25 +30,14 @@ lazy val riichi = project
   .aggregate(domain)
   .dependsOn(domain)
 
-lazy val playground = project
-    .aggregate(domain)
-    .dependsOn(domain)
-
-lazy val it = project.settings(
-  libraryDependencies ++= Seq(
-    "org.http4s" %% "http4s-blaze-client" % versions.Http4sVersion,
-    "org.http4s" %% "http4s-circe" % versions.Http4sVersion,
-    "org.http4s" %% "http4s-dsl" % versions.Http4sVersion,
-    "org.scalacheck" %% "scalacheck" % versions.ScalaCheckVersion % Test,
-    "org.scalatest" %% "scalatest" % versions.ScalaTestVersion % Test
-  )
-)
 
 // *****************************************************************************
 // Library dependencies
 // *****************************************************************************
 
 lazy val versions = new {
+  val AkkaHttp = "10.1.0"
+  val AkkaStream = "2.5.11"
   val scalaCheck = "1.13.5"
   val utest = "0.6.3"
   val CatsVersion = "1.1.0"

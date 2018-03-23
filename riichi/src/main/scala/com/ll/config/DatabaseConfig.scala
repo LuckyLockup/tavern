@@ -1,6 +1,6 @@
 package com.ll.config
 
-import cats.effect.{Async, Sync}
+import cats.effect.{Async, Effect, Sync}
 import doobie.hikari.HikariTransactor
 import org.flywaydb.core.Flyway
 
@@ -8,7 +8,7 @@ case class DatabaseConfig(url: String, driver: String, user: String, password: S
 
 object DatabaseConfig {
 
-  def dbTransactor[F[_]: Async](dbConfig: DatabaseConfig): F[HikariTransactor[F]] =
+  def dbTransactor[F[_]: Async](dbConfig: DatabaseConfig)(implicit E: Effect[F]): F[HikariTransactor[F]] =
     HikariTransactor.newHikariTransactor[F](dbConfig.driver, dbConfig.url, dbConfig.user, dbConfig.password)
 
   /**
