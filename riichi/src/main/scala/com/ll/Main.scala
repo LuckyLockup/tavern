@@ -9,7 +9,10 @@ import akka.stream.ActorMaterializer
 import com.ll.endpoint.HelloWorldEndpoints
 import cats.effect.IO
 import cats.effect._
+import com.ll.infra.PubSub
 import com.ll.utils.Logging
+
+import scala.io.StdIn
 
 
 object Main extends App with Logging {
@@ -27,17 +30,27 @@ object Main extends App with Logging {
       materializer = ActorMaterializer()(system)
       eventRepo      =  DoobieEventRepositoryInterpreter[IO](xa)
       eventService   =  EventService[IO](eventRepo)
+      pubSub = PubSub.initialize[IO](system, materializer)
       exitCode       <- IO {
         log.info("Starting server...")
         implicit val sys = system
         implicit val mat = materializer
         implicit val executionContext = system.dispatcher
-        val route = HelloWorldEndpoints.endpoints[IO]()
+        val route = HelloWorldEndpoints.endpoints[IO](pubSub)
 
         Http().bindAndHandle(route, "localhost", 8080)
       }
+      _ <- IO {
+        try {
+          println("Press ENTER to exit the system")
+          StdIn.readLine()
+        } finally {
+          system.terminate()
+        }
+      }
     } yield ()
     program.unsafeRunSync()
+
   }
 
 

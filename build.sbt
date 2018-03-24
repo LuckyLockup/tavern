@@ -4,6 +4,16 @@
 lazy val domain = project.settings(settings)
   .settings(
     libraryDependencies ++= Seq(
+      "com.typesafe.akka" %% "akka-typed" % versions.AkkaTypedVersion,
+      "com.typesafe.akka" %% "akka-cluster" % versions.AkkaVersion,
+      "com.typesafe.akka" %% "akka-distributed-data" % versions.AkkaVersion,
+      "com.typesafe.akka" %% "akka-cluster-tools" % versions.AkkaVersion,
+      "com.typesafe.akka" %% "akka-cluster-sharding" % versions.AkkaVersion,
+      "com.typesafe.akka" %% "akka-persistence" % versions.AkkaVersion,
+      "com.typesafe.akka" %% "akka-persistence-cassandra" % versions.CassandraPluginVersion,
+      // this allows us to start cassandra from the sample
+      "com.typesafe.akka" %% "akka-persistence-cassandra-launcher" % versions.CassandraPluginVersion,
+      "com.typesafe.akka" %% "akka-typed-testkit" % versions.AkkaTypedVersion  % "test",
       "com.typesafe.akka" %% "akka-http" % versions.AkkaHttp,
       "com.typesafe.akka" %% "akka-stream" % versions.AkkaStream,
       "org.typelevel" %% "cats-core" % versions.CatsVersion,
@@ -36,10 +46,16 @@ lazy val riichi = project
 // *****************************************************************************
 
 lazy val versions = new {
+  val AkkaVersion = "2.5.6"
+  val AkkaTypedVersion = "2.5.7"
   val AkkaHttp = "10.1.0"
   val AkkaStream = "2.5.11"
+
+  val CassandraPluginVersion = "0.56"
+
   val scalaCheck = "1.13.5"
   val utest = "0.6.3"
+
   val CatsVersion = "1.1.0"
   val CirceVersion = "0.9.2"
   val DoobieVersion = "0.5.1"

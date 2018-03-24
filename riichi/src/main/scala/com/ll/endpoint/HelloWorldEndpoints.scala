@@ -9,6 +9,8 @@ import akka.http.scaladsl.model._
 import akka.http.scaladsl.server.Directives._
 import akka.http.scaladsl.server.{Route, RouteResult}
 import akka.stream.Materializer
+import com.ll.domain.auth.UserId
+import com.ll.infra.PubSub
 
 class HelloWorldEndpoints[F[_]: Effect] extends Logging {
 
@@ -27,14 +29,15 @@ class HelloWorldEndpoints[F[_]: Effect] extends Logging {
         Nil
     }
 
-  def wsRoute(implicit mat: Materializer) = path("ws") {
+  def wsRoute(pubSub: PubSub[F])(implicit mat: Materializer) = path("ws" / LongNumber) { id =>
     get { ctx =>
       ctx.request match {
         case req @ HttpRequest(HttpMethods.GET, Uri.Path("/ws"), _, _, _) =>
           req.header[UpgradeToWebSocket] match {
             case Some(upgrade) =>
               log.info("Creating ws connection")
-              val conn = upgrade.handleMessages(greeterWebSocketService)
+//              handleWebSocketMessages(pubSub.openConnection(UserId(id)))
+              val conn = upgrade.handleMessages(pubSub.openConnection(UserId(id)))
               ctx.complete(conn)
             case None          =>
               ctx.complete(HttpResponse(400, entity = "Not a valid websocket request!"))
@@ -46,13 +49,13 @@ class HelloWorldEndpoints[F[_]: Effect] extends Logging {
     }
   }
 
-  def endpoints(implicit mat: Materializer): Route =
-    helloRoute ~ wsRoute
+  def endpoints(pubSub: PubSub[F])(implicit mat: Materializer): Route =
+    helloRoute ~ wsRoute(pubSub)
 }
 
 object HelloWorldEndpoints {
-  def endpoints[F[_]: Effect]()(implicit mat: Materializer): Route =
-    new HelloWorldEndpoints[F].endpoints(mat)
+  def endpoints[F[_]: Effect](pubSub: PubSub[F])(implicit mat: Materializer): Route =
+    new HelloWorldEndpoints[F].endpoints(pubSub)
 }
 
 
