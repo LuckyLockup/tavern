@@ -8,5 +8,6 @@ object Ws {
   //outgoing messages to client
   sealed trait Out
   case class Pong(id: Int) extends Out
+  case class Text(txt: String) extends Out
 
 }

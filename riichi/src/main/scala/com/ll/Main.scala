@@ -30,7 +30,7 @@ object Main extends App with Logging {
       materializer = ActorMaterializer()(system)
       eventRepo      =  DoobieEventRepositoryInterpreter[IO](xa)
       eventService   =  EventService[IO](eventRepo)
-      pubSub = PubSub.initialize[IO](system, materializer)
+      pubSub = PubSub[IO](system, materializer)
       exitCode       <- IO {
         log.info("Starting server...")
         implicit val sys = system
