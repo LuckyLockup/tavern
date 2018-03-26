@@ -9,7 +9,7 @@ import akka.stream.ActorMaterializer
 import com.ll.endpoint.HelloWorldEndpoints
 import cats.effect.IO
 import cats.effect._
-import com.ll.infra.PubSub
+import com.ll.ws.PubSub
 import com.ll.utils.Logging
 
 import scala.io.StdIn

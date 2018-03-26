@@ -4,18 +4,27 @@
 lazy val domain = project.settings(settings)
   .settings(
     libraryDependencies ++= Seq(
-      "com.typesafe.akka" %% "akka-typed" % versions.AkkaTypedVersion,
+      "com.typesafe.akka" %% "akka-actor" % versions.AkkaVersion,
+      "com.typesafe.akka" %% "akka-slf4j" % versions.AkkaVersion,
+      "com.typesafe.akka" %% "akka-testkit" % versions.AkkaVersion % Test,
+
+      "com.typesafe.akka" %% "akka-stream" % versions.AkkaVersion,
+      "com.typesafe.akka" %% "akka-stream-testkit" % versions.AkkaVersion,
+
+      "com.typesafe.akka" %% "akka-http" % versions.AkkaHttp,
+      "com.typesafe.akka" %% "akka-http-testkit" % versions.AkkaHttp,
+
+      "com.typesafe.akka" %% "akka-remote" % versions.AkkaVersion,
       "com.typesafe.akka" %% "akka-cluster" % versions.AkkaVersion,
-      "com.typesafe.akka" %% "akka-distributed-data" % versions.AkkaVersion,
       "com.typesafe.akka" %% "akka-cluster-tools" % versions.AkkaVersion,
       "com.typesafe.akka" %% "akka-cluster-sharding" % versions.AkkaVersion,
       "com.typesafe.akka" %% "akka-persistence" % versions.AkkaVersion,
       "com.typesafe.akka" %% "akka-persistence-cassandra" % versions.CassandraPluginVersion,
+      "com.typesafe.akka" %% "akka-distributed-data" % versions.AkkaVersion,
       // this allows us to start cassandra from the sample
       "com.typesafe.akka" %% "akka-persistence-cassandra-launcher" % versions.CassandraPluginVersion,
-      "com.typesafe.akka" %% "akka-typed-testkit" % versions.AkkaTypedVersion  % "test",
+
       "com.typesafe.akka" %% "akka-http" % versions.AkkaHttp,
-      "com.typesafe.akka" %% "akka-stream" % versions.AkkaStream,
       "org.typelevel" %% "cats-core" % versions.CatsVersion,
       "io.circe" %% "circe-generic" % versions.CirceVersion,
       "io.circe" %% "circe-literal" % versions.CirceVersion,
@@ -46,10 +55,9 @@ lazy val riichi = project
 // *****************************************************************************
 
 lazy val versions = new {
-  val AkkaVersion = "2.5.6"
+  val AkkaVersion = "2.5.11"
   val AkkaTypedVersion = "2.5.7"
   val AkkaHttp = "10.1.0"
-  val AkkaStream = "2.5.11"
 
   val CassandraPluginVersion = "0.56"
 

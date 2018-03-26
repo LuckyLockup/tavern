@@ -8,7 +8,7 @@ import akka.http.scaladsl.server.Directives._
 import akka.http.scaladsl.server.{Route, RouteResult}
 import akka.stream.Materializer
 import com.ll.domain.auth.UserId
-import com.ll.infra.{PubSub, Ws}
+import com.ll.ws.{PubSub, WsMsg}
 
 class HelloWorldEndpoints[F[_] : Effect] extends Logging {
 
@@ -29,7 +29,7 @@ class HelloWorldEndpoints[F[_] : Effect] extends Logging {
       post {
         decodeRequest {
           entity(as[String]) { str =>
-            pubSub.sendToPlayer(UserId(id), Ws.Text(str))
+            pubSub.sendToPlayer(UserId(id), WsMsg.Out.Text(str))
             complete(HttpResponse(200, entity= "We are ok"))
           }
         }
