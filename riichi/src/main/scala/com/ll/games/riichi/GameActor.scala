@@ -16,8 +16,9 @@ class GameActor(gameId: GameId, pubSub: PubSub) extends PersistentActor with Log
 
   val receiveCommand: Receive = {
     case RiichiCmd.GetState(userId, _) =>
-      val stateForPlayer =_state.playerProjection(userId)
-      pubSub.sendToPlayer(userId, OutEventConverter.convert(stateForPlayer))
+      _state.playerProjection(userId).foreach(stateForPlayer =>
+        pubSub.sendToPlayer(userId, OutEventConverter.convert(stateForPlayer))
+      )
 
     case cmd: Cmd =>
       _state.validate(cmd) match {
@@ -39,7 +40,7 @@ class GameActor(gameId: GameId, pubSub: PubSub) extends PersistentActor with Log
 
       }
     case cmd =>
-      log.error(s"Unkown command $cmd")
+      log.error(s"Unknown command $cmd")
   }
 
   val receiveRecover: Receive = {

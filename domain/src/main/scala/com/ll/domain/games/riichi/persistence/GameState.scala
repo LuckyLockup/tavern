@@ -77,7 +77,7 @@ case class GameState(
     case RiichiEvent.TileDiscarded(userId, tile) =>
       val newHands = this.hands.map {
         case (`userId`, hand) =>
-          val newClosedHand = (hand.currentTitle.get :: hand.openHand).filter(t => t != tile)
+          val newClosedHand = (hand.currentTitle.get :: hand.closedHand).filter(t => t != tile)
           val newDiscard = tile :: hand.discard
           val newHand = hand.copy(
             closedHand = newClosedHand,
@@ -107,15 +107,16 @@ case class GameState(
     }.toList
   }
 
-  def playerProjection(userId: UserId): PlayerEvent.RiichiGameState = {
-    val playerState = this.hands.get(userId).get
-    PlayerEvent.RiichiGameState (
-      userId = userId,
-      gameId = this.id,
-      closedHand = playerState.closedHand,
-      openHand = playerState.openHand,
-      currentTitle = playerState.currentTitle,
-      discard = playerState.discard
+  def playerProjection(userId: UserId): Option[PlayerEvent.RiichiGameState] = {
+    this.hands.get(userId).map(playerState =>
+      PlayerEvent.RiichiGameState (
+        userId = userId,
+        gameId = this.id,
+        closedHand = playerState.closedHand,
+        openHand = playerState.openHand,
+        currentTitle = playerState.currentTitle,
+        discard = playerState.discard
+      )
     )
   }
 

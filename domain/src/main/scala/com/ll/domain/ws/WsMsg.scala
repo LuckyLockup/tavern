@@ -2,19 +2,20 @@ package com.ll.domain.ws
 
 import com.ll.domain.auth.UserId
 import com.ll.domain.games.GameId
-import com.ll.domain.games.persistence.OutEvent
 
-object WsMsg {
+object  WsMsg {
   sealed trait In
+  sealed trait GameCmd extends In {
+    def gameId: GameId
+  }
 
   object In {
     case class Ping(id: Int) extends In
-    case class Cmd(cmd: Cmd) extends In
 
-    case class JoinGameAsPlayer(gameId: GameId) extends In
-    case class GetState(gameId: GameId) extends In
-    case class DiscardTile(gameId: GameId, tile: String) extends In
-    case class GetTileFromWall(gameId: GameId) extends In
+    case class JoinGameAsPlayer(gameId: GameId) extends GameCmd
+    case class GetState(gameId: GameId) extends GameCmd
+    case class DiscardTile(gameId: GameId, tile: String) extends GameCmd
+    case class GetTileFromWall(gameId: GameId) extends GameCmd
   }
 
   sealed trait Out
@@ -22,7 +23,7 @@ object WsMsg {
     case class Pong(id: Int) extends Out
     case class Text(txt: String) extends Out
 
-    case class PlayerJoinedTheGame(id: UserId) extends Out
+    case class PlayerJoinedTheGame(userId: UserId) extends Out
 
     case class GameState(
       gameId: GameId,

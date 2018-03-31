@@ -9,6 +9,7 @@ import akka.http.scaladsl.server.Route
 import akka.stream.Materializer
 import com.ll.domain.auth.UserId
 import com.ll.domain.ws.WsMsg
+import com.ll.games.riichi.Riichi
 import com.ll.ws.PubSub
 
 class WsEndpoints[F[_] : Effect] extends Logging {
@@ -37,13 +38,13 @@ class WsEndpoints[F[_] : Effect] extends Logging {
       }
     }
 
-  def wsRoute(pubSub: PubSub)(implicit mat: Materializer) = path("ws" / LongNumber) { id =>
+  def wsRoute(pubSub: PubSub, riichi: Riichi)(implicit mat: Materializer) = path("ws" / LongNumber) { id =>
     get { ctx =>
       ctx.request match {
         case req@HttpRequest(HttpMethods.GET, _, _, _, _) =>
           req.header[UpgradeToWebSocket] match {
             case Some(upgrade) =>
-              ctx.complete(upgrade.handleMessages(pubSub.openNewConnection(UserId(id))))
+              ctx.complete(upgrade.handleMessages(pubSub.openNewConnection(UserId(id), riichi)))
             case None          =>
               ctx.complete(HttpResponse(400, entity = "Not a valid websocket request!"))
           }
@@ -54,13 +55,13 @@ class WsEndpoints[F[_] : Effect] extends Logging {
     }
   }
 
-  def endpoints(pubSub: PubSub)(implicit mat: Materializer): Route =
-    helloRoute ~ wsRoute(pubSub) ~ wsTest(pubSub)
+  def endpoints(pubSub: PubSub, riichi: Riichi)(implicit mat: Materializer): Route =
+    helloRoute ~ wsRoute(pubSub, riichi) ~ wsTest(pubSub)
 }
 
 object WsEndpoints {
-  def endpoints[F[_] : Effect](pubSub: PubSub)(implicit mat: Materializer): Route =
-    new WsEndpoints[F].endpoints(pubSub)
+  def endpoints[F[_] : Effect](pubSub: PubSub, riichi: Riichi)(implicit mat: Materializer): Route =
+    new WsEndpoints[F].endpoints(pubSub, riichi: Riichi)
 }
 
 

@@ -38,7 +38,7 @@ object Main extends App with Logging {
         implicit val executionContext = system.dispatcher
         import akka.http.scaladsl.server.Directives._
         val route = pathPrefix("api" / "v0.1") {
-           WsEndpoints.endpoints[IO](pubSub) ~
+           WsEndpoints.endpoints[IO](pubSub, riichi) ~
            RiichiEndPoints.endpoints[IO](pubSub, riichi)
         }
 
