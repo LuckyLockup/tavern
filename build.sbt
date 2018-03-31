@@ -41,7 +41,8 @@ lazy val domain = project.settings(settings)
       "org.flywaydb" % "flyway-core" % versions.FlywayVersion,
       "com.github.pureconfig" %% "pureconfig" % versions.PureConfigVersion,
       "org.scalacheck" %% "scalacheck" % versions.ScalaCheckVersion % Test,
-      "org.scalatest" %% "scalatest" % versions.ScalaTestVersion % Test
+      "org.scalatest" %% "scalatest" % versions.ScalaTestVersion % Test,
+      "org.fusesource.leveldbjni" % "leveldbjni-all" % "1.8"
     )
   )
 

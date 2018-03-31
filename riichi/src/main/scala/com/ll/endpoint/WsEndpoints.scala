@@ -8,7 +8,8 @@ import akka.http.scaladsl.server.Directives._
 import akka.http.scaladsl.server.Route
 import akka.stream.Materializer
 import com.ll.domain.auth.UserId
-import com.ll.ws.{PubSub, WsMsg}
+import com.ll.domain.ws.WsMsg
+import com.ll.ws.PubSub
 
 class WsEndpoints[F[_] : Effect] extends Logging {
 
@@ -19,7 +20,7 @@ class WsEndpoints[F[_] : Effect] extends Logging {
       }
     }
 
-  def wsTest(pubSub: PubSub[F]): Route =
+  def wsTest(pubSub: PubSub): Route =
     path("test") {
       get {
         complete(HttpEntity(ContentTypes.`text/html(UTF-8)`, pubSub.getConnections.toString))
@@ -36,7 +37,7 @@ class WsEndpoints[F[_] : Effect] extends Logging {
       }
     }
 
-  def wsRoute(pubSub: PubSub[F])(implicit mat: Materializer) = path("ws" / LongNumber) { id =>
+  def wsRoute(pubSub: PubSub)(implicit mat: Materializer) = path("ws" / LongNumber) { id =>
     get { ctx =>
       ctx.request match {
         case req@HttpRequest(HttpMethods.GET, _, _, _, _) =>
@@ -53,12 +54,12 @@ class WsEndpoints[F[_] : Effect] extends Logging {
     }
   }
 
-  def endpoints(pubSub: PubSub[F])(implicit mat: Materializer): Route =
+  def endpoints(pubSub: PubSub)(implicit mat: Materializer): Route =
     helloRoute ~ wsRoute(pubSub) ~ wsTest(pubSub)
 }
 
 object WsEndpoints {
-  def endpoints[F[_] : Effect](pubSub: PubSub[F])(implicit mat: Materializer): Route =
+  def endpoints[F[_] : Effect](pubSub: PubSub)(implicit mat: Materializer): Route =
     new WsEndpoints[F].endpoints(pubSub)
 }
 

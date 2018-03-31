@@ -12,10 +12,11 @@ import akka.stream.OverflowStrategy
 import akka.stream.scaladsl._
 import org.reactivestreams.Publisher
 import akka.stream.scaladsl.Sink
+import com.ll.domain.ws.{Codec, WsMsg}
 
 import scala.concurrent.Future
 
-class PubSub[+F[_]]()(implicit system: ActorSystem, mat: Materializer) extends Logging {
+class PubSub()(implicit system: ActorSystem, mat: Materializer) extends Logging {
   implicit val ec = system.dispatcher
 
   private var wsConnections: Map[UserId, ActorRef] = Map.empty[UserId, ActorRef]
@@ -60,6 +61,10 @@ class PubSub[+F[_]]()(implicit system: ActorSystem, mat: Materializer) extends L
 
   def sendToPlayer(id: UserId, msg: WsMsg.Out) = wsConnections.get(id).foreach(ar => ar ! msg)
 
+  def sendToPlayers(ids: Set[UserId], msg: WsMsg.Out) = ids.foreach{ id =>
+    wsConnections.get(id).foreach(ar => ar ! msg)
+  }
+
   def closeConnection(id: UserId) = {
     wsConnections.get(id).foreach { ar =>
       log.info(s"Closing WS connection for $id")
@@ -70,5 +75,5 @@ class PubSub[+F[_]]()(implicit system: ActorSystem, mat: Materializer) extends L
 }
 
 object PubSub {
-  def apply[F[_] : Monad](system: ActorSystem, mat: Materializer) = new PubSub[F]()(system, mat)
+  def apply[F[_] : Monad](system: ActorSystem, mat: Materializer) = new PubSub()(system, mat)
 }

@@ -1,10 +1,10 @@
-package com.ll.ws
+package com.ll.domain.ws
 
+import com.ll.domain.ws.WsMsg._
 import io.circe._
 import io.circe.generic.auto._
 import io.circe.parser._
 import io.circe.syntax._
-import WsMsg._
 
 object Codec {
 
