@@ -5,8 +5,8 @@ import com.ll.domain.game.EventService
 import com.ll.repository.doobie.DoobieEventRepositoryInterpreter
 import akka.actor.ActorSystem
 import akka.http.scaladsl.Http
-import akka.stream.ActorMaterializer
-import com.ll.endpoint.HelloWorldEndpoints
+import akka.stream.{ActorMaterializer, ActorMaterializerSettings, Supervision}
+import com.ll.endpoint.WsEndpoints
 import cats.effect.IO
 import cats.effect._
 import com.ll.ws.PubSub
@@ -26,17 +26,21 @@ object Main extends App with Logging {
       conf <- ServerConfig.load[IO]
       xa             <- DatabaseConfig.dbTransactor(conf.db)
       _              <- DatabaseConfig.initializeDb(conf.db, xa)
-      system = ActorSystem("ll")
-      materializer = ActorMaterializer()(system)
-      eventRepo      =  DoobieEventRepositoryInterpreter[IO](xa)
-      eventService   =  EventService[IO](eventRepo)
-      pubSub = PubSub[IO](system, materializer)
+      system         = ActorSystem("ll")
+      strategy       = decider()
+      materializer   = ActorMaterializer(ActorMaterializerSettings(system).withSupervisionStrategy(strategy))(system)
+      eventRepo      = DoobieEventRepositoryInterpreter[IO](xa)
+      eventService   = EventService[IO](eventRepo)
+      pubSub         = PubSub[IO](system, materializer)
       exitCode       <- IO {
         log.info("Starting server...")
         implicit val sys = system
         implicit val mat = materializer
         implicit val executionContext = system.dispatcher
-        val route = HelloWorldEndpoints.endpoints[IO](pubSub)
+        import akka.http.scaladsl.server.Directives._
+        val route = pathPrefix("api" / "v0.1") {
+           WsEndpoints.endpoints[IO](pubSub)
+        }
 
         Http().bindAndHandle(route, "localhost", 8080)
       }
@@ -50,8 +54,13 @@ object Main extends App with Logging {
       }
     } yield ()
     program.unsafeRunSync()
-
   }
 
-
+  def decider(): Supervision.Decider = {
+    case ex =>
+      log.error("Error in stream: " + ex.getMessage)
+      Supervision.Resume
+    case _                      =>
+      Supervision.Stop
+  }
 }

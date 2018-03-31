@@ -42,6 +42,7 @@ class PubSub[+F[_]]()(implicit system: ActorSystem, mat: Materializer) extends L
       }
       .mapAsync(4) {
         case WsMsg.In.Ping(n) =>
+          log.info(s"Ping is recieved")
           actorRef ! WsMsg.Out.Pong(n)
           Future.successful("Pong!")
         case msg              =>
@@ -57,7 +58,7 @@ class PubSub[+F[_]]()(implicit system: ActorSystem, mat: Materializer) extends L
     Flow.fromSinkAndSource(sink, Source.fromPublisher(publisher))
   }
 
-  def sendToPlayer(id: UserId, msg: WsMsg.Out) = wsConnections.get(id).foreach(ar => ar ! TextMessage(msg.toString))
+  def sendToPlayer(id: UserId, msg: WsMsg.Out) = wsConnections.get(id).foreach(ar => ar ! msg)
 
   def closeConnection(id: UserId) = {
     wsConnections.get(id).foreach { ar =>
@@ -69,13 +70,5 @@ class PubSub[+F[_]]()(implicit system: ActorSystem, mat: Materializer) extends L
 }
 
 object PubSub {
-  var _pubSub: Option[PubSub[Any]] = None
-
-  def apply[F[_] : Monad](system: ActorSystem, mat: Materializer) = {
-    val pubSub = new PubSub[F]()(system, mat)
-    _pubSub = Some(pubSub)
-    pubSub
-  }
-
-  def sendToPlayer(id: UserId, msg: WsMsg.Out) = _pubSub.foreach(ps => ps.sendToPlayer(id, msg))
+  def apply[F[_] : Monad](system: ActorSystem, mat: Materializer) = new PubSub[F]()(system, mat)
 }

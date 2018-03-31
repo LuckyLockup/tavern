@@ -2,15 +2,15 @@ package com.ll.endpoint
 
 import cats.effect.Effect
 import com.ll.utils.Logging
-import akka.http.scaladsl.model.ws.{BinaryMessage, Message, TextMessage, UpgradeToWebSocket}
+import akka.http.scaladsl.model.ws.UpgradeToWebSocket
 import akka.http.scaladsl.model._
 import akka.http.scaladsl.server.Directives._
-import akka.http.scaladsl.server.{Route, RouteResult}
+import akka.http.scaladsl.server.Route
 import akka.stream.Materializer
 import com.ll.domain.auth.UserId
 import com.ll.ws.{PubSub, WsMsg}
 
-class HelloWorldEndpoints[F[_] : Effect] extends Logging {
+class WsEndpoints[F[_] : Effect] extends Logging {
 
   def helloRoute: Route =
     path("hello") {
@@ -30,7 +30,7 @@ class HelloWorldEndpoints[F[_] : Effect] extends Logging {
         decodeRequest {
           entity(as[String]) { str =>
             pubSub.sendToPlayer(UserId(id), WsMsg.Out.Text(str))
-            complete(HttpResponse(200, entity= "We are ok"))
+            complete(HttpResponse(200, entity = "We are ok"))
           }
         }
       }
@@ -57,9 +57,9 @@ class HelloWorldEndpoints[F[_] : Effect] extends Logging {
     helloRoute ~ wsRoute(pubSub) ~ wsTest(pubSub)
 }
 
-object HelloWorldEndpoints {
+object WsEndpoints {
   def endpoints[F[_] : Effect](pubSub: PubSub[F])(implicit mat: Materializer): Route =
-    new HelloWorldEndpoints[F].endpoints(pubSub)
+    new WsEndpoints[F].endpoints(pubSub)
 }
 
 
