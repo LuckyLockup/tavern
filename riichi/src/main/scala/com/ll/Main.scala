@@ -43,14 +43,7 @@ object Main extends App with Logging {
         }
 
         Http().bindAndHandle(route, "0.0.0.0", 8080)
-      }
-      _ <- IO {
-        try {
-          println("Press ENTER to exit the system")
-//          StdIn.readLine()
-        } finally {
-          system.terminate()
-        }
+        log.info("Server is started...")
       }
     } yield ()
     program.unsafeRunSync()
