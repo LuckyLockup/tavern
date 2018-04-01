@@ -22,7 +22,7 @@ case class GameState(
       }
 
     case GameCmd.JoinGameAsPlayer(userId, _) =>
-      if (this.hands.size < 4 && !this.hands.keySet.contains(userId)) {
+      if (this.hands.size <= 1 && !this.hands.keySet.contains(userId)) {
         Right(List(GameEvent.PlayerJoinedTable(userId), GameEvent.GameStarted, RiichiEvent.TileTaken(userId)))
       } else {
         Left(ValidationError("Can't join table"))

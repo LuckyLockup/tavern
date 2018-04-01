@@ -1,7 +1,9 @@
+
 // *****************************************************************************
 // Projects
 // *****************************************************************************
-lazy val domain = project.settings(settings)
+lazy val domain = project
+  .settings(commonSettings)
   .settings(
     libraryDependencies ++= Seq(
       "com.typesafe.akka" %% "akka-actor" % versions.AkkaVersion,
@@ -47,8 +49,12 @@ lazy val domain = project.settings(settings)
   )
 
 lazy val riichi = project
+  .settings(commonSettings)
   .aggregate(domain)
   .dependsOn(domain)
+  .settings(
+    mainClass in assembly := Some("com.ll.Main")
+  )
 
 
 // *****************************************************************************
@@ -82,15 +88,14 @@ lazy val versions = new {
 // Settings
 // *****************************************************************************
 
-lazy val settings = commonSettings
-
 lazy val commonSettings =
   Seq(
+    version := "0.1-SNAPSHOT",
     scalaVersion := "2.12.4",
     organization := "luckylockup.com",
     organizationName := "Lucky Lockup",
     startYear := Some(2018),
-    mainClass := Some("com.ll.Main"),
+    mainClass in Compile := Some("com.ll.Main"),
     cancelable in Global := true,
     licenses += ("Do What The Fuck You Want To Public License", url("http://www.wtfpl.net/")),
     scalacOptions ++= Seq(
@@ -104,5 +109,13 @@ lazy val commonSettings =
     ),
     Compile / unmanagedSourceDirectories := Seq((Compile / scalaSource).value),
     Test / unmanagedSourceDirectories := Seq((Test / scalaSource).value),
-    testFrameworks += new TestFramework("utest.runner.Framework")
+    testFrameworks += new TestFramework("utest.runner.Framework"),
+    test in assembly := {},
+    assemblyMergeStrategy in assembly := {
+      case PathList("META-INF", xs @ _*) => MergeStrategy.discard
+      case "io.netty.versions.properties"  => MergeStrategy.first
+      case x =>
+        val oldStrategy = (assemblyMergeStrategy in assembly).value
+        oldStrategy(x)
+    }
   )

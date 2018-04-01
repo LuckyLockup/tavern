@@ -42,12 +42,12 @@ object Main extends App with Logging {
            RiichiEndPoints.endpoints[IO](pubSub, riichi)
         }
 
-        Http().bindAndHandle(route, "localhost", 8080)
+        Http().bindAndHandle(route, "0.0.0.0", 8080)
       }
       _ <- IO {
         try {
           println("Press ENTER to exit the system")
-          StdIn.readLine()
+//          StdIn.readLine()
         } finally {
           system.terminate()
         }

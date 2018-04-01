@@ -60,7 +60,10 @@ class PubSub()(implicit system: ActorSystem, mat: Materializer) extends Logging 
     Flow.fromSinkAndSource(sink, Source.fromPublisher(publisher))
   }
 
-  def sendToPlayer(id: UserId, msg: WsMsg.Out) = wsConnections.get(id).foreach(ar => ar ! msg)
+  def sendToPlayer(id: UserId, msg: WsMsg.Out) = wsConnections.get(id).foreach { ar =>
+    log.info(s"Sending $msg")
+    ar ! msg
+  }
 
   def sendToPlayers(ids: Set[UserId], msg: WsMsg.Out) = ids.foreach{ id =>
     wsConnections.get(id).foreach(ar => ar ! msg)
