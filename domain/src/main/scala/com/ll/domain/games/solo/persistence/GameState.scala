@@ -1,5 +1,6 @@
-package com.ll.domain.games.riichi.persistence
+package com.ll.domain.games.solo.persistence
 
+import com.ll.domain.ValidationError
 import com.ll.domain.auth.UserId
 import com.ll.domain.games.GameId
 import com.ll.domain.games.persistence._
@@ -52,7 +53,7 @@ case class GameState(
 
     case GameEvent.GameStarted =>
       val (hand1, remaining) = wall.splitAt(GameState.handSize)
-      val newPlayerStates = this.hands.mapValues(playerState => playerState.copy(closedHand = hand1))
+      val newPlayerStates = this.hands.mapValues(playerState => playerState.copy(closedHand = hand1.sortBy(_.order)))
       val newState = this.copy(
         wall = remaining,
         hands = newPlayerStates
@@ -77,7 +78,7 @@ case class GameState(
     case RiichiEvent.TileDiscarded(userId, tile) =>
       val newHands = this.hands.map {
         case (`userId`, hand) =>
-          val newClosedHand = (hand.currentTitle.get :: hand.closedHand).filter(t => t != tile)
+          val newClosedHand = (hand.currentTitle.get :: hand.closedHand).filter(t => t != tile).sortBy(_.order)
           val newDiscard = tile :: hand.discard
           val newHand = hand.copy(
             closedHand = newClosedHand,

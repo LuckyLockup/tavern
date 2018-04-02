@@ -1,6 +1,8 @@
 package com.ll.domain.ws
 
+import com.ll.domain.ValidationError
 import com.ll.domain.games.persistence.{GeneralEvent, OutEvent, PlayerEvent}
+
 
 object OutEventConverter {
 
@@ -20,4 +22,6 @@ object OutEventConverter {
     case PlayerEvent.TileDiscarded(userId, tile) =>
       WsMsg.Out.TileDiscarded(tile.repr)
   }
+
+  def convert(error: ValidationError): WsMsg.Out = WsMsg.Out.ValidationError(error.reason)
 }

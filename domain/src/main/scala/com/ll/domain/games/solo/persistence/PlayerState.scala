@@ -1,4 +1,4 @@
-package com.ll.domain.games.riichi.persistence
+package com.ll.domain.games.solo.persistence
 
 import com.ll.domain.games.riichi.Tile
 

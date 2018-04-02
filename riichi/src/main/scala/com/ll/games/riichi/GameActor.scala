@@ -1,10 +1,9 @@
 package com.ll.games.riichi
 
-import akka.actor.Props
 import akka.persistence.PersistentActor
 import com.ll.domain.games.GameId
 import com.ll.domain.games.persistence._
-import com.ll.domain.games.riichi.persistence.GameState
+import com.ll.domain.games.solo.persistence.GameState
 import com.ll.domain.ws.OutEventConverter
 import com.ll.utils.Logging
 import com.ll.ws.PubSub
@@ -22,7 +21,13 @@ class GameActor(gameId: GameId, pubSub: PubSub) extends PersistentActor with Log
 
     case cmd: Cmd =>
       _state.validate(cmd) match {
-        case Left(error) => log.info(s"Error validating $cmd")
+        case Left(error) =>
+          log.info(s"Error validating $cmd")
+          cmd match {
+            case playerCmd: RiichiCmd =>
+              pubSub.sendToPlayer(playerCmd.userId,  OutEventConverter.convert(error))
+            case _ =>
+          }
         case Right(events) =>
           val (updatedState, accOutEvents) =events.foldLeft((_state, Nil : List[OutEvent])){
             case ((state, outEvents), event) =>
