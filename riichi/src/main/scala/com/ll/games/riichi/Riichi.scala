@@ -23,7 +23,7 @@ class Riichi(pubSub: PubSub)(implicit system: ActorSystem) extends Logging {
       log.info(s"Creating game for $gameId")
       val actorRef = system.actorOf(Props(new GameActor(gameId, pubSub)))
       games += gameId -> actorRef
-      system.scheduler.scheduleOnce(200 seconds) {
+      system.scheduler.scheduleOnce(30 minutes) {
         log.info(s"Killing game $gameId")
         actorRef ! PoisonPill
         games -= gameId

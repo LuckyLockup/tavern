@@ -24,7 +24,8 @@ lazy val domain = project
       "com.typesafe.akka" %% "akka-persistence-cassandra" % versions.CassandraPluginVersion,
       "com.typesafe.akka" %% "akka-distributed-data" % versions.AkkaVersion,
       // this allows us to start cassandra from the sample
-      "com.typesafe.akka" %% "akka-persistence-cassandra-launcher" % versions.CassandraPluginVersion,
+      "com.typesafe.akka" %% "akka-persistence-cassandra" % versions.CassandraPluginVersion,
+      "com.typesafe.akka" %% "akka-persistence-cassandra-launcher" % versions.CassandraPluginVersion % Test,
 
       "com.typesafe.akka" %% "akka-http" % versions.AkkaHttp,
       "org.typelevel" %% "cats-core" % versions.CatsVersion,
@@ -66,7 +67,7 @@ lazy val versions = new {
   val AkkaTypedVersion = "2.5.7"
   val AkkaHttp = "10.1.0"
 
-  val CassandraPluginVersion = "0.56"
+  val CassandraPluginVersion = "0.83"
 
   val scalaCheck = "1.13.5"
   val utest = "0.6.3"
