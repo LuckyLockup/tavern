@@ -22,7 +22,8 @@ object PlayerEvent {
     closedHand: List[Tile],
     openHand: List[Tile],
     currentTitle: Option[Tile],
-    discard: List[Tile]
+    discard: List[Tile],
+    turn: Int
   ) extends PlayerEvent
 
   case class TileFromWall(
@@ -39,4 +40,7 @@ object PlayerEvent {
     userId: UserId,
     error: ValidationError
   ) extends PlayerEvent
+
+  case class Win(userId: UserId) extends PlayerEvent
+  case class Loose(userId: UserId) extends PlayerEvent
 }

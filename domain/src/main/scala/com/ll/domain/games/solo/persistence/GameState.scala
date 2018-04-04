@@ -5,6 +5,7 @@ import com.ll.domain.auth.UserId
 import com.ll.domain.games.GameId
 import com.ll.domain.games.persistence._
 import com.ll.domain.games.riichi.{Deck, Tile}
+import com.ll.domain.games.solo.GameResult
 
 import scala.util.Random
 
@@ -32,9 +33,9 @@ case class GameState(
     case RiichiCmd.DiscardTile(userId, _, tile) =>
       this.hands.get(userId)
         .flatMap { hand =>
-          hand.closedHand.find(t => t.repr == tile)
+          (hand.closedHand ::: hand.currentTitle.toList).find(t => t.repr == tile)
         }
-        .map(tile => Right(List(RiichiEvent.TileDiscarded(userId, tile))))
+        .map(tile => Right(List(RiichiEvent.TileDiscarded(userId, tile), RiichiEvent.TileTaken(userId))))
         .getOrElse(Left(ValidationError(s"$tile is not in discard")))
 
     case RiichiCmd.GetTileFromWall(userId, _) =>
@@ -73,7 +74,11 @@ case class GameState(
         wall = remaining,
         hands = newHands
       )
-      (newState, List(PlayerEvent.TileFromWall(userId, newTile)))
+      val result = GameResult.defineGameResult(newState).map {
+        case GameResult.Win() => PlayerEvent.Win(userId)
+        case GameResult.Loose => PlayerEvent.Loose(userId)
+      }.toList
+      (newState, List(PlayerEvent.TileFromWall(userId, newTile)) ::: result)
 
     case RiichiEvent.TileDiscarded(userId, tile) =>
       val newHands = this.hands.map {
@@ -103,7 +108,8 @@ case class GameState(
           closedHand = playerState.closedHand,
           openHand = playerState.openHand,
           currentTitle = playerState.currentTitle,
-          discard = playerState.discard
+          discard = playerState.discard,
+          turn = this.turn
         )
     }.toList
   }
@@ -116,7 +122,8 @@ case class GameState(
         closedHand = playerState.closedHand,
         openHand = playerState.openHand,
         currentTitle = playerState.currentTitle,
-        discard = playerState.discard
+        discard = playerState.discard,
+        turn = this.turn
       )
     )
   }

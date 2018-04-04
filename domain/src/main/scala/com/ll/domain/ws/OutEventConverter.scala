@@ -15,12 +15,17 @@ object OutEventConverter {
         closedHand = st.closedHand.map(_.repr),
         openHand = st.openHand.map(_.repr),
         currentTitle = st.currentTitle.map(_.repr),
-        discard = st.discard.map(_.repr)
+        discard = st.discard.map(_.repr),
+        turn = st.turn
       )
     case PlayerEvent.TileFromWall(userId, tile) =>
       WsMsg.Out.TileFromWall(tile.repr)
     case PlayerEvent.TileDiscarded(userId, tile) =>
       WsMsg.Out.TileDiscarded(tile.repr)
+    case PlayerEvent.Win(userId) =>
+      WsMsg.Out.GameWin()
+    case PlayerEvent.Loose(userId) =>
+      WsMsg.Out.Loose()
   }
 
   def convert(error: ValidationError): WsMsg.Out = WsMsg.Out.ValidationError(error.reason)

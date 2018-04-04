@@ -10,7 +10,7 @@ object Tile {
   sealed trait Sou extends Tile
   sealed trait Wan extends Tile
 
-  sealed trait Number
+  sealed trait Number extends Tile
   sealed trait `1` extends Number
   sealed trait `2` extends Number
   sealed trait `3` extends Number

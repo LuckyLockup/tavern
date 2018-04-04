@@ -30,7 +30,8 @@ object  WsMsg {
       closedHand: List[String],
       openHand: List[String],
       currentTitle: Option[String],
-      discard: List[String]
+      discard: List[String],
+      turn: Int
     ) extends Out
 
     case class TileFromWall(tile: String) extends Out
@@ -38,5 +39,8 @@ object  WsMsg {
     case class TileDiscarded(tile: String) extends Out
 
     case class ValidationError(error: String) extends Out
+
+    case class GameWin() extends Out
+    case class Loose() extends Out
   }
 }
