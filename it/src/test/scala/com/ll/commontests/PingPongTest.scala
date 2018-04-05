@@ -1,18 +1,15 @@
 package com.ll.commontests
 
-import com.ll.Test
 import com.ll.domain.ws.WsMsg
-import org.scalatest.FunSuite
+import com.ll.utils.{CommonData, Test}
 
 class PingPongTest extends Test {
 
-  test("ping pong") {
-    val ws = createWsConnection(123)
+  "Ping Pong" in new CommonData {
+    val player = createNewPlayer(userId)
 
-    ws ! WsMsg.In.Ping(22)
-    ws.expect {case msg @ WsMsg.Out.Pong(_) => msg }
-    Thread.sleep(1000)
+    player.ws ! WsMsg.In.Ping(22)
+    player.ws.expectWsMsg[WsMsg.Out.Pong]
   }
-
 }
 

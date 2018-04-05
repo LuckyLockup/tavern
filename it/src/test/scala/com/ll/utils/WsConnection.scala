@@ -1,17 +1,14 @@
-package com.ll
+package com.ll.utils
 
-import akka.{Done, NotUsed}
-import akka.http.scaladsl.Http
-import akka.http.scaladsl.model.ws.WebSocketRequest
 import akka.actor.{ActorRef, ActorSystem, Status}
+import akka.http.scaladsl.HttpExt
 import akka.http.scaladsl.model.StatusCodes
-import akka.stream.Materializer
-import akka.stream.scaladsl.{Flow, Source}
-import akka.http.scaladsl.model.ws.{Message, TextMessage}
-import akka.stream.OverflowStrategy
-import akka.stream.scaladsl._
-import akka.stream.scaladsl.Sink
+import akka.http.scaladsl.model.ws.{Message, TextMessage, WebSocketRequest}
+import akka.stream.{Materializer, OverflowStrategy}
+import akka.stream.scaladsl.{Flow, Sink, Source, _}
 import akka.testkit.{TestKitBase, TestProbe}
+import akka.{Done, NotUsed}
+import com.ll.domain.auth.UserId
 import com.ll.domain.ws.WsMsg
 import io.circe._
 import io.circe.generic.auto._
@@ -20,34 +17,34 @@ import io.circe.syntax._
 import org.reactivestreams.Publisher
 
 import scala.concurrent.Future
-import scala.concurrent.duration._
+import scala.reflect.runtime.universe._
 
-
-class WsConnection(userId: Int, as: ActorSystem, mat: Materializer)
+class WsConnection(userId: UserId, as: ActorSystem, mat: Materializer, http: HttpExt, config: TestConfig)
   extends TestKitBase with Logging {
 
   implicit lazy val system = as
   implicit lazy val materializer = mat
 
   log.info(s"Creating connection for $userId")
+
   implicit val ec = system.dispatcher
 
-  val req = WebSocketRequest(uri = s"ws://127.0.0.1:8080/api/v0.1/ws/$userId")
+  val req = WebSocketRequest(uri = s"${config.wsUrl}/${userId.id}")
 
   val probe = TestProbe()
 
   val (ws: ActorRef, publisher: Publisher[TextMessage.Strict]) = Source
     .actorRef[WsMsg.In](16, OverflowStrategy.fail)
     .log(s"$userId sent: ")
-    .map(msg =>  TextMessage.Strict(encodeWsMsg(msg)))
+    .map(msg => TextMessage.Strict(encodeWsMsg(msg)))
     .toMat(Sink.asPublisher(false))(Keep.both).run()
 
   val sink: Sink[Message, NotUsed] = Flow[Message]
-      .log(s"$userId received: ")
+    .log(s"$userId received: ")
     .mapAsync(1) {
-      case TextMessage.Strict(msg)  =>
+      case TextMessage.Strict(msg) =>
         decodeWsMsg(msg) match {
-          case Left(error) => log.error(s"Error parsing message from server $error")
+          case Left(error)  => log.error(s"Error parsing message from server $error")
           case Right(wsMsg) => probe.ref ! wsMsg
         }
         Future.successful()
@@ -56,7 +53,7 @@ class WsConnection(userId: Int, as: ActorSystem, mat: Materializer)
 
   val flow = Flow.fromSinkAndSource(sink, Source.fromPublisher(publisher))
 
-  val (upgradeResponse, closed) = Http().singleWebSocketRequest(req, flow)
+  val (upgradeResponse, closed) = http.singleWebSocketRequest(req, flow)
 
   val connected = upgradeResponse.map { upgrade =>
     if (upgrade.response.status == StatusCodes.SwitchingProtocols) {
@@ -68,7 +65,17 @@ class WsConnection(userId: Int, as: ActorSystem, mat: Materializer)
 
   def !(msg: WsMsg.In): Unit = ws ! msg
 
-  def expect(f: PartialFunction[Any, WsMsg.Out]): WsMsg.Out = probe.expectMsgPF(3 seconds, "expecting")(f)
+  def expectWsMsg(f: PartialFunction[Any, WsMsg.Out]): WsMsg.Out = probe.expectMsgPF(
+    config.defaultTimeout, "expecting")(f)
+
+  def expectWsMsg[T <: WsMsg.Out](implicit tag: TypeTag[T]): T = probe.expectMsgPF(
+    config.defaultTimeout, s"expecting type ${tag.tpe}") {
+    case msg: T => msg
+  }
+  def closeConnection() = {
+    log.info(s"Closing connection for $userId")
+    ws ! Status.Success("Done")
+  }
 
   private def decodeWsMsg(json: String): Either[Error, WsMsg.Out] = {
     decode[WsMsg.Out](json)
