@@ -3,15 +3,15 @@ package com.ll.domain.games.solo.persistence
 import com.ll.domain.ValidationError
 import com.ll.domain.auth.UserId
 import com.ll.domain.games.GameId
+import com.ll.domain.games.deck.{Deck, Tile}
 import com.ll.domain.games.persistence._
-import com.ll.domain.games.riichi.{Deck, Tile}
 import com.ll.domain.games.solo.GameResult
 
 import scala.util.Random
 
 case class GameState(
   id: GameId,
-  wall: List[Tile] = Random.shuffle(Deck.allTiles),
+  wall: List[Tile] = Random.shuffle(Deck.tilesForSolo),
   hands: Map[UserId, PlayerState] = Map(),
   turn: Integer = 0
 ) {

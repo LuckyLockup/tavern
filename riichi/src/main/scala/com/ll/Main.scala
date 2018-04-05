@@ -3,15 +3,15 @@ package com.ll
 import com.ll.config.{DatabaseConfig, ServerConfig}
 import akka.actor.ActorSystem
 import akka.http.scaladsl.Http
+import akka.http.scaladsl.server.Route
 import akka.stream.{ActorMaterializer, ActorMaterializerSettings, Supervision}
-import com.ll.endpoint.{RiichiEndPoints, WsEndpoints}
+import com.ll.endpoint.{SoloEndPoints, WsEndpoints}
 import cats.effect.IO
 import cats.effect._
-import com.ll.games.riichi.Riichi
+import com.ll.games.GameService
 import com.ll.ws.PubSub
 import com.ll.utils.Logging
 
-import scala.io.StdIn
 
 
 object Main extends App with Logging {
@@ -29,17 +29,16 @@ object Main extends App with Logging {
       strategy       = decider()
       materializer   = ActorMaterializer(ActorMaterializerSettings(system).withSupervisionStrategy(strategy))(system)
       pubSub         = PubSub[IO](system, materializer)
-      riichi         = Riichi[IO](system, pubSub)
-      //here we initialize gameTables
-      exitCode       <- IO {
+      gameService    = GameService[IO](system, pubSub)
+      _              <- IO {
         log.info("Starting server...")
         implicit val sys = system
         implicit val mat = materializer
         implicit val executionContext = system.dispatcher
         import akka.http.scaladsl.server.Directives._
-        val route = pathPrefix("api" / "v0.1") {
-           WsEndpoints.endpoints[IO](pubSub, riichi) ~
-           RiichiEndPoints.endpoints[IO](pubSub, riichi)
+        val route: Route = pathPrefix("api" / "v0.1") {
+           WsEndpoints.endpoints[IO](pubSub, gameService) ~
+           SoloEndPoints.endpoints[IO](pubSub, gameService)
         }
 
         Http().bindAndHandle(route, "0.0.0.0", 8080)

@@ -1,4 +1,4 @@
-package com.ll.games.riichi
+package com.ll.games.solo
 
 import akka.persistence.PersistentActor
 import com.ll.domain.games.GameId
@@ -9,7 +9,7 @@ import com.ll.utils.Logging
 import com.ll.ws.PubSub
 
 class GameActor(gameId: GameId, pubSub: PubSub) extends PersistentActor with Logging {
-  override def persistenceId = s"riichi_${gameId.id.toString}"
+  override def persistenceId = s"solo_${gameId.id.toString}"
 
   var _state = GameState(gameId)
 

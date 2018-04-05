@@ -1,5 +1,6 @@
 package com.ll.domain.games.riichi
 
+import com.ll.domain.games.deck.{Tile, TileSet}
 import org.scalatest.{FunSuite, Matchers}
 
 class TileSetTest extends FunSuite with Matchers {

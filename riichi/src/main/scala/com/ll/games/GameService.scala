@@ -1,17 +1,18 @@
-package com.ll.games.riichi
+package com.ll.games
 
 import akka.actor.{ActorRef, ActorSystem, PoisonPill, Props}
 import cats.Monad
 import com.ll.domain.auth.UserId
 import com.ll.domain.games.GameId
-import com.ll.domain.games.persistence.{Cmd, GameCmd}
+import com.ll.domain.games.persistence.Cmd
 import com.ll.domain.ws.{CmdConverter, WsMsg}
+import com.ll.games.solo.GameActor
 import com.ll.utils.Logging
 import com.ll.ws.PubSub
 
 import scala.concurrent.duration._
 
-class Riichi(pubSub: PubSub)(implicit system: ActorSystem) extends Logging {
+class GameService(pubSub: PubSub)(implicit system: ActorSystem) extends Logging {
   implicit val ec = system.dispatcher
 
   private var games: Map[GameId, ActorRef] = Map.empty[GameId, ActorRef]
@@ -45,6 +46,6 @@ class Riichi(pubSub: PubSub)(implicit system: ActorSystem) extends Logging {
   def gamesCount: Int = games.size
 }
 
-object Riichi {
-  def apply[F[_] : Monad](system: ActorSystem, pubSub: PubSub) = new Riichi(pubSub)(system)
+object GameService {
+  def apply[F[_] : Monad](system: ActorSystem, pubSub: PubSub) = new GameService(pubSub)(system)
 }

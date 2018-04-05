@@ -1,7 +1,7 @@
 package com.ll.domain.games.persistence
 
 import com.ll.domain.auth.UserId
-import com.ll.domain.games.riichi.Tile
+import com.ll.domain.games.deck.Tile
 
 sealed trait Event
 

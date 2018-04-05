@@ -1,6 +1,6 @@
 package com.ll.domain.games.solo.persistence
 
-import com.ll.domain.games.riichi.Tile
+import com.ll.domain.games.deck.Tile
 
 case class PlayerState(
   closedHand: List[Tile] = Nil,

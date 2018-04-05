@@ -1,4 +1,4 @@
-package com.ll.domain.games.riichi
+package com.ll.domain.games.deck
 
 sealed trait TileCode {
   def code: String

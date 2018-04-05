@@ -1,6 +1,6 @@
 package com.ll.domain.games.solo
 
-import com.ll.domain.games.riichi.{Tile, TileSet}
+import com.ll.domain.games.deck.{Tile, TileSet}
 import com.ll.domain.games.solo.persistence.GameState
 
 sealed trait GameResult
@@ -33,7 +33,6 @@ object GameResult {
        case None => Nil
      }
      case a :: b :: c :: tail => {
-       //we try pair and then 3 tiles
        val setsWithPairs = {
          TileSet.getSet(a, b) match {
            case Some(set) => getCombinations(addSet(set, sets), c :: tail)

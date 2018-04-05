@@ -13,7 +13,7 @@ import akka.stream.scaladsl._
 import org.reactivestreams.Publisher
 import akka.stream.scaladsl.Sink
 import com.ll.domain.ws.{Codec, WsMsg}
-import com.ll.games.riichi.Riichi
+import com.ll.games.GameService
 
 import scala.concurrent.Future
 
@@ -24,7 +24,7 @@ class PubSub()(implicit system: ActorSystem, mat: Materializer) extends Logging 
 
   def getConnections = wsConnections.size
 
-  def openNewConnection(id: UserId, riichi: Riichi): Flow[Message, Message, NotUsed] = {
+  def openNewConnection(id: UserId, riichi: GameService): Flow[Message, Message, NotUsed] = {
     closeConnection(id)
 
     val (actorRef: ActorRef, publisher: Publisher[TextMessage.Strict]) = Source.actorRef[WsMsg.Out](16, OverflowStrategy.fail)

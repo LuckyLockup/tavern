@@ -6,46 +6,19 @@ lazy val domain = project
   .settings(commonSettings)
   .settings(
     libraryDependencies ++= Seq(
-      "com.typesafe.akka" %% "akka-actor" % versions.AkkaVersion,
-      "com.typesafe.akka" %% "akka-slf4j" % versions.AkkaVersion,
-      "com.typesafe.akka" %% "akka-testkit" % versions.AkkaVersion % Test,
-
-      "com.typesafe.akka" %% "akka-stream" % versions.AkkaVersion,
-      "com.typesafe.akka" %% "akka-stream-testkit" % versions.AkkaVersion,
-
-      "com.typesafe.akka" %% "akka-http" % versions.AkkaHttp,
-      "com.typesafe.akka" %% "akka-http-testkit" % versions.AkkaHttp,
-
-      "com.typesafe.akka" %% "akka-remote" % versions.AkkaVersion,
-      "com.typesafe.akka" %% "akka-cluster" % versions.AkkaVersion,
-      "com.typesafe.akka" %% "akka-cluster-tools" % versions.AkkaVersion,
-      "com.typesafe.akka" %% "akka-cluster-sharding" % versions.AkkaVersion,
-      "com.typesafe.akka" %% "akka-persistence" % versions.AkkaVersion,
-      "com.typesafe.akka" %% "akka-persistence-cassandra" % versions.CassandraPluginVersion,
-      "com.typesafe.akka" %% "akka-distributed-data" % versions.AkkaVersion,
-      // this allows us to start cassandra from the sample
-      "com.typesafe.akka" %% "akka-persistence-cassandra" % versions.CassandraPluginVersion,
-      "com.typesafe.akka" %% "akka-persistence-cassandra-launcher" % versions.CassandraPluginVersion % Test,
-
-      "com.typesafe.akka" %% "akka-http" % versions.AkkaHttp,
       "org.typelevel" %% "cats-core" % versions.CatsVersion,
+
       "io.circe" %% "circe-generic" % versions.CirceVersion,
       "io.circe" %% "circe-literal" % versions.CirceVersion,
       "io.circe" %% "circe-generic-extras" % versions.CirceVersion,
       "io.circe" %% "circe-optics" % versions.CirceVersion,
       "io.circe" %% "circe-parser" % versions.CirceVersion,
       "io.circe" %% "circe-java8" % versions.CirceVersion,
-      "org.tpolecat" %% "doobie-core" % versions.DoobieVersion,
-      "org.tpolecat" %% "doobie-h2" % versions.DoobieVersion,
-      "org.tpolecat" %% "doobie-scalatest" % versions.DoobieVersion,
-      "org.tpolecat" %% "doobie-hikari" % versions.DoobieVersion,
-      "com.h2database" % "h2" % versions.H2Version,
-      "ch.qos.logback" % "logback-classic" % versions.LogbackVersion,
-      "org.flywaydb" % "flyway-core" % versions.FlywayVersion,
+
       "com.github.pureconfig" %% "pureconfig" % versions.PureConfigVersion,
+
       "org.scalacheck" %% "scalacheck" % versions.ScalaCheckVersion % Test,
-      "org.scalatest" %% "scalatest" % versions.ScalaTestVersion % Test,
-      "org.fusesource.leveldbjni" % "leveldbjni-all" % "1.8"
+      "org.scalatest" %% "scalatest" % versions.ScalaTestVersion % Test
     )
   )
 
@@ -53,10 +26,55 @@ lazy val riichi = project
   .settings(commonSettings)
   .aggregate(domain)
   .dependsOn(domain)
-  .settings(
+  .settings(libraryDependencies ++= Seq(
+    "com.typesafe.akka" %% "akka-actor" % versions.AkkaVersion,
+    "com.typesafe.akka" %% "akka-slf4j" % versions.AkkaVersion,
+    "com.typesafe.akka" %% "akka-testkit" % versions.AkkaVersion % Test,
+
+    "com.typesafe.akka" %% "akka-stream" % versions.AkkaVersion,
+    "com.typesafe.akka" %% "akka-stream-testkit" % versions.AkkaVersion,
+
+    "com.typesafe.akka" %% "akka-http" % versions.AkkaHttp,
+    "com.typesafe.akka" %% "akka-http-testkit" % versions.AkkaHttp,
+
+    "com.typesafe.akka" %% "akka-remote" % versions.AkkaVersion,
+    "com.typesafe.akka" %% "akka-cluster" % versions.AkkaVersion,
+    "com.typesafe.akka" %% "akka-cluster-tools" % versions.AkkaVersion,
+    "com.typesafe.akka" %% "akka-cluster-sharding" % versions.AkkaVersion,
+    "com.typesafe.akka" %% "akka-persistence" % versions.AkkaVersion,
+    "com.typesafe.akka" %% "akka-persistence-cassandra" % versions.CassandraPluginVersion,
+    "com.typesafe.akka" %% "akka-distributed-data" % versions.AkkaVersion,
+    // this allows us to start cassandra from the sample
+    "com.typesafe.akka" %% "akka-persistence-cassandra" % versions.CassandraPluginVersion,
+    "com.typesafe.akka" %% "akka-persistence-cassandra-launcher" % versions.CassandraPluginVersion % Test,
+
+    "com.typesafe.akka" %% "akka-http" % versions.AkkaHttp,
+    "org.tpolecat" %% "doobie-core" % versions.DoobieVersion,
+    "org.tpolecat" %% "doobie-h2" % versions.DoobieVersion,
+    "org.tpolecat" %% "doobie-scalatest" % versions.DoobieVersion,
+    "org.tpolecat" %% "doobie-hikari" % versions.DoobieVersion,
+    "com.h2database" % "h2" % versions.H2Version,
+    "ch.qos.logback" % "logback-classic" % versions.LogbackVersion,
+    "org.flywaydb" % "flyway-core" % versions.FlywayVersion,
+    "org.fusesource.leveldbjni" % "leveldbjni-all" % "1.8"
+  ),
     mainClass in assembly := Some("com.ll.Main")
   )
 
+lazy val it = project
+  .settings(commonSettings)
+  .dependsOn(domain)
+  .settings(
+    libraryDependencies ++= Seq(
+      "com.typesafe.akka" %% "akka-stream" % versions.AkkaVersion,
+      "com.typesafe.akka" %% "akka-stream-testkit" % versions.AkkaVersion,
+
+      "com.typesafe.akka" %% "akka-http" % versions.AkkaHttp,
+      "ch.qos.logback" % "logback-classic" % "1.2.3",
+      "org.scalacheck" %% "scalacheck" % versions.ScalaCheckVersion % Test,
+      "org.scalatest" %% "scalatest" % versions.ScalaTestVersion % Test
+    )
+  )
 
 // *****************************************************************************
 // Library dependencies
@@ -113,9 +131,9 @@ lazy val commonSettings =
     testFrameworks += new TestFramework("utest.runner.Framework"),
     test in assembly := {},
     assemblyMergeStrategy in assembly := {
-      case PathList("META-INF", xs @ _*) => MergeStrategy.discard
-      case "io.netty.versions.properties"  => MergeStrategy.first
-      case x =>
+      case PathList("META-INF", xs@_*)    => MergeStrategy.discard
+      case "io.netty.versions.properties" => MergeStrategy.first
+      case x                              =>
         val oldStrategy = (assemblyMergeStrategy in assembly).value
         oldStrategy(x)
     }

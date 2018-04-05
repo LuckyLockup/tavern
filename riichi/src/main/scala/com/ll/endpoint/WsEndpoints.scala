@@ -9,7 +9,7 @@ import akka.http.scaladsl.server.Route
 import akka.stream.Materializer
 import com.ll.domain.auth.UserId
 import com.ll.domain.ws.WsMsg
-import com.ll.games.riichi.Riichi
+import com.ll.games.GameService
 import com.ll.ws.PubSub
 
 class WsEndpoints[F[_] : Effect] extends Logging {
@@ -38,7 +38,7 @@ class WsEndpoints[F[_] : Effect] extends Logging {
       }
     }
 
-  def wsRoute(pubSub: PubSub, riichi: Riichi)(implicit mat: Materializer) = path("ws" / LongNumber) { id =>
+  def wsRoute(pubSub: PubSub, riichi: GameService)(implicit mat: Materializer) = path("ws" / LongNumber) { id =>
     get { ctx =>
       ctx.request match {
         case req@HttpRequest(HttpMethods.GET, _, _, _, _) =>
@@ -55,13 +55,13 @@ class WsEndpoints[F[_] : Effect] extends Logging {
     }
   }
 
-  def endpoints(pubSub: PubSub, riichi: Riichi)(implicit mat: Materializer): Route =
+  def endpoints(pubSub: PubSub, riichi: GameService)(implicit mat: Materializer): Route =
     helloRoute ~ wsRoute(pubSub, riichi) ~ wsTest(pubSub)
 }
 
 object WsEndpoints {
-  def endpoints[F[_] : Effect](pubSub: PubSub, riichi: Riichi)(implicit mat: Materializer): Route =
-    new WsEndpoints[F].endpoints(pubSub, riichi: Riichi)
+  def endpoints[F[_] : Effect](pubSub: PubSub, riichi: GameService)(implicit mat: Materializer): Route =
+    new WsEndpoints[F].endpoints(pubSub, riichi: GameService)
 }
 
 

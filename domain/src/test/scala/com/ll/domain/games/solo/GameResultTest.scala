@@ -1,8 +1,8 @@
 package com.ll.domain.games.solo
 
-import com.ll.domain.games.riichi.Tile.Wind._
-import com.ll.domain.games.riichi.Tile.Sou._
-import com.ll.domain.games.riichi.TileSet.{Chow, Pung, TilesPair}
+import com.ll.domain.games.deck.Tile.Wind._
+import com.ll.domain.games.deck.Tile.Sou._
+import com.ll.domain.games.deck.TileSet.{Chow, Pung, TilesPair}
 import org.scalatest.{FunSuite, Matchers}
 
 class GameResultTest extends FunSuite with Matchers{
@@ -17,9 +17,8 @@ class GameResultTest extends FunSuite with Matchers{
   )
 
   test("testHandSets") {
-    winningHands.foreach{ case (hand, result) =>
+    winningHands.foreach { case (hand, result) =>
       GameResult.handSets(hand) should equal (result)
     }
   }
-
 }
