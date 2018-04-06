@@ -23,5 +23,4 @@ class BasicSolotTest extends Test {
     player.ws.expectWsMsg[WsMsg.Out.TileFromWall]
 
   }
-
 }

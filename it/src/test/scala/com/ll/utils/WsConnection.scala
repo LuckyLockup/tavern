@@ -17,6 +17,7 @@ import io.circe.syntax._
 import org.reactivestreams.Publisher
 
 import scala.concurrent.Future
+import scala.reflect.ClassTag
 import scala.reflect.runtime.universe._
 
 class WsConnection(userId: UserId, as: ActorSystem, mat: Materializer, http: HttpExt, config: TestConfig)
@@ -36,16 +37,21 @@ class WsConnection(userId: UserId, as: ActorSystem, mat: Materializer, http: Htt
   val (ws: ActorRef, publisher: Publisher[TextMessage.Strict]) = Source
     .actorRef[WsMsg.In](16, OverflowStrategy.fail)
     .log(s"$userId sent: ")
-    .map(msg => TextMessage.Strict(encodeWsMsg(msg)))
+    .map(msg => {
+      val json = encodeWsMsg(msg)
+      log.info(s"WS [${userId.id}] >>>>  $json")
+      TextMessage.Strict(json)
+    })
     .toMat(Sink.asPublisher(false))(Keep.both).run()
 
   val sink: Sink[Message, NotUsed] = Flow[Message]
-    .log(s"$userId received: ")
     .mapAsync(1) {
       case TextMessage.Strict(msg) =>
+        log.info(s"WS [${userId.id}] <<<<  $msg")
         decodeWsMsg(msg) match {
           case Left(error)  => log.error(s"Error parsing message from server $error")
-          case Right(wsMsg) => probe.ref ! wsMsg
+          case Right(wsMsg) =>
+            probe.ref ! wsMsg
         }
         Future.successful()
     }
@@ -68,10 +74,14 @@ class WsConnection(userId: UserId, as: ActorSystem, mat: Materializer, http: Htt
   def expectWsMsg(f: PartialFunction[Any, WsMsg.Out]): WsMsg.Out = probe.expectMsgPF(
     config.defaultTimeout, "expecting")(f)
 
-  def expectWsMsg[T <: WsMsg.Out](implicit tag: TypeTag[T]): T = probe.expectMsgPF(
+  def expectWsMsg[T: ClassTag](implicit tag: TypeTag[T]): T = probe.expectMsgPF(
     config.defaultTimeout, s"expecting type ${tag.tpe}") {
     case msg: T => msg
+    case msg =>
+      log.info(s"Skipping $msg")
+      expectWsMsg[T]
   }
+
   def closeConnection() = {
     log.info(s"Closing connection for $userId")
     ws ! Status.Success("Done")
