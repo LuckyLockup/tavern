@@ -9,7 +9,7 @@ import akka.stream.scaladsl.{Flow, Sink, Source, _}
 import akka.testkit.{TestKitBase, TestProbe}
 import akka.{Done, NotUsed}
 import com.ll.domain.auth.UserId
-import com.ll.domain.ws.WsMsg
+import com.ll.domain.messages.WsMsg
 import io.circe._
 import io.circe.generic.auto._
 import io.circe.parser._

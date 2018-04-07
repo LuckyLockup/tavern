@@ -12,8 +12,8 @@ import akka.stream.OverflowStrategy
 import akka.stream.scaladsl._
 import org.reactivestreams.Publisher
 import akka.stream.scaladsl.Sink
-import com.ll.domain.ws.{Codec, WsMsg}
-import com.ll.games.GameService
+import com.ll.domain.messages.{Codec, WsMsg}
+import com.ll.games.TablesService
 
 import scala.concurrent.Future
 
@@ -24,7 +24,7 @@ class PubSub()(implicit system: ActorSystem, mat: Materializer) extends Logging 
 
   def getConnections = wsConnections.size
 
-  def openNewConnection(id: UserId, riichi: GameService): Flow[Message, Message, NotUsed] = {
+  def openNewConnection(id: UserId, riichi: TablesService): Flow[Message, Message, NotUsed] = {
     closeConnection(id)
 
     val (actorRef: ActorRef, publisher: Publisher[TextMessage.Strict]) = Source.actorRef[WsMsg.Out](16, OverflowStrategy.fail)
@@ -60,12 +60,12 @@ class PubSub()(implicit system: ActorSystem, mat: Materializer) extends Logging 
     Flow.fromSinkAndSource(sink, Source.fromPublisher(publisher))
   }
 
-  def sendToPlayer(id: UserId, msg: WsMsg.Out) = wsConnections.get(id).foreach { ar =>
+  def sendToUser(id: UserId, msg: WsMsg.Out): Unit = wsConnections.get(id).foreach { ar =>
     log.info(s"Sending $msg")
     ar ! msg
   }
 
-  def sendToPlayers(ids: Set[UserId], msg: WsMsg.Out) = ids.foreach{ id =>
+  def sendToUsers(ids: Set[UserId], msg: WsMsg.Out): Unit = ids.foreach{ id =>
     wsConnections.get(id).foreach(ar => ar ! msg)
   }
 

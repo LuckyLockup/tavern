@@ -1,26 +1,13 @@
 package com.ll.domain.games.solo
 
 import com.ll.domain.games.deck.{Tile, TileSet}
-import com.ll.domain.games.solo.persistence.GameState
 
 sealed trait GameResult
 
+/**
+  * temporary algo for winning hand determination
+  */
 object GameResult {
-  case class Win() extends GameResult
-  case object Loose extends GameResult
-
-  def defineGameResult(state: GameState): Option[GameResult] = {
-    if (state.turn > 40) {
-      Some(Loose)
-    } else {
-      state.hands.headOption.map(_._2).map { hand =>
-        handSets(hand.currentTitle.get :: hand.closedHand)
-      }.flatMap{
-        case sets if sets.nonEmpty => Some(Win())
-        case _ => None
-      }
-    }
-  }
 
   def handSets(hand: List[Tile]): List[List[TileSet]] = getCombinations(Nil, hand)
 

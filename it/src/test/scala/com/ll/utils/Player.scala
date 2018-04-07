@@ -6,7 +6,7 @@ import akka.http.scaladsl.model._
 import akka.stream.Materializer
 import com.ll.domain.auth.UserId
 import com.ll.domain.games.GameId
-import com.ll.domain.ws.WsMsg
+import com.ll.domain.messages.WsMsg
 import org.scalatest.Matchers
 
 import scala.concurrent.Await

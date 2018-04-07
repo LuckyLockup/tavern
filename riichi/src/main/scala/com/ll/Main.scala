@@ -8,9 +8,11 @@ import akka.stream.{ActorMaterializer, ActorMaterializerSettings, Supervision}
 import com.ll.endpoint.{SoloEndPoints, WsEndpoints}
 import cats.effect.IO
 import cats.effect._
-import com.ll.games.GameService
+import com.ll.games.TablesService
 import com.ll.ws.PubSub
 import com.ll.utils.Logging
+
+import scala.util.control.NonFatal
 
 
 
@@ -29,7 +31,7 @@ object Main extends App with Logging {
       strategy       = decider()
       materializer   = ActorMaterializer(ActorMaterializerSettings(system).withSupervisionStrategy(strategy))(system)
       pubSub         = PubSub[IO](system, materializer)
-      gameService    = GameService[IO](system, pubSub)
+      gameService    = TablesService[IO](system, pubSub)
       _              <- IO {
         log.info("Starting server...")
         implicit val sys = system
@@ -49,7 +51,7 @@ object Main extends App with Logging {
   }
 
   def decider(): Supervision.Decider = {
-    case ex =>
+    case NonFatal(ex) =>
       log.error("Error in stream: " + ex.getMessage)
       Supervision.Resume
     case _                      =>

@@ -1,6 +1,6 @@
 package com.ll.commontests
 
-import com.ll.domain.ws.WsMsg
+import com.ll.domain.messages.WsMsg
 import com.ll.utils.{CommonData, Test}
 
 class PingPongTest extends Test {

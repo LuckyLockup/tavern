@@ -1,7 +1,8 @@
 package com.ll.commontests
 
-import com.ll.domain.ws.WsMsg
-import com.ll.domain.ws.WsMsg.Out
+import com.ll.domain.messages.WsMsg
+import com.ll.domain.messages.WsMsg.Out
+import com.ll.domain.persistence.{TableCmd, UserCmd}
 import com.ll.utils.{CommonData, Test}
 
 class BasicSolotTest extends Test {
@@ -17,10 +18,12 @@ class BasicSolotTest extends Test {
     //TODO proper game creation
     Thread.sleep(1000)
 
-    player.ws ! WsMsg.In.JoinGameAsPlayer(gameId)
+    player.ws ! UserCmd.JoinAsPlayer(tableId, userId)
+    player.ws ! TableCmd.StartGame(tableId)
 
-    player.ws.expectWsMsg[WsMsg.Out.GameState]
-    player.ws.expectWsMsg[WsMsg.Out.TileFromWall]
+
+    player.ws.expectWsMsg[WsMsg.Out.Table.TableState]
+    player.ws.expectWsMsg[WsMsg.Out.Table.GameStarted]
 
   }
 }
