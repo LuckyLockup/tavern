@@ -4,11 +4,13 @@ import akka.persistence.PersistentActor
 import com.ll.domain.games.{GameId, GameTable, TableId}
 import com.ll.domain.messages.WsMsg.Out.Table
 import com.ll.domain.messages.WsMsgProjector
-import com.ll.domain.persistence.{GameCmd, TableCmd, UserCmd}
+import com.ll.domain.persistence._
 import com.ll.utils.Logging
 import com.ll.ws.PubSub
 
-class TableActor[C, E, S](table: GameTable[C, E, S], pubSub: PubSub) extends PersistentActor with Logging {
+class TableActor[C <: TableCmd, E <: TableEvent, S <: GameState](table: GameTable[C, E, S], pubSub: PubSub)
+  extends PersistentActor with Logging {
+
   override def persistenceId = s"solo_${table.tableId.id.toString}"
 
   var _state = table

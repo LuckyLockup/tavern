@@ -12,13 +12,16 @@ import com.ll.ws.PubSub
 import com.ll.domain.messages.WsMsg.Out.Table.TableState
 import com.ll.domain.persistence.{TableCmd, UserCmd}
 import akka.pattern.ask
+import akka.util.Timeout
+import com.ll.config.ServerConfig
 import com.ll.domain.games.riichi.RiichiTable
 
 import scala.concurrent.Future
 import scala.concurrent.duration._
 
-class TablesService(pubSub: PubSub)(implicit system: ActorSystem) extends Logging {
+class TablesService(pubSub: PubSub, config: ServerConfig)(implicit system: ActorSystem) extends Logging {
   implicit val ec = system.dispatcher
+  implicit val timeout = Timeout(config.defaultTimeout)
 
   private var tables: Map[TableId, ActorRef] = Map.empty[TableId, ActorRef]
 
@@ -42,20 +45,18 @@ class TablesService(pubSub: PubSub)(implicit system: ActorSystem) extends Loggin
       }
   }
 
-  def sendToGame(cmd: Cmd) = games.get(cmd.gameId).foreach(ar => ar ! cmd)
+  def sendToGame(cmd: TableCmd): Unit = {
+    if (tables.get(cmd.tableId).isEmpty) {
+      log.warn(s"Message is sent to non existing tabled: $cmd")
+    }
+    tables.get(cmd.tableId).foreach(ar => ar ! cmd)
 
-  def sendToGame(wsCmd: WsMsg.GameCmd, userId: UserId) = games
-    .get(wsCmd.gameId)
-    .foreach(ar => {
-      CmdConverter.convert(wsCmd, userId) match {
-        case Some(cmd) => ar! cmd
-        case None =>
-      }
-    })
+  }
 
-  def gamesCount: Int = games.size
+  def gamesCount: Int = tables.size
 }
 
 object TablesService {
-  def apply[F[_] : Monad](system: ActorSystem, pubSub: PubSub) = new TablesService(pubSub)(system)
+  def apply[F[_] : Monad](system: ActorSystem, pubSub: PubSub, config: ServerConfig) =
+    new TablesService(pubSub, config)(system)
 }

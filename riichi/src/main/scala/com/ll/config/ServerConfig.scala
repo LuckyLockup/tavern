@@ -4,8 +4,13 @@ import cats.effect.Effect
 import cats.implicits._
 import pureconfig.error.ConfigReaderException
 
+import scala.concurrent.duration.{Duration, FiniteDuration}
 
-case class ServerConfig(db: DatabaseConfig)
+
+case class ServerConfig(
+  db: DatabaseConfig,
+  defaultTimeout: FiniteDuration
+)
 
 object ServerConfig {
   import pureconfig._

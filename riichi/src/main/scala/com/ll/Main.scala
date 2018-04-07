@@ -31,7 +31,7 @@ object Main extends App with Logging {
       strategy       = decider()
       materializer   = ActorMaterializer(ActorMaterializerSettings(system).withSupervisionStrategy(strategy))(system)
       pubSub         = PubSub[IO](system, materializer)
-      gameService    = TablesService[IO](system, pubSub)
+      gameService    = TablesService[IO](system, pubSub, conf)
       _              <- IO {
         log.info("Starting server...")
         implicit val sys = system
@@ -40,7 +40,7 @@ object Main extends App with Logging {
         import akka.http.scaladsl.server.Directives._
         val route: Route = pathPrefix("api" / "v0.1") {
            WsEndpoints.endpoints[IO](pubSub, gameService) ~
-           SoloEndPoints.endpoints[IO](pubSub, gameService)
+           SoloEndPoints.endpoints[IO](pubSub, gameService, conf)
         }
 
         Http().bindAndHandle(route, "0.0.0.0", 8080)

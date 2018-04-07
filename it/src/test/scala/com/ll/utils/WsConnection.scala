@@ -9,6 +9,7 @@ import akka.stream.scaladsl.{Flow, Sink, Source, _}
 import akka.testkit.{TestKitBase, TestProbe}
 import akka.{Done, NotUsed}
 import com.ll.domain.auth.UserId
+import com.ll.domain.json.Codec
 import com.ll.domain.messages.WsMsg
 import io.circe._
 import io.circe.generic.auto._
@@ -88,10 +89,10 @@ class WsConnection(userId: UserId, as: ActorSystem, mat: Materializer, http: Htt
   }
 
   private def decodeWsMsg(json: String): Either[Error, WsMsg.Out] = {
-    decode[WsMsg.Out](json)
+    Codec.Test.decodeWsMsg(json)
   }
 
   private def encodeWsMsg(msg: WsMsg.In): String = {
-    msg.asJson.noSpaces
+    Codec.Test.encodeWsMsg(msg)
   }
 }
