@@ -1,16 +1,15 @@
 package com.ll.domain.json
 
 import com.ll.domain.messages.WsMsg
-import com.ll.domain.messages.WsMsg.In
-import io.circe._
-import io.circe.generic.auto._
+import io.circe.generic.semiauto._
 import io.circe.generic.extras.Configuration
-import io.circe.parser._
-import io.circe.syntax._
+//import io.circe.syntax._
 
 
 object Codec {
-  import JsonConfig._
+  implicit val configuration: Configuration = Configuration.default
+    .withDiscriminator("type")
+  implicit val pong = deriveEncoder[WsMsg.Out.Pong]
 
   def decodeWsMsg(json: String): Either[Error, WsMsg.In] = {
 
@@ -18,8 +17,17 @@ object Codec {
   }
 
   def encodeWsMsg(msg: WsMsg.Out): String = {
-//    msg.asJson.noSpaces
-    ???
+    val json = msg match {
+      //    case x: WsMsg.Out.Pong => Json.obj(
+      //      "type" -> Json.fromString("Pong"),
+      //      "payload" -> x.asJson).noSpaces
+      //    case x: WsMsg.Out.Pong => Json.obj(
+      //      "type" -> Json.fromString("Pong"),
+      //      "payload" -> x.asJson).noSpaces
+      case x: WsMsg.Out.Pong => pong.apply(x)
+    }
+
+    json.noSpaces
   }
 
 

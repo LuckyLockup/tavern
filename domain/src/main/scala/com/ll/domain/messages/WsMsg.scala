@@ -2,6 +2,7 @@ package com.ll.domain.messages
 
 import com.ll.domain.auth.UserId
 import com.ll.domain.games.{GameId, TableId}
+import io.circe.generic.extras.ConfiguredJsonCodec
 
 
 object WsMsg {

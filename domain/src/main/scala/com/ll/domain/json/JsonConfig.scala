@@ -5,8 +5,7 @@ import io.circe.{Decoder, Encoder}
 import shapeless._
 
 object JsonConfig {
-  implicit val configuration: Configuration = Configuration.default
-    .withDiscriminator("type")
+
 
   implicit def encoderValueClass[T <: AnyVal, V](implicit
     g: Lazy[Generic.Aux[T, V :: HNil]],

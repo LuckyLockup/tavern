@@ -2,7 +2,7 @@ package com.ll.domain.json
 
 import com.ll.domain.auth.UserId
 import com.ll.domain.games.{GameId, TableId}
-import com.ll.domain.messages.WsMsg.Out.Pong
+
 import com.ll.domain.persistence.{TableCmd, UserCmd}
 import org.scalatest.{FunSuite, Matchers}
 
@@ -10,7 +10,10 @@ class CodecTest extends FunSuite with Matchers{
   import Codec._
 
   test("testEncodeWsMsg") {
-    encodeWsMsg(Pong(42)) shouldBe ("""{"Pong":{"id":42}}""")
+    import com.ll.domain.messages.WsMsg.Out._
+    println(encodeWsMsg(Pong(42)))
+    encodeWsMsg(Pong(42)) shouldBe ("""{"type":"Pong","payload":{"id":42}}""")
+    encodeWsMsg(Text("hey!")) shouldBe ("""{"type":"Pong","payload":{"id":42}}""")
 //    encodeWsMsg(UserCmd.JoinAsPlayer(TableId(42), GameId(140))) shouldBe ("""{"PlayerJoinedTheGame":{"userId":42}}""")
   }
 
