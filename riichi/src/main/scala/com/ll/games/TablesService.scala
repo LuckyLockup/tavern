@@ -35,7 +35,7 @@ class TablesService(pubSub: PubSub, config: ServerConfig)(implicit system: Actor
         val supervisor = BackoffSupervisor.props(
           Backoff.onStop(
             props,
-            childName = "myEcho",
+            childName = "table_${tableId.id}",
             minBackoff = 3.seconds,
             maxBackoff = 30.seconds,
             randomFactor = 0.2 // adds 20% "noise" to vary the intervals slightly
