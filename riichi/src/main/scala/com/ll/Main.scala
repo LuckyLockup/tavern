@@ -54,7 +54,8 @@ object Main extends App with Logging {
     case NonFatal(ex) =>
       log.error("Error in stream: " + ex.getMessage)
       Supervision.Resume
-    case _                      =>
+    case ex                      =>
+      log.error("Fatal error: " + ex.getMessage)
       Supervision.Stop
   }
 }

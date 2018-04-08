@@ -25,6 +25,8 @@ object WsMsg {
 
       case class SpectacularJoinedTable(user: User, tableId: TableId) extends Out
       case class SpectacularLeftTable(user: User, tableId: TableId) extends Out
+      case class PlayerJoinedTable(user: User, tableId: TableId) extends Out
+      case class PlayerLeftTable(user: User, tableId: TableId) extends Out
     }
   }
 }

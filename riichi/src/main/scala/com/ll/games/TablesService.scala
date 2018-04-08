@@ -1,20 +1,17 @@
 package com.ll.games
 
-import akka.actor.{ActorRef, ActorSystem, PoisonPill, Props}
+import akka.actor.{ActorRef, ActorSystem, OneForOneStrategy, PoisonPill, Props, SupervisorStrategy}
 import cats.Monad
 import com.ll.domain.auth.UserId
 import com.ll.domain.games.{GameId, TableId}
-import com.ll.domain.messages.WsMsg
 import com.ll.domain.messages.WsMsg.Out.Table
-import com.ll.games.solo.TableActor
 import com.ll.utils.Logging
 import com.ll.ws.PubSub
-import com.ll.domain.messages.WsMsg.Out.Table.TableState
-import com.ll.domain.persistence.{TableCmd, UserCmd}
-import akka.pattern.ask
+import com.ll.domain.persistence._
+import akka.pattern.{Backoff, BackoffSupervisor, ask}
 import akka.util.Timeout
 import com.ll.config.ServerConfig
-import com.ll.domain.games.riichi.RiichiTable
+import com.ll.domain.games.riichi.{RiichiTableState}
 
 import scala.concurrent.Future
 import scala.concurrent.duration._
@@ -33,15 +30,34 @@ class TablesService(pubSub: PubSub, config: ServerConfig)(implicit system: Actor
       })
       .getOrElse {
         log.info(s"Creating table for $tableId")
-        val table = RiichiTable(tableId)
-        val actorRef = system.actorOf(Props(new TableActor(table, pubSub)))
+        val table: RiichiTableState = RiichiTableState(tableId)
+        val props: Props = Props(new TableActor[RiichiCmd, RiichiEvent](table, pubSub))
+        val supervisor = BackoffSupervisor.props(
+          Backoff.onStop(
+            props,
+            childName = "myEcho",
+            minBackoff = 3.seconds,
+            maxBackoff = 30.seconds,
+            randomFactor = 0.2 // adds 20% "noise" to vary the intervals slightly
+          ).withSupervisorStrategy(
+            OneForOneStrategy() {
+              case ex  =>
+                log.error(s"Exception in table actor: ${ex.getMessage}")
+                SupervisorStrategy.Resume
+            })
+        )
+
+        val actorRef = system.actorOf(supervisor, name = s"supervisor_${table.tableId.id}")
         tables += tableId -> actorRef
         system.scheduler.scheduleOnce(30 minutes) {
           log.info(s"Stopping table $tableId")
           actorRef ! PoisonPill
           tables -= tableId
         }
-        (actorRef ? UserCmd.GetState(tableId, userId)).mapTo[Table.TableState]
+        (actorRef ? UserCmd.GetState(tableId, userId)).map(msg => {
+          log.info("Message is receieved back")
+          msg
+        }).mapTo[Table.TableState]
       }
   }
 
