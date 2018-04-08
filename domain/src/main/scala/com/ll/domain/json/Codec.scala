@@ -1,14 +1,31 @@
 package com.ll.domain.json
 
-import com.ll.domain.auth.User
+import com.ll.domain.games.User
 import com.ll.domain.messages.WsMsg
 import io.circe.{Decoder, DecodingFailure, HCursor, Json, ObjectEncoder}
 import io.circe.generic.semiauto._
 import io.circe.syntax._
-import io.circe._, io.circe.parser._
+import io.circe._
+import io.circe.parser._
+import shapeless.{::, Generic, HNil, Lazy}
 
 object Codec {
-  import JsonConfig._
+  implicit def encoderValueClass[T <: AnyVal, V](implicit
+    g: Lazy[Generic.Aux[T, V :: HNil]],
+    e: Encoder[V]
+  ): Encoder[T] = Encoder.instance { value ⇒
+    e(g.value.to(value).head)
+  }
+
+  implicit def decoderValueClass[T <: AnyVal, V](implicit
+    g: Lazy[Generic.Aux[T, V :: HNil]],
+    d: Decoder[V]
+  ): Decoder[T] = Decoder.instance { cursor ⇒
+    d(cursor).map { value ⇒
+      g.value.from(value :: HNil)
+    }
+  }
+
   implicit val userEncoder = deriveEncoder[User]
   implicit val userDecoder = deriveDecoder[User]
 

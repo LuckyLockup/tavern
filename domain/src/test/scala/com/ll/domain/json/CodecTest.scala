@@ -1,7 +1,7 @@
 package com.ll.domain.json
 
-import com.ll.domain.auth.{User, UserId}
-import com.ll.domain.games.{GameId, TableId}
+import com.ll.domain.auth.UserId
+import com.ll.domain.games.{GameId, TableId, User}
 import com.ll.domain.json.Codec.{Test, encodeWsMsg}
 import com.ll.domain.messages.WsMsg
 import org.scalatest.{Matchers, WordSpec}

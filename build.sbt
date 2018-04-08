@@ -71,6 +71,7 @@ lazy val it = project
       "com.typesafe.akka" %% "akka-stream-testkit" % versions.AkkaVersion,
 
       "com.typesafe.akka" %% "akka-http" % versions.AkkaHttp,
+      "de.heikoseeberger" %% "akka-http-circe" % "1.20.1",
       "ch.qos.logback" % "logback-classic" % "1.2.3",
       "org.scalacheck" %% "scalacheck" % versions.ScalaCheckVersion % Test,
       "org.scalatest" %% "scalatest" % versions.ScalaTestVersion % Test

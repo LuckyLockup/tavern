@@ -1,6 +1,7 @@
 package com.ll.games
 
 import akka.persistence.PersistentActor
+import com.ll.domain.games.Player
 import com.ll.domain.persistence._
 import com.ll.utils.Logging
 import com.ll.ws.PubSub
@@ -15,16 +16,14 @@ class TableActor[C <: TableCmd: ClassTag, E <: TableEvent: ClassTag](
   override def persistenceId = s"solo_${table.tableId.id.toString}"
 
   var _state = table
+  var players: Set[Player] = Set.empty
 
   val receiveCommand: Receive = {
     case message => {
       try {
         message match {
-          case cmd: TableCmd => ???
-          case cmd: UserCmd =>
-            sender()
-            receiveUserCmd(cmd)
-          case cmd: GameCmd => ???
+          case cmd: TableCmd => receiveTableCmd(cmd)
+          case cmd: UserCmd => receiveUserCmd(cmd)
           case cmd: C => ???
           case cmd => log.error(s"Unknown command $cmd")
         }
@@ -39,7 +38,13 @@ class TableActor[C <: TableCmd: ClassTag, E <: TableEvent: ClassTag](
 
   def receiveUserCmd: UserCmd => Unit = {
     case cmd: UserCmd.GetState =>
+      log.info("Returning state")
+      log.info(s"Sender ${sender()}")
       sender() ! _state.projection(cmd)
+  }
+
+  def receiveTableCmd: TableCmd => Unit = {
+    case _ => ???
   }
 
   val receiveRecover: Receive = {

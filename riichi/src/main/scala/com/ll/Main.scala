@@ -5,7 +5,7 @@ import akka.actor.ActorSystem
 import akka.http.scaladsl.Http
 import akka.http.scaladsl.server.Route
 import akka.stream.{ActorMaterializer, ActorMaterializerSettings, Supervision}
-import com.ll.endpoint.{SoloEndPoints, WsEndpoints}
+import com.ll.endpoint.{RiichiEndpoints, WsEndpoints}
 import cats.effect.IO
 import cats.effect._
 import com.ll.games.TablesService
@@ -40,7 +40,7 @@ object Main extends App with Logging {
         import akka.http.scaladsl.server.Directives._
         val route: Route = pathPrefix("api" / "v0.1") {
            WsEndpoints.endpoints[IO](pubSub, gameService) ~
-           SoloEndPoints.endpoints[IO](pubSub, gameService, conf)
+           RiichiEndpoints.endpoints[IO](pubSub, gameService, conf)
         }
 
         Http().bindAndHandle(route, "0.0.0.0", 8080)
