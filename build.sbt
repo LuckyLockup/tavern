@@ -18,7 +18,8 @@ lazy val domain = project
       "com.github.pureconfig" %% "pureconfig" % versions.PureConfigVersion,
 
       "org.scalacheck" %% "scalacheck" % versions.ScalaCheckVersion % Test,
-      "org.scalatest" %% "scalatest" % versions.ScalaTestVersion % Test
+      "org.scalatest" %% "scalatest" % versions.ScalaTestVersion % Test,
+      "org.gnieh" %% "diffson-circe" % versions.DiffVersion % Test
     )
   )
 
@@ -92,6 +93,7 @@ lazy val versions = new {
 
   val CatsVersion = "1.1.0"
   val CirceVersion = "0.9.2"
+  val DiffVersion = "2.2.6"
   val DoobieVersion = "0.5.1"
   val H2Version = "1.4.196"
   val Http4sVersion = "0.18.2"

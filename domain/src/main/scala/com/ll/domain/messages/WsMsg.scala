@@ -1,8 +1,7 @@
 package com.ll.domain.messages
 
-import com.ll.domain.auth.UserId
+import com.ll.domain.auth.User
 import com.ll.domain.games.{GameId, TableId}
-import io.circe.generic.extras.ConfiguredJsonCodec
 
 
 object WsMsg {
@@ -14,18 +13,18 @@ object WsMsg {
   }
 
   object Out {
-    sealed trait Table extends Out
+    sealed trait Table extends Out { def tableId: TableId}
 
     case class Pong(id: Int) extends Out
     case class Text(txt: String) extends Out
-
-    case class SpectacularJoinedTable(userId: UserId, tableId: TableId) extends Out
-    case class SpectacularLeftTable(userId: UserId, tableId: TableId) extends Out
 
     object Table {
       case class TableState(tableId: TableId) extends Table
       case class GameStarted(tableId: TableId, gameId: GameId) extends Table
       case class GamePaused(tableId: TableId, gameId: GameId) extends Table
+
+      case class SpectacularJoinedTable(user: User, tableId: TableId) extends Out
+      case class SpectacularLeftTable(user: User, tableId: TableId) extends Out
     }
   }
 }

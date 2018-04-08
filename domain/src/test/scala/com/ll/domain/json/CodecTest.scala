@@ -1,41 +1,70 @@
 package com.ll.domain.json
 
-import com.ll.domain.auth.UserId
+import com.ll.domain.auth.{User, UserId}
 import com.ll.domain.games.{GameId, TableId}
+import com.ll.domain.json.Codec.{Test, encodeWsMsg}
+import com.ll.domain.messages.WsMsg
+import org.scalatest.{Matchers, WordSpec}
+import gnieh.diffson.circe._
 
-import com.ll.domain.persistence.{TableCmd, UserCmd}
-import org.scalatest.{FunSuite, Matchers}
+class CodecTest extends WordSpec with Matchers {
 
-class CodecTest extends FunSuite with Matchers{
-  import Codec._
+  "Encode Out messages" in new OutMessages {
+    testData.foreach { case (msg, json) =>
+      JsonDiff.diff(encodeWsMsg(msg), json, false).ops shouldBe empty
+    }
+  }
 
-  test("testEncodeWsMsg") {
+  "Decode Out messages" in new OutMessages {
+    testData.foreach { case (msg, json) =>
+      Test.decodeWsMsg(json) should be (Right(msg))
+    }
+  }
+
+  trait Common {
+    val userId = UserId(42)
+    val user = User("Akagi", userId)
+    val tableId = TableId("test_table")
+    val gameId = GameId(100)
+  }
+
+  abstract class OutMessages extends Common {
     import com.ll.domain.messages.WsMsg.Out._
-    println(encodeWsMsg(Pong(42)))
-    encodeWsMsg(Pong(42)) shouldBe ("""{"type":"Pong","payload":{"id":42}}""")
-    encodeWsMsg(Text("hey!")) shouldBe ("""{"type":"Pong","payload":{"id":42}}""")
-//    encodeWsMsg(UserCmd.JoinAsPlayer(TableId(42), GameId(140))) shouldBe ("""{"PlayerJoinedTheGame":{"userId":42}}""")
-  }
+    import com.ll.domain.messages.WsMsg.Out.Table._
+    val pong = Pong(42)
+    val text = Text("hey!")
+    val spectacularJoined = SpectacularJoinedTable(user, tableId)
+    val spectacularLeft = SpectacularLeftTable(user, tableId)
 
-  test("testDecodeWsMsg") {
-
+    val testData: List[(WsMsg.Out, String)] = List(
+      (Pong(42), """{"type":"Pong","payload":{"id":42}}"""),
+      (Text("hey!"), """{"type":"Text","payload":{"txt":"hey!"}}"""),
+      (SpectacularJoinedTable(user, tableId),
+        """
+          |{
+          |  "type": "SpectacularJoinedTable",
+          |  "payload": {
+          |    "user": {
+          |      "nickName": "Akagi",
+          |      "userId": 42
+          |    },
+          |    "tableId": "test_table"
+          |  }
+          |}
+        """.stripMargin),
+      (SpectacularLeftTable(user, tableId),
+        """
+          |{
+          |  "type": "SpectacularLeftTable",
+          |  "payload": {
+          |    "user": {
+          |      "nickName": "Akagi",
+          |      "userId": 42
+          |    },
+          |    "tableId": "test_table"
+          |  }
+          |}
+        """.stripMargin)
+    )
   }
-
-  /**
-    *   test("testEncodeWs") {
-    import com.ll.domain.messages.WsMsg.Out._
-    encodeWsMsg(Pong(42)) shouldBe ("""{"Pong":{"id":42}}""")
-    encodeWsMsg(PlayerJoinedTheGame(UserId(42))) shouldBe ("""{"PlayerJoinedTheGame":{"userId":42}}""")
-  }
-
-  test("testDecodeWs") {
-    import com.ll.domain.messages.WsMsg.In._
-    Ping(42)
-    decodeWsMsg("""{"Ping":{"id":42}}""") shouldBe Right(Ping(42))
-    decodeWsMsg("""{"Ping":{"id":42,"crap":43}}""") shouldBe Right(Ping(42))
-    decodeWsMsg("""{"JoinGameAsPlayer":{"gameId":42}}""") shouldBe Right(JoinGameAsPlayer(GameId(42)))
-    decodeWsMsg("""{"GetState":{"gameId":42}}""") shouldBe Right(GetState(GameId(42)))
-    //{"DiscardTile":{"gameId":42, "tile": "5_wan"}}
-  }
-    */
 }
