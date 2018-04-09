@@ -1,7 +1,7 @@
 package com.ll.domain.messages
 
 import com.ll.domain.auth.User
-import com.ll.domain.games.{GameId, HumanPlayer, TableId}
+import com.ll.domain.games.{GameId, HumanPlayer, Player, TableId}
 
 
 object WsMsg {
@@ -17,16 +17,20 @@ object WsMsg {
 
     case class Pong(id: Int) extends Out
     case class Message(txt: String) extends Out
+    case class ValidationError(reason: String) extends Out
 
     object Table {
-      case class TableState(tableId: TableId) extends Table
+      case class TableState(
+        tableId: TableId,
+        players: Set[Player]
+      ) extends Table
       case class GameStarted(tableId: TableId, gameId: GameId) extends Table
       case class GamePaused(tableId: TableId, gameId: GameId) extends Table
 
       case class SpectacularJoinedTable(user: User, tableId: TableId) extends Out
       case class SpectacularLeftTable(user: User, tableId: TableId) extends Out
-      case class PlayerJoinedTable(user: HumanPlayer, tableId: TableId) extends Out
-      case class PlayerLeftTable(user: HumanPlayer, tableId: TableId) extends Out
+      case class PlayerJoinedTable(tableId: TableId, user: HumanPlayer) extends Out
+      case class PlayerLeftTable(tableId: TableId, user: HumanPlayer) extends Out
     }
   }
 }

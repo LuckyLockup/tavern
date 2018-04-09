@@ -23,7 +23,7 @@ abstract class Test extends TestKit(ActorSystem("MySpec")) with ImplicitSender
     connections.get(userId).foreach(_.closeConnection())
     val ws = new WsConnection(userId, system, materializer, http, config)
     connections += (userId -> ws)
-    Player(userId, ws, http, config)
+    PlayerProbe(userId, ws, http, config)
   }
 
   override def afterAll {

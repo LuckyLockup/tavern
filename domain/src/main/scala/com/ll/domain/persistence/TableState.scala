@@ -1,8 +1,7 @@
 package com.ll.domain.persistence
 
-import com.ll.domain.ValidationError
 import com.ll.domain.games.{HumanPlayer, Player, TableId}
-import com.ll.domain.messages.WsMsg.Out.Table
+import com.ll.domain.messages.WsMsg.Out.{Table, ValidationError}
 
 trait TableState [C <: TableCmd, E <: TableEvent, S <: TableState[C,E,S]] {
   def tableId: TableId
@@ -18,4 +17,8 @@ trait TableState [C <: TableCmd, E <: TableEvent, S <: TableState[C,E,S]] {
   def humanPlayers = players.collect{case p: HumanPlayer => p}
 
   def humanIds = players.collect{case p: HumanPlayer => p}.map(_.userId)
+
+  def joinGame(cmd: UserCmd.JoinAsPlayer): Either[ValidationError, (UserEvent.PlayerJoined, S)]
+
+  def leftGame(cmd: UserCmd.LeftAsPlayer): Either[ValidationError, (UserEvent.PlayerLeft, S)]
 }

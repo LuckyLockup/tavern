@@ -1,7 +1,7 @@
 package com.ll.domain.json
 
 import com.ll.domain.auth.User
-import com.ll.domain.games.{AIPlayer, HumanPlayer}
+import com.ll.domain.games.{AIPlayer, HumanPlayer, Player}
 import com.ll.domain.messages.WsMsg
 import com.ll.domain.persistence.{RiichiCmd, TableCmd, UserCmd}
 import io.circe.{Decoder, DecodingFailure, HCursor, Json, ObjectEncoder}
@@ -28,12 +28,28 @@ object Codec {
     }
   }
 
-  implicit val HumanPlayerEncoder = deriveEncoder[HumanPlayer]
-  implicit val HumanPlayerDecoder = deriveDecoder[HumanPlayer]
   implicit val userEncoder = deriveEncoder[User]
   implicit val userDecoder = deriveDecoder[User]
-  implicit val AIPlayerEncoder = deriveEncoder[AIPlayer]
-  implicit val AIPlayerDecoder = deriveDecoder[AIPlayer]
+  implicit val PlayerDecoder: Decoder[Player] = new Decoder[Player] {
+    final def apply(c: HCursor): Decoder.Result[Player] = {
+      def decode(messageType: String, payload: Json): Decoder.Result[Player] = messageType match {
+        case "HumanPlayer" => payload.as[HumanPlayer](deriveDecoder[HumanPlayer])
+        case "AIPlayer" => payload.as[AIPlayer](deriveDecoder[AIPlayer])
+      }
+
+      for {
+        messageType <- c.downField("type").as[String]
+        payload <- c.downField("payload").focus.toRight(DecodingFailure("payload field is not present", Nil))
+        in <- decode(messageType, payload)
+      } yield in
+    }
+  }
+  implicit val PlayerEncoder: Encoder[Player] = new Encoder[Player] {
+    final def apply(a: Player): Json = a match {
+      case x: HumanPlayer => wrap("HumanPlayer", x)(deriveEncoder[HumanPlayer])
+      case x: AIPlayer => wrap("AIPlayer", x)(deriveEncoder[AIPlayer])
+    }
+  }
 
   def decodeWsMsg(json: String): Either[Error, WsMsg.In] = {
     implicit val inDecoder: Decoder[WsMsg.In] = new Decoder[WsMsg.In] {
@@ -72,6 +88,11 @@ object Codec {
     val json = msg match {
       case x: WsMsg.Out.Pong                         => wrap("Pong", x)(deriveEncoder[WsMsg.Out.Pong])
       case x: WsMsg.Out.Message                      => wrap("Message", x)(deriveEncoder[WsMsg.Out.Message])
+      case x: WsMsg.Out.ValidationError              => wrap("ValidationError", x)(deriveEncoder[WsMsg.Out.ValidationError])
+      case x: WsMsg.Out.Table.PlayerJoinedTable =>
+        wrap("PlayerJoinedTable", x)(deriveEncoder[WsMsg.Out.Table.PlayerJoinedTable])
+      case x: WsMsg.Out.Table.PlayerLeftTable   =>
+        wrap("PlayerLeftTable", x)(deriveEncoder[WsMsg.Out.Table.PlayerLeftTable])
       case x: WsMsg.Out.Table.SpectacularJoinedTable =>
         wrap("SpectacularJoinedTable", x)(deriveEncoder[WsMsg.Out.Table.SpectacularJoinedTable])
       case x: WsMsg.Out.Table.SpectacularLeftTable   =>
@@ -92,6 +113,7 @@ object Codec {
         def decode(messageType: String, payload: Json): Decoder.Result[WsMsg.Out] = messageType match {
           case "Pong"                   => payload.as[WsMsg.Out.Pong](deriveDecoder[WsMsg.Out.Pong])
           case "Message"                => payload.as[WsMsg.Out.Message](deriveDecoder[WsMsg.Out.Message])
+          case "ValidationError"        => payload.as[WsMsg.Out.ValidationError](deriveDecoder[WsMsg.Out.ValidationError])
           case "GameStarted"            => payload.as[WsMsg.Out.Table.GameStarted](deriveDecoder[WsMsg.Out.Table.GameStarted])
           case "GamePaused"             => payload.as[WsMsg.Out.Table.GamePaused](deriveDecoder[WsMsg.Out.Table.GamePaused])
           case "SpectacularJoinedTable" => payload.as[WsMsg.Out.Table.SpectacularJoinedTable](deriveDecoder[WsMsg.Out.Table.SpectacularJoinedTable])

@@ -52,7 +52,7 @@ object Main extends App with Logging {
 
   def decider(): Supervision.Decider = {
     case NonFatal(ex) =>
-      log.error("Error in stream: " + ex.getMessage)
+      log.error("Error in stream: ", ex)
       Supervision.Resume
     case ex                      =>
       log.error("Fatal error: " + ex.getMessage)

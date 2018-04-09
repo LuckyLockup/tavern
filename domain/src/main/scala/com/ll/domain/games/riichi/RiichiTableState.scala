@@ -1,8 +1,7 @@
 package com.ll.domain.games.riichi
 
-import com.ll.domain.ValidationError
-import com.ll.domain.games.{Player, TableId}
-import com.ll.domain.messages.WsMsg.Out.Table
+import com.ll.domain.games.{HumanPlayer, Player, TableId}
+import com.ll.domain.messages.WsMsg.Out.{Table, ValidationError}
 import com.ll.domain.persistence._
 
 trait RiichiTableState extends TableState[RiichiCmd, RiichiEvent, RiichiTableState] {
@@ -10,15 +9,34 @@ trait RiichiTableState extends TableState[RiichiCmd, RiichiEvent, RiichiTableSta
 
   def applyEvent(e: RiichiEvent): RiichiTableState = ???
 
-  def projection(cmd: UserCmd.GetState): Table.TableState = Table.TableState(tableId)
+  def projection(cmd: UserCmd.GetState): Table.TableState = Table.TableState(tableId, players)
 
-  def players: Set[Player]
 }
 
-case class NoGame(
+case class NoGameOnTable(
   tableId: TableId,
   players: Set[Player] = Set.empty[Player]
 ) extends RiichiTableState {
+  def joinGame(cmd: UserCmd.JoinAsPlayer): Either[ValidationError, (UserEvent.PlayerJoined, NoGameOnTable)] = {
+    if (players.size < 4) {
+      val event = UserEvent.PlayerJoined(tableId, cmd.player)
+      val newState = this.copy(players = this.players + cmd.player)
+      Right(event, newState)
+    } else {
+      Left(ValidationError("Table is already full."))
+    }
+  }
+
+  def leftGame(cmd: UserCmd.LeftAsPlayer): Either[ValidationError, (UserEvent.PlayerLeft, NoGameOnTable)] = {
+    players.collect{case p: HumanPlayer => p }.find(p => p.userId == cmd.userId) match {
+      case Some(p) =>
+        val event = UserEvent.PlayerLeft(tableId, cmd.player)
+        val newState = this.copy(players = this.players - cmd.player)
+        Right(event, newState)
+      case None =>
+        Left(ValidationError("You are not player on this table"))
+    }
+  }
 }
 
 case class GameStarted(
@@ -27,4 +45,8 @@ case class GameStarted(
 ) extends RiichiTableState {
 
   def players = hands.keySet
+
+  def joinGame(cmd: UserCmd.JoinAsPlayer): Either[ValidationError, (UserEvent.PlayerJoined, GameStarted)] = ???
+
+  def leftGame(cmd: UserCmd.LeftAsPlayer): Either[ValidationError, (UserEvent.PlayerLeft, GameStarted)] = ???
 }
