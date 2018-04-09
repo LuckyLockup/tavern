@@ -1,6 +1,7 @@
 package com.ll.domain.json
 
-import com.ll.domain.games.User
+import com.ll.domain.auth.User
+import com.ll.domain.games.{AIPlayer, HumanPlayer}
 import com.ll.domain.messages.WsMsg
 import com.ll.domain.persistence.{RiichiCmd, TableCmd, UserCmd}
 import io.circe.{Decoder, DecodingFailure, HCursor, Json, ObjectEncoder}
@@ -27,8 +28,12 @@ object Codec {
     }
   }
 
+  implicit val HumanPlayerEncoder = deriveEncoder[HumanPlayer]
+  implicit val HumanPlayerDecoder = deriveDecoder[HumanPlayer]
   implicit val userEncoder = deriveEncoder[User]
   implicit val userDecoder = deriveDecoder[User]
+  implicit val AIPlayerEncoder = deriveEncoder[AIPlayer]
+  implicit val AIPlayerDecoder = deriveDecoder[AIPlayer]
 
   def decodeWsMsg(json: String): Either[Error, WsMsg.In] = {
     implicit val inDecoder: Decoder[WsMsg.In] = new Decoder[WsMsg.In] {
@@ -66,7 +71,7 @@ object Codec {
   def encodeWsMsg(msg: WsMsg.Out): String = {
     val json = msg match {
       case x: WsMsg.Out.Pong                         => wrap("Pong", x)(deriveEncoder[WsMsg.Out.Pong])
-      case x: WsMsg.Out.Text                         => wrap("Text", x)(deriveEncoder[WsMsg.Out.Text])
+      case x: WsMsg.Out.Message                      => wrap("Message", x)(deriveEncoder[WsMsg.Out.Message])
       case x: WsMsg.Out.Table.SpectacularJoinedTable =>
         wrap("SpectacularJoinedTable", x)(deriveEncoder[WsMsg.Out.Table.SpectacularJoinedTable])
       case x: WsMsg.Out.Table.SpectacularLeftTable   =>
@@ -86,7 +91,7 @@ object Codec {
       final def apply(c: HCursor): Decoder.Result[WsMsg.Out] = {
         def decode(messageType: String, payload: Json): Decoder.Result[WsMsg.Out] = messageType match {
           case "Pong"                   => payload.as[WsMsg.Out.Pong](deriveDecoder[WsMsg.Out.Pong])
-          case "Text"                   => payload.as[WsMsg.Out.Text](deriveDecoder[WsMsg.Out.Text])
+          case "Message"                => payload.as[WsMsg.Out.Message](deriveDecoder[WsMsg.Out.Message])
           case "GameStarted"            => payload.as[WsMsg.Out.Table.GameStarted](deriveDecoder[WsMsg.Out.Table.GameStarted])
           case "GamePaused"             => payload.as[WsMsg.Out.Table.GamePaused](deriveDecoder[WsMsg.Out.Table.GamePaused])
           case "SpectacularJoinedTable" => payload.as[WsMsg.Out.Table.SpectacularJoinedTable](deriveDecoder[WsMsg.Out.Table.SpectacularJoinedTable])

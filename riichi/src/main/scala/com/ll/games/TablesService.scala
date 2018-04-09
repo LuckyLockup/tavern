@@ -11,7 +11,7 @@ import com.ll.domain.persistence._
 import akka.pattern.{Backoff, BackoffSupervisor, ask}
 import akka.util.Timeout
 import com.ll.config.ServerConfig
-import com.ll.domain.games.riichi.{RiichiTableState}
+import com.ll.domain.games.riichi.{NoGame, RiichiTableState}
 
 import scala.concurrent.Future
 import scala.concurrent.duration._
@@ -30,7 +30,7 @@ class TablesService(pubSub: PubSub, config: ServerConfig)(implicit system: Actor
       })
       .getOrElse {
         log.info(s"Creating table for $tableId")
-        val table: RiichiTableState = RiichiTableState(tableId)
+        val table: RiichiTableState = NoGame(tableId)
         val props: Props = Props(new TableActor[RiichiCmd, RiichiEvent](table, pubSub))
         val supervisor = BackoffSupervisor.props(
           Backoff.onStop(

@@ -1,6 +1,6 @@
 package com.ll.domain.persistence
 
-import com.ll.domain.auth.UserId
+import com.ll.domain.auth.{User, UserId}
 import com.ll.domain.games.{GameId, TableId}
 import com.ll.domain.messages.WsMsg
 
@@ -15,10 +15,18 @@ object TableCmd {
 
 object UserCmd {
   case class GetState(tableId: TableId, userId: UserId) extends UserCmd
-  case class JoinAsPlayer(tableId: TableId, userId: UserId) extends UserCmd
-  case class LeftAsPlayer(tableId: TableId, userId: UserId) extends UserCmd
-  case class JoinAsSpectacular(tableId: TableId, userId: UserId) extends UserCmd
-  case class LeftAsSpectacular(tableId: TableId, userId: UserId) extends UserCmd
+  case class JoinAsPlayer(tableId: TableId, user: User) extends UserCmd {
+    def userId = user.id
+  }
+  case class LeftAsPlayer(tableId: TableId, user: User) extends UserCmd  {
+    def userId = user.id
+  }
+  case class JoinAsSpectacular(tableId: TableId, user: User) extends UserCmd {
+    def userId = user.id
+  }
+  case class LeftAsSpectacular(tableId: TableId, user: User) extends UserCmd {
+    def userId = user.id
+  }
 }
 
 object RiichiCmd {

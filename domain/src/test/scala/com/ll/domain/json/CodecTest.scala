@@ -1,8 +1,8 @@
 package com.ll.domain.json
 
-import com.ll.domain.auth.UserId
-import com.ll.domain.games.{GameId, TableId, User}
-import com.ll.domain.json.Codec.{Test, encodeWsMsg, decodeWsMsg}
+import com.ll.domain.auth.{User, UserId}
+import com.ll.domain.games.{GameId, HumanPlayer, TableId}
+import com.ll.domain.json.Codec.{Test, decodeWsMsg, encodeWsMsg}
 import com.ll.domain.messages.WsMsg
 import org.scalatest.{Matchers, WordSpec}
 import gnieh.diffson.circe._
@@ -37,7 +37,7 @@ class CodecTest extends WordSpec with Matchers {
 
   trait Common {
     val userId = UserId(42)
-    val user = User("Akagi", userId)
+    val user = User(userId, "Akagi")
     val tableId = TableId("test_table")
     val gameId = GameId(100)
   }
@@ -48,7 +48,7 @@ class CodecTest extends WordSpec with Matchers {
 
     val testData: List[(WsMsg.Out, String)] = List(
       (Pong(42), """{"type":"Pong","payload":{"id":42}}"""),
-      (Text("hey!"), """{"type":"Text","payload":{"txt":"hey!"}}"""),
+      (Message("hey!"), """{"type":"Text","payload":{"txt":"hey!"}}"""),
       (SpectacularJoinedTable(user, tableId),
         """
           |{

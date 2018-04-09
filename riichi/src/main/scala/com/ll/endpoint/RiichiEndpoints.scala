@@ -30,7 +30,7 @@ class RiichiEndpoints[F[_] : Effect](config: ServerConfig)(implicit system: Acto
         post(
           decodeRequest {
             entity(as[String]) { id =>
-              async(riichi.getOrCreate(TableId(id), UserId(id.toLong))
+              async(riichi.getOrCreate(TableId(id), UserId(0))
                 .map(st => {
                   log.info(s"returning: ${Codec.encodeWsMsg(st)}")
                   complete(HttpEntity(ContentTypes.`application/json`, Codec.encodeWsMsg(st)))

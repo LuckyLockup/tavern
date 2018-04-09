@@ -6,7 +6,7 @@ import akka.http.scaladsl.model._
 import akka.http.scaladsl.unmarshalling.Unmarshal
 import akka.stream.Materializer
 import com.ll.domain.auth.UserId
-import com.ll.domain.games.GameId
+import com.ll.domain.games.{GameId, TableId}
 import com.ll.domain.messages.WsMsg
 import io.circe.Json
 import org.scalatest.Matchers
@@ -20,7 +20,7 @@ case class Player(userId: UserId, ws: WsConnection, http: HttpExt, config: TestC
 
   def !(msg: WsMsg.In): Unit = ws ! msg
 
-  def createGame(id: GameId) = {
+  def createTable(id: TableId) = {
     var responseF = http.singleRequest(HttpRequest(
       method = HttpMethods.POST,
       uri = config.soloUrl,

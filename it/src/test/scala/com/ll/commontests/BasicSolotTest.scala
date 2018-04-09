@@ -13,12 +13,12 @@ class BasicSolotTest extends Test {
     player.ws ! WsMsg.In.Ping(23)
     player.ws.expectWsMsg[Out.Pong]
 
-    player.createGame(gameId)
+    player.createTable(tableId)
 
     //TODO proper game creation
     Thread.sleep(1000)
 
-    player.ws ! UserCmd.JoinAsPlayer(tableId, userId)
+    player.ws ! UserCmd.JoinAsPlayer(tableId, user)
     player.ws ! TableCmd.StartGame(tableId)
 
 

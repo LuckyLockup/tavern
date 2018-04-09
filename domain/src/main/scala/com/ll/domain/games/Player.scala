@@ -1,11 +1,15 @@
 package com.ll.domain.games
 
-import com.ll.domain.auth.UserId
+import com.ll.domain.auth.{User, UserId}
 
 sealed trait Player {
   def nickName: String
 }
 
-case class User(nickName: String, userId: UserId) extends Player
+case class HumanPlayer(userId: UserId, nickName: String) extends Player
 
-case class AI(nickName: String) extends Player
+object HumanPlayer {
+  def apply(user: User): HumanPlayer = new HumanPlayer(user.id, user.nickname)
+}
+case class AIPlayer(nickName: String) extends Player
+

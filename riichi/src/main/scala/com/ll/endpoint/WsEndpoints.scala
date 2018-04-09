@@ -31,7 +31,7 @@ class WsEndpoints[F[_] : Effect] extends Logging {
       post {
         decodeRequest {
           entity(as[String]) { str =>
-            pubSub.sendToUser(UserId(id), WsMsg.Out.Text(str))
+            pubSub.sendToUser(UserId(id), WsMsg.Out.Message(str))
             complete(HttpResponse(200, entity = "We are ok"))
           }
         }
