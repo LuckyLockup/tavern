@@ -6,7 +6,7 @@ import com.ll.domain.persistence.{TableEvent, TableState}
 
 object WsMsgProjector {
 
-  def convert[E <: TableEvent](event: E, state: TableState[_, E]): Out = event match {
+  def convert[E <: TableEvent](event: E, state: TableState[_, E, _]): Out = event match {
     case TableEvent.GameStarted(tableId, gameId) =>
       Table.GameStarted(tableId, gameId)
     case TableEvent.GamePaused(tableId, gameId) =>

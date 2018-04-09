@@ -6,8 +6,7 @@ import com.ll.domain.messages.WsMsg
 
 sealed trait TableCmd extends WsMsg.In {def tableId: TableId}
 sealed trait UserCmd extends TableCmd {def userId: UserId}
-sealed trait GameCmd extends TableCmd {def gameId: GameId}
-sealed trait RiichiCmd extends GameCmd
+sealed trait RiichiCmd extends TableCmd {def gameId: GameId}
 
 object TableCmd {
   case class StartGame(tableId: TableId) extends TableCmd

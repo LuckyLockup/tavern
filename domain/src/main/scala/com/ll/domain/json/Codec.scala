@@ -2,6 +2,7 @@ package com.ll.domain.json
 
 import com.ll.domain.games.User
 import com.ll.domain.messages.WsMsg
+import com.ll.domain.persistence.{RiichiCmd, TableCmd, UserCmd}
 import io.circe.{Decoder, DecodingFailure, HCursor, Json, ObjectEncoder}
 import io.circe.generic.semiauto._
 import io.circe.syntax._
@@ -34,7 +35,19 @@ object Codec {
       final def apply(c: HCursor): Decoder.Result[WsMsg.In] = {
         def decode(messageType: String, payload: Json): Decoder.Result[WsMsg.In] = messageType match {
           case "Ping" => payload.as[WsMsg.In.Ping](deriveDecoder[WsMsg.In.Ping])
+          case "TableCmd.StartGame" => payload.as[TableCmd.StartGame](deriveDecoder[TableCmd.StartGame])
+          case "TableCmd.PauseGame" => payload.as[TableCmd.PauseGame](deriveDecoder[TableCmd.PauseGame])
+          case "UserCmd.GetState" => payload.as[UserCmd.GetState](deriveDecoder[UserCmd.GetState])
+          case "UserCmd.JoinAsPlayer" => payload.as[UserCmd.JoinAsPlayer](deriveDecoder[UserCmd.JoinAsPlayer])
+          case "UserCmd.LeftAsPlayer" => payload.as[UserCmd.LeftAsPlayer](deriveDecoder[UserCmd.LeftAsPlayer])
+          case "UserCmd.JoinAsSpectacular" => payload.as[UserCmd.JoinAsSpectacular](deriveDecoder[UserCmd.JoinAsSpectacular])
+          case "UserCmd.LeftAsSpectacular" => payload.as[UserCmd.LeftAsSpectacular](deriveDecoder[UserCmd.LeftAsSpectacular])
+          case "RiichiCmd.DiscardTile" => payload.as[RiichiCmd.DiscardTile](deriveDecoder[RiichiCmd.DiscardTile])
+          case "RiichiCmd.GetTileFromWall" => payload.as[RiichiCmd.GetTileFromWall](deriveDecoder[RiichiCmd.GetTileFromWall])
+          case "RiichiCmd.ClaimTile" => payload.as[RiichiCmd.ClaimTile](deriveDecoder[RiichiCmd.ClaimTile])
+          case "RiichiCmd.DeclareWin" => payload.as[RiichiCmd.DeclareWin](deriveDecoder[RiichiCmd.DeclareWin])
         }
+
         for {
           messageType <- c.downField("type").as[String]
           payload <- c.downField("payload").focus.toRight(DecodingFailure("payload field is not present", Nil))
@@ -49,10 +62,6 @@ object Codec {
         json => Right(json)
       )
   }
-
-  private def wrap[T](name: String, msg: T)(implicit encoder: ObjectEncoder[T]) = Json.obj(
-    "type" -> name.asJson,
-    "payload" -> msg.asJson)
 
   def encodeWsMsg(msg: WsMsg.Out): String = {
     val json = msg match {
@@ -76,15 +85,16 @@ object Codec {
     implicit val outDecoder: Decoder[WsMsg.Out] = new Decoder[WsMsg.Out] {
       final def apply(c: HCursor): Decoder.Result[WsMsg.Out] = {
         def decode(messageType: String, payload: Json): Decoder.Result[WsMsg.Out] = messageType match {
-          case "Pong" => payload.as[WsMsg.Out.Pong](deriveDecoder[WsMsg.Out.Pong])
-          case "Text" => payload.as[WsMsg.Out.Text](deriveDecoder[WsMsg.Out.Text])
-          case "GameStarted" => payload.as[WsMsg.Out.Table.GameStarted](deriveDecoder[WsMsg.Out.Table.GameStarted])
-          case "GamePaused" => payload.as[WsMsg.Out.Table.GamePaused](deriveDecoder[WsMsg.Out.Table.GamePaused])
+          case "Pong"                   => payload.as[WsMsg.Out.Pong](deriveDecoder[WsMsg.Out.Pong])
+          case "Text"                   => payload.as[WsMsg.Out.Text](deriveDecoder[WsMsg.Out.Text])
+          case "GameStarted"            => payload.as[WsMsg.Out.Table.GameStarted](deriveDecoder[WsMsg.Out.Table.GameStarted])
+          case "GamePaused"             => payload.as[WsMsg.Out.Table.GamePaused](deriveDecoder[WsMsg.Out.Table.GamePaused])
           case "SpectacularJoinedTable" => payload.as[WsMsg.Out.Table.SpectacularJoinedTable](deriveDecoder[WsMsg.Out.Table.SpectacularJoinedTable])
-          case "SpectacularLeftTable" => payload.as[WsMsg.Out.Table.SpectacularLeftTable](deriveDecoder[WsMsg.Out.Table.SpectacularLeftTable])
-          case "PlayerJoinedTable" => payload.as[WsMsg.Out.Table.PlayerJoinedTable](deriveDecoder[WsMsg.Out.Table.PlayerJoinedTable])
-          case "PlayerLeftTable" => payload.as[WsMsg.Out.Table.PlayerLeftTable](deriveDecoder[WsMsg.Out.Table.PlayerLeftTable])
+          case "SpectacularLeftTable"   => payload.as[WsMsg.Out.Table.SpectacularLeftTable](deriveDecoder[WsMsg.Out.Table.SpectacularLeftTable])
+          case "PlayerJoinedTable"      => payload.as[WsMsg.Out.Table.PlayerJoinedTable](deriveDecoder[WsMsg.Out.Table.PlayerJoinedTable])
+          case "PlayerLeftTable"        => payload.as[WsMsg.Out.Table.PlayerLeftTable](deriveDecoder[WsMsg.Out.Table.PlayerLeftTable])
         }
+
         for {
           messageType <- c.downField("type").as[String]
           payload <- c.downField("payload").focus.toRight(DecodingFailure("payload field is not present", Nil))
@@ -104,10 +114,24 @@ object Codec {
 
     def encodeWsMsg(msg: WsMsg.In): String = {
       val json = msg match {
-        case x: WsMsg.In.Ping                         => wrap("Ping", x)(deriveEncoder[WsMsg.In.Ping])
+        case x: WsMsg.In.Ping             => wrap("Ping", x)(deriveEncoder[WsMsg.In.Ping])
+        case x: TableCmd.StartGame        => wrap("TableCmd.StartGame", x)(deriveEncoder[TableCmd.StartGame])
+        case x: TableCmd.PauseGame        => wrap("TableCmd.PauseGame", x)(deriveEncoder[TableCmd.PauseGame])
+        case x: UserCmd.GetState          => wrap("UserCmd.GetState", x)(deriveEncoder[UserCmd.GetState])
+        case x: UserCmd.JoinAsPlayer      => wrap("UserCmd.JoinAsPlayer", x)(deriveEncoder[UserCmd.JoinAsPlayer])
+        case x: UserCmd.LeftAsPlayer      => wrap("UserCmd.LeftAsPlayer", x)(deriveEncoder[UserCmd.LeftAsPlayer])
+        case x: UserCmd.JoinAsSpectacular => wrap("UserCmd.JoinAsSpectacular", x)(deriveEncoder[UserCmd.JoinAsSpectacular])
+        case x: UserCmd.LeftAsSpectacular => wrap("UserCmd.LeftAsSpectacular", x)(deriveEncoder[UserCmd.LeftAsSpectacular])
+        case x: RiichiCmd.DiscardTile => wrap("RiichiCmd.DiscardTile", x)(deriveEncoder[RiichiCmd.DiscardTile])
+        case x: RiichiCmd.GetTileFromWall => wrap("RiichiCmd.GetTileFromWall", x)(deriveEncoder[RiichiCmd.GetTileFromWall])
+        case x: RiichiCmd.ClaimTile => wrap("RiichiCmd.ClaimTile", x)(deriveEncoder[RiichiCmd.ClaimTile])
+        case x: RiichiCmd.DeclareWin => wrap("RiichiCmd.DeclareWin", x)(deriveEncoder[RiichiCmd.DeclareWin])
       }
       json.noSpaces
     }
-
   }
+
+  private def wrap[T](name: String, msg: T)(implicit encoder: ObjectEncoder[T]) = Json.obj(
+    "type" -> name.asJson,
+    "payload" -> msg.asJson)
 }

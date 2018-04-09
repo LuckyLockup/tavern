@@ -2,7 +2,7 @@ package com.ll.domain.json
 
 import com.ll.domain.auth.UserId
 import com.ll.domain.games.{GameId, TableId, User}
-import com.ll.domain.json.Codec.{Test, encodeWsMsg}
+import com.ll.domain.json.Codec.{Test, encodeWsMsg, decodeWsMsg}
 import com.ll.domain.messages.WsMsg
 import org.scalatest.{Matchers, WordSpec}
 import gnieh.diffson.circe._
@@ -11,6 +11,7 @@ class CodecTest extends WordSpec with Matchers {
 
   "Encode Out messages" in new OutMessages {
     testData.foreach { case (msg, json) =>
+      println(encodeWsMsg(msg))
       JsonDiff.diff(encodeWsMsg(msg), json, false).ops shouldBe empty
     }
   }
@@ -18,6 +19,19 @@ class CodecTest extends WordSpec with Matchers {
   "Decode Out messages" in new OutMessages {
     testData.foreach { case (msg, json) =>
       Test.decodeWsMsg(json) should be (Right(msg))
+    }
+  }
+
+  "Encode In messages" in new InMessages {
+    testData.foreach { case (msg, json) =>
+      println(Test.encodeWsMsg(msg))
+      JsonDiff.diff(Test.encodeWsMsg(msg), json, false).ops shouldBe empty
+    }
+  }
+
+  "Decode In messages" in new InMessages {
+    testData.foreach { case (msg, json) =>
+      decodeWsMsg(json) should be (Right(msg))
     }
   }
 
@@ -31,10 +45,6 @@ class CodecTest extends WordSpec with Matchers {
   abstract class OutMessages extends Common {
     import com.ll.domain.messages.WsMsg.Out._
     import com.ll.domain.messages.WsMsg.Out.Table._
-    val pong = Pong(42)
-    val text = Text("hey!")
-    val spectacularJoined = SpectacularJoinedTable(user, tableId)
-    val spectacularLeft = SpectacularLeftTable(user, tableId)
 
     val testData: List[(WsMsg.Out, String)] = List(
       (Pong(42), """{"type":"Pong","payload":{"id":42}}"""),
@@ -65,6 +75,28 @@ class CodecTest extends WordSpec with Matchers {
           |  }
           |}
         """.stripMargin)
+    )
+  }
+
+  abstract class InMessages extends Common {
+    import com.ll.domain.messages.WsMsg.In._
+    import com.ll.domain.persistence.TableCmd._
+    import com.ll.domain.persistence.UserCmd._
+    import com.ll.domain.persistence.RiichiCmd._
+
+
+    val testData: List[(WsMsg.In, String)] = List(
+      (Ping(42), """{"type":"Ping","payload":{"id":42}}"""),
+      (StartGame(tableId),
+        """
+          |{
+          |  "type": "TableCmd.StartGame",
+          |  "payload": {
+          |    "tableId": "test_table"
+          |  }
+          |}
+        """.stripMargin)
+
     )
   }
 }

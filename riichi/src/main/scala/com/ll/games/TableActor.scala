@@ -9,7 +9,7 @@ import com.ll.ws.PubSub
 import scala.reflect.ClassTag
 
 class TableActor[C <: TableCmd: ClassTag, E <: TableEvent: ClassTag](
-  table: TableState[C, E],
+  table: TableState[C, E, _],
   pubSub: PubSub)
   extends PersistentActor with Logging {
 

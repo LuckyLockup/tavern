@@ -7,9 +7,9 @@ import com.ll.domain.persistence.{RiichiCmd, RiichiEvent, TableState, UserCmd}
 
 case class RiichiTableState(
   tableId: TableId
-) extends TableState[RiichiCmd, RiichiEvent] {
+) extends TableState[RiichiCmd, RiichiEvent, RiichiTableState] {
 
-  def validateCmd(cmd: RiichiCmd): Either[ValidationError, (List[RiichiTableState], RiichiTableState)] = ???
+  def validateCmd(cmd: RiichiCmd): Either[ValidationError, (List[RiichiEvent], RiichiTableState)] = ???
 
   def projection(cmd: UserCmd.GetState): Table.TableState = Table.TableState(tableId)
 }
