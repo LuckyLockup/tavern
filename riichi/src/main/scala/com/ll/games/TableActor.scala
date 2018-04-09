@@ -21,8 +21,8 @@ class TableActor[C <: TableCmd: ClassTag, E <: TableEvent: ClassTag](
   val receiveCommand: Receive = {
     case message => {
       try {
+        log.info(s"${table.tableId} Processing $message")
         message match {
-          case cmd: TableCmd => receiveTableCmd(cmd)
           case cmd: UserCmd => receiveUserCmd(cmd)
           case cmd: C => ???
           case cmd => log.error(s"Unknown command $cmd")
@@ -38,13 +38,7 @@ class TableActor[C <: TableCmd: ClassTag, E <: TableEvent: ClassTag](
 
   def receiveUserCmd: UserCmd => Unit = {
     case cmd: UserCmd.GetState =>
-      log.info("Returning state")
-      log.info(s"Sender ${sender()}")
       sender() ! _state.projection(cmd)
-  }
-
-  def receiveTableCmd: TableCmd => Unit = {
-    case _ => ???
   }
 
   val receiveRecover: Receive = {

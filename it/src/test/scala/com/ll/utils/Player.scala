@@ -25,7 +25,7 @@ case class Player(userId: UserId, ws: WsConnection, http: HttpExt, config: TestC
       method = HttpMethods.POST,
       uri = config.soloUrl,
       entity = id.id.toString))
-      .flatMap(Unmarshal(_).to[Json])
+//      .flatMap(Unmarshal(_).to[Json])
     val response = Await.result(responseF, config.defaultTimeout)
     log.info(s"Http << ${response}")
   }

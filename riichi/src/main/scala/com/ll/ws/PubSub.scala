@@ -30,14 +30,18 @@ class PubSub()(implicit system: ActorSystem, mat: Materializer) extends Logging 
     closeConnection(id)
 
     val (actorRef: ActorRef, publisher: Publisher[TextMessage.Strict]) = Source.actorRef[WsMsg.Out](16, OverflowStrategy.fail)
-      .map(msg => TextMessage.Strict(Codec.encodeWsMsg(msg)))
+      .map(msg => {
+        val json = Codec.encodeWsMsg(msg)
+        log.info(s"$id >>> $json")
+        TextMessage.Strict(json)
+      })
       .toMat(Sink.asPublisher(false))(Keep.both).run()
 
     val sink: Sink[Message, Unit] = Flow[Message]
       .watchTermination()((_, ft) => ft.foreach { _ => closeConnection(id) })
       .mapConcat {
         case TextMessage.Strict(msg) =>
-          log.info(s"Dispatching $msg")
+          log.info(s"$id <<< $msg")
           Codec.decodeWsMsg(msg).fold(err => {
             log.info(s"Unknown message $msg. Parsing error: $err")
             Nil
@@ -47,7 +51,6 @@ class PubSub()(implicit system: ActorSystem, mat: Materializer) extends Logging 
       }
       .mapAsync(4) {
         case WsMsg.In.Ping(n) =>
-          log.info(s"Ping is recieved")
           actorRef ! WsMsg.Out.Pong(n)
           Future.successful("Pong!")
         case msg: TableCmd            =>
@@ -62,7 +65,6 @@ class PubSub()(implicit system: ActorSystem, mat: Materializer) extends Logging 
   }
 
   def sendToUser(id: UserId, msg: WsMsg.Out): Unit = wsConnections.get(id).foreach { ar =>
-    log.info(s"Sending $msg")
     ar ! msg
   }
 

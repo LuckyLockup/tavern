@@ -2,7 +2,9 @@ package com.ll.domain.games
 
 import io.circe._
 
-case class TableId(id: String)
+case class TableId(id: String) {
+  override def toString: String = id
+}
 
 object TableId {
   implicit val encodeTableId: Encoder[TableId] = (table: TableId) => Json.fromString(table.id)
