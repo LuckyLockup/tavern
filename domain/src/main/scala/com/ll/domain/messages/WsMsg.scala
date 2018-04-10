@@ -1,7 +1,8 @@
 package com.ll.domain.messages
 
 import com.ll.domain.auth.User
-import com.ll.domain.games.{GameId, HumanPlayer, Player, TableId}
+import com.ll.domain.games.Player.HumanPlayer
+import com.ll.domain.games.{GameId, Player, TableId}
 
 
 object WsMsg {

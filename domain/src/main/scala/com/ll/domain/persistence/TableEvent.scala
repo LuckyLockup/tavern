@@ -1,8 +1,9 @@
 package com.ll.domain.persistence
 
 import com.ll.domain.auth.UserId
+import com.ll.domain.games.Player.HumanPlayer
 import com.ll.domain.games.deck.Tile
-import com.ll.domain.games.{GameId, HumanPlayer, TableId}
+import com.ll.domain.games.{GameId, TableId}
 
 sealed trait TableEvent {def tableId: TableId}
 sealed trait UserEvent extends TableEvent {def userId: UserId}

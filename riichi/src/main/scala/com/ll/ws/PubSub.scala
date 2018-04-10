@@ -30,11 +30,7 @@ class PubSub()(implicit system: ActorSystem, mat: Materializer) extends Logging 
     closeConnection(id)
 
     val (actorRef: ActorRef, publisher: Publisher[TextMessage.Strict]) = Source.actorRef[WsMsg.Out](16, OverflowStrategy.fail)
-      .map(msg => {
-        val json = Codec.encodeWsMsg(msg)
-        log.info(s"$id >>> $json")
-        TextMessage.Strict(json)
-      })
+      .map(msg => TextMessage.Strict(Codec.encodeWsMsg(msg)))
       .toMat(Sink.asPublisher(false))(Keep.both).run()
 
     val sink: Sink[Message, Unit] = Flow[Message]
@@ -53,9 +49,9 @@ class PubSub()(implicit system: ActorSystem, mat: Materializer) extends Logging 
         case WsMsg.In.Ping(n) =>
           actorRef ! WsMsg.Out.Pong(n)
           Future.successful("Pong!")
-        case msg: TableCmd            =>
+        case msg: TableCmd    =>
           tables.sendToGame(msg)
-          Future.successful{"Done"}
+          Future.successful {"Done"}
       }
       .to(Sink.ignore)
 
@@ -65,10 +61,12 @@ class PubSub()(implicit system: ActorSystem, mat: Materializer) extends Logging 
   }
 
   def sendToUser(id: UserId, msg: WsMsg.Out): Unit = wsConnections.get(id).foreach { ar =>
+    log.info(s">>>$id: ${Codec.encodeWsMsg(msg)}")
     ar ! msg
   }
 
-  def sendToUsers(ids: Set[UserId], msg: WsMsg.Out): Unit = ids.foreach{ id =>
+  def sendToUsers(ids: Set[UserId], msg: WsMsg.Out): Unit = ids.foreach { id =>
+    log.info(s">>>[${ids.size}]: ${Codec.encodeWsMsg(msg)}")
     wsConnections.get(id).foreach(ar => ar ! msg)
   }
 

@@ -6,10 +6,13 @@ sealed trait Player {
   def nickName: String
 }
 
-case class HumanPlayer(userId: UserId, nickName: String) extends Player
+object Player{
+  case class HumanPlayer(userId: UserId, nickName: String) extends Player
+  case class AIPlayer(nickName: String) extends Player
 
-object HumanPlayer {
-  def apply(user: User): HumanPlayer = new HumanPlayer(user.id, user.nickname)
+  object HumanPlayer {
+    def apply(user: User): HumanPlayer = new HumanPlayer(user.id, user.nickname)
+  }
 }
-case class AIPlayer(nickName: String) extends Player
+
 

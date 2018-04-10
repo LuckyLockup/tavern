@@ -1,7 +1,7 @@
 package com.ll.domain.persistence
 
 import com.ll.domain.auth.{User, UserId}
-import com.ll.domain.games.{GameId, HumanPlayer, TableId}
+import com.ll.domain.games.{GameId, TableId}
 import com.ll.domain.messages.WsMsg
 
 sealed trait TableCmd extends WsMsg.In {def tableId: TableId}
@@ -15,11 +15,11 @@ object TableCmd {
 
 object UserCmd {
   case class GetState(tableId: TableId, userId: UserId) extends UserCmd
-  case class JoinAsPlayer(tableId: TableId, player: HumanPlayer) extends UserCmd {
-    def userId = player.userId
+  case class JoinAsPlayer(tableId: TableId, user: User) extends UserCmd {
+    def userId = user.id
   }
-  case class LeftAsPlayer(tableId: TableId, player: HumanPlayer) extends UserCmd  {
-    def userId = player.userId
+  case class LeftAsPlayer(tableId: TableId, user: User) extends UserCmd  {
+    def userId = user.id
   }
   case class JoinAsSpectacular(tableId: TableId, user: User) extends UserCmd {
     def userId = user.id

@@ -1,6 +1,7 @@
 package com.ll.domain.persistence
 
-import com.ll.domain.games.{HumanPlayer, Player, TableId}
+import com.ll.domain.games.Player.HumanPlayer
+import com.ll.domain.games.{ Player, TableId}
 import com.ll.domain.messages.WsMsg.Out.{Table, ValidationError}
 
 trait TableState [C <: TableCmd, E <: TableEvent, S <: TableState[C,E,S]] {

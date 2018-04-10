@@ -2,7 +2,7 @@ package com.ll.games
 
 import akka.persistence.PersistentActor
 import com.ll.domain.auth.{User, UserId}
-import com.ll.domain.games.{HumanPlayer, Player}
+import com.ll.domain.games.Player.HumanPlayer
 import com.ll.domain.messages.WsMsg.Out
 import com.ll.domain.messages.WsMsgProjector
 import com.ll.domain.persistence._

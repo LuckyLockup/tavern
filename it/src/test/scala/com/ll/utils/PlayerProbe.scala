@@ -5,7 +5,7 @@ import akka.http.scaladsl.HttpExt
 import akka.http.scaladsl.model._
 import akka.http.scaladsl.unmarshalling.Unmarshal
 import akka.stream.Materializer
-import com.ll.domain.auth.UserId
+import com.ll.domain.auth.{User, UserId}
 import com.ll.domain.games.{GameId, HumanPlayer, TableId}
 import com.ll.domain.messages.WsMsg
 import io.circe.Json
@@ -21,6 +21,7 @@ case class PlayerProbe(userId: UserId, ws: WsConnection, http: HttpExt, config: 
   implicit val ec = as.dispatcher
 
   val name = Random.alphanumeric.take(6).mkString("")
+  val user = User(userId, name)
   val player = HumanPlayer(userId, name)
 
   def !(msg: WsMsg.In): Unit = ws ! msg

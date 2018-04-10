@@ -20,19 +20,19 @@ class FourPlayersJoinTableTest extends Test {
 
     player1.createTable(tableId)
 
-    player1.ws ! UserCmd.JoinAsPlayer(tableId, player1.player)
+    player1.ws ! UserCmd.JoinAsPlayer(tableId, player1.user)
     player1.ws.expectWsMsg[WsMsg.Out.Table.PlayerJoinedTable]
 
-    player2.ws ! UserCmd.JoinAsPlayer(tableId, player2.player)
+    player2.ws ! UserCmd.JoinAsPlayer(tableId, player2.user)
     player1.ws.expectWsMsg[WsMsg.Out.Table.PlayerJoinedTable]
 
-    player3.ws ! UserCmd.JoinAsPlayer(tableId, player3.player)
+    player3.ws ! UserCmd.JoinAsPlayer(tableId, player3.user)
     player1.ws.expectWsMsg[WsMsg.Out.Table.PlayerJoinedTable]
 
-    player4.ws ! UserCmd.JoinAsPlayer(tableId, player4.player)
+    player4.ws ! UserCmd.JoinAsPlayer(tableId, player4.user)
     player1.ws.expectWsMsg[WsMsg.Out.Table.PlayerJoinedTable]
 
-    player5.ws ! UserCmd.JoinAsPlayer(tableId, player5.player)
+    player5.ws ! UserCmd.JoinAsPlayer(tableId, player5.user)
     player5.ws.expectWsMsg[WsMsg.Out.ValidationError]
   }
 }

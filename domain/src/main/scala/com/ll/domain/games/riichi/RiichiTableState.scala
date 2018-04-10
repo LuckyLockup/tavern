@@ -1,6 +1,7 @@
 package com.ll.domain.games.riichi
 
-import com.ll.domain.games.{HumanPlayer, Player, TableId}
+import com.ll.domain.games.Player.HumanPlayer
+import com.ll.domain.games.{Player, TableId}
 import com.ll.domain.messages.WsMsg.Out.{Table, ValidationError}
 import com.ll.domain.persistence._
 
@@ -17,21 +18,22 @@ case class NoGameOnTable(
   tableId: TableId,
   players: Set[Player] = Set.empty[Player]
 ) extends RiichiTableState {
-  def joinGame(cmd: UserCmd.JoinAsPlayer): Either[ValidationError, (UserEvent.PlayerJoined, NoGameOnTable)] = {
+  def joinGame(cmd: UserCmd.JoinAsPlayer): Either[ValidationError, (UserEvent.PlayerJoined, RiichiTableState)] = {
     if (players.size < 4) {
-      val event = UserEvent.PlayerJoined(tableId, cmd.player)
-      val newState = this.copy(players = this.players + cmd.player)
+      val newPlayer = HumanPlayer(cmd.user)
+      val event = UserEvent.PlayerJoined(tableId, newPlayer)
+      val newState = this.copy(players = this.players + newPlayer)
       Right(event, newState)
     } else {
       Left(ValidationError("Table is already full."))
     }
   }
 
-  def leftGame(cmd: UserCmd.LeftAsPlayer): Either[ValidationError, (UserEvent.PlayerLeft, NoGameOnTable)] = {
+  def leftGame(cmd: UserCmd.LeftAsPlayer): Either[ValidationError, (UserEvent.PlayerLeft, RiichiTableState)] = {
     players.collect{case p: HumanPlayer => p }.find(p => p.userId == cmd.userId) match {
-      case Some(p) =>
-        val event = UserEvent.PlayerLeft(tableId, cmd.player)
-        val newState = this.copy(players = this.players - cmd.player)
+      case Some(player) =>
+        val event = UserEvent.PlayerLeft(tableId, player)
+        val newState = this.copy(players = this.players - player)
         Right(event, newState)
       case None =>
         Left(ValidationError("You are not player on this table"))
@@ -46,7 +48,7 @@ case class GameStarted(
 
   def players = hands.keySet
 
-  def joinGame(cmd: UserCmd.JoinAsPlayer): Either[ValidationError, (UserEvent.PlayerJoined, GameStarted)] = ???
+  def joinGame(cmd: UserCmd.JoinAsPlayer): Either[ValidationError, (UserEvent.PlayerJoined, RiichiTableState)] = ???
 
-  def leftGame(cmd: UserCmd.LeftAsPlayer): Either[ValidationError, (UserEvent.PlayerLeft, GameStarted)] = ???
+  def leftGame(cmd: UserCmd.LeftAsPlayer): Either[ValidationError, (UserEvent.PlayerLeft, RiichiTableState)] = ???
 }
