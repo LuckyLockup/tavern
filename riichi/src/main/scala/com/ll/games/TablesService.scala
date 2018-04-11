@@ -2,7 +2,7 @@ package com.ll.games
 
 import akka.actor.{ActorRef, ActorSystem, OneForOneStrategy, PoisonPill, Props, SupervisorStrategy}
 import cats.Monad
-import com.ll.domain.auth.UserId
+import com.ll.domain.auth.{User, UserId}
 import com.ll.domain.games.{GameId, TableId}
 import com.ll.domain.messages.WsMsg.Out.Table
 import com.ll.utils.Logging
@@ -30,7 +30,7 @@ class TablesService(pubSub: PubSub, config: ServerConfig)(implicit system: Actor
       })
       .getOrElse {
         log.info(s"Creating table for $tableId")
-        val table: RiichiTableState = NoGameOnTable(tableId)
+        val table: RiichiTableState = NoGameOnTable(User(userId, "God"), tableId)
         val props: Props = Props(new TableActor[RiichiCmd, RiichiEvent, RiichiTableState](table, pubSub))
         val supervisor = BackoffSupervisor.props(
           Backoff.onStop(

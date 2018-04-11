@@ -1,5 +1,6 @@
 package com.ll.domain.games.riichi
 
+import com.ll.domain.auth.{User, UserId}
 import com.ll.domain.games.Player.HumanPlayer
 import com.ll.domain.games.{Player, TableId}
 import com.ll.domain.messages.WsMsg.Out.{Table, ValidationError}
@@ -15,6 +16,7 @@ trait RiichiTableState extends TableState[RiichiCmd, RiichiEvent, RiichiTableSta
 }
 
 case class NoGameOnTable(
+  adminId: User,
   tableId: TableId,
   players: Set[Player] = Set.empty[Player]
 ) extends RiichiTableState {
@@ -39,16 +41,36 @@ case class NoGameOnTable(
         Left(ValidationError("You are not player on this table"))
     }
   }
+
+  def startGame(cmd: TableCmd.StartGame): Either[ValidationError, (UserEvent.PlayerLeft, RiichiTableState)] = {
+    if (players.isEmpty) {
+      Left(ValidationError("You can't start game without players."))
+    } else {
+      //TODO put instead of not existing players Ai.
+      ???
+    }
+  }
 }
 
 case class GameStarted(
+  adminId: User,
   tableId: TableId,
   hands: Map[Player, PlayerState]
 ) extends RiichiTableState {
 
   def players = hands.keySet
 
-  def joinGame(cmd: UserCmd.JoinAsPlayer): Either[ValidationError, (UserEvent.PlayerJoined, RiichiTableState)] = ???
+  def joinGame(cmd: UserCmd.JoinAsPlayer): Either[ValidationError, (UserEvent.PlayerJoined, RiichiTableState)] = {
+    //TODO implement
+    Left(ValidationError("Logic is not implemented"))
+  }
 
-  def leftGame(cmd: UserCmd.LeftAsPlayer): Either[ValidationError, (UserEvent.PlayerLeft, RiichiTableState)] = ???
+  def leftGame(cmd: UserCmd.LeftAsPlayer): Either[ValidationError, (UserEvent.PlayerLeft, RiichiTableState)] = {
+    //TODO implement
+    Left(ValidationError("Logic is not implemented"))
+  }
+
+  def startGame(cmd: TableCmd.StartGame): Either[ValidationError, (UserEvent.PlayerLeft, RiichiTableState)] = {
+    Left(ValidationError("Game is already started"))
+  }
 }

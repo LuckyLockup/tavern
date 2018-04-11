@@ -45,7 +45,7 @@ class TableActor[C <: TableCmd: ClassTag, E <: TableEvent: ClassTag, S <: TableS
     }
   }
 
-  private def notifyClients(result: Either[ValidationError, (TableEvent, S)], userId: UserId) = result match {
+  private def persistAndNotifyClients(result: Either[ValidationError, (TableEvent, S)], userId: UserId) = result match {
     case Left(error) => pubSub.sendToUser(userId, error)
     case Right((e, state)) => persist(e) { e =>
       _table = state
@@ -59,9 +59,9 @@ class TableActor[C <: TableCmd: ClassTag, E <: TableEvent: ClassTag, S <: TableS
       sender() ! _table.projection(cmd)
       pubSub.sendToUser(cmd.userId, state)
     case cmd: UserCmd.JoinAsPlayer =>
-      notifyClients(_table.joinGame(cmd), cmd.userId)
+      persistAndNotifyClients(_table.joinGame(cmd), cmd.userId)
     case cmd: UserCmd.LeftAsPlayer =>
-      notifyClients(_table.leftGame(cmd), cmd.userId)
+      persistAndNotifyClients(_table.leftGame(cmd), cmd.userId)
     case UserCmd.JoinAsSpectacular(_, user) =>
       spectaculars += user
       pubSub.sendToUsers(allUsers, Out.Table.SpectacularJoinedTable(user, tableId))
