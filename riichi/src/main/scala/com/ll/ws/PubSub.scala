@@ -27,14 +27,20 @@ class PubSub()(implicit system: ActorSystem, mat: Materializer) extends Logging 
   def getConnections = wsConnections.size
 
   def openNewConnection(id: UserId, tables: TablesService): Flow[Message, Message, NotUsed] = {
-    closeConnection(id)
+    wsConnections.get(id).foreach { ar =>
+      log.info(s"Closing previous WS connection for $id")
+      ar ! Status.Success("Done")
+    }
 
     val (actorRef: ActorRef, publisher: Publisher[TextMessage.Strict]) = Source.actorRef[WsMsg.Out](16, OverflowStrategy.fail)
       .map(msg => TextMessage.Strict(Codec.encodeWsMsg(msg)))
       .toMat(Sink.asPublisher(false))(Keep.both).run()
 
     val sink: Sink[Message, Unit] = Flow[Message]
-      .watchTermination()((_, ft) => ft.foreach { _ => closeConnection(id) })
+      .watchTermination()((_, ft) => ft.foreach { _ => {
+        log.info(s"Closing WS connection from client for $id")
+        wsConnections -= id
+      } })
       .mapConcat {
         case TextMessage.Strict(msg) =>
           log.info(s"$id <<< $msg")
@@ -61,21 +67,13 @@ class PubSub()(implicit system: ActorSystem, mat: Materializer) extends Logging 
   }
 
   def sendToUser(id: UserId, msg: WsMsg.Out): Unit = wsConnections.get(id).foreach { ar =>
-    log.info(s">>>$id: ${Codec.encodeWsMsg(msg)}")
+    log.info(s"$id >>> ${Codec.encodeWsMsg(msg)}")
     ar ! msg
   }
 
   def sendToUsers(ids: Set[UserId], msg: WsMsg.Out): Unit = ids.foreach { id =>
-    log.info(s">>>[${ids.size}]: ${Codec.encodeWsMsg(msg)}")
+    log.info(s"[${ids.size}] >>> ${Codec.encodeWsMsg(msg)}")
     wsConnections.get(id).foreach(ar => ar ! msg)
-  }
-
-  def closeConnection(id: UserId) = {
-    wsConnections.get(id).foreach { ar =>
-      log.info(s"Closing WS connection for $id")
-      ar ! Status.Success("Done")
-    }
-    wsConnections -= id
   }
 }
 

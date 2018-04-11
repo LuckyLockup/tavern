@@ -4,6 +4,7 @@ import akka.persistence.PersistentActor
 import com.ll.domain.auth.{User, UserId}
 import com.ll.domain.games.Player.HumanPlayer
 import com.ll.domain.messages.WsMsg.Out
+import com.ll.domain.messages.WsMsg.Out.ValidationError
 import com.ll.domain.messages.WsMsgProjector
 import com.ll.domain.persistence._
 import com.ll.utils.Logging
@@ -44,20 +45,23 @@ class TableActor[C <: TableCmd: ClassTag, E <: TableEvent: ClassTag, S <: TableS
     }
   }
 
+  private def notifyClients(result: Either[ValidationError, (TableEvent, S)], userId: UserId) = result match {
+    case Left(error) => pubSub.sendToUser(userId, error)
+    case Right((e, state)) => persist(e) { e =>
+      _table = state
+      pubSub.sendToUsers(allUsers, WsMsgProjector.convert(e, state))
+    }
+  }
+
   def receiveUserCmd: UserCmd => Unit = {
     case cmd: UserCmd.GetState =>
+      val state = _table.projection(cmd)
       sender() ! _table.projection(cmd)
-      //TODO move this logic back to tableState.
+      pubSub.sendToUser(cmd.userId, state)
     case cmd: UserCmd.JoinAsPlayer =>
-      _table.joinGame(cmd) match {
-        case Left(error) => pubSub.sendToUser(cmd.userId, error)
-        case Right((e, state)) => persist(e) { e =>
-          _table = state
-          pubSub.sendToUsers(allUsers, WsMsgProjector.convert(e, state))
-        }
-      }
-    case UserCmd.LeftAsPlayer(_, user) =>
-
+      notifyClients(_table.joinGame(cmd), cmd.userId)
+    case cmd: UserCmd.LeftAsPlayer =>
+      notifyClients(_table.leftGame(cmd), cmd.userId)
     case UserCmd.JoinAsSpectacular(_, user) =>
       spectaculars += user
       pubSub.sendToUsers(allUsers, Out.Table.SpectacularJoinedTable(user, tableId))

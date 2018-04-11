@@ -9,7 +9,8 @@ import org.scalatest._
 import pureconfig._
 
 abstract class Test extends TestKit(ActorSystem("MySpec")) with ImplicitSender
-  with WordSpecLike with Matchers with BeforeAndAfterAll with Logging{
+  with WordSpecLike with Matchers with BeforeAndAfterAll with Logging
+  with BeforeAndAfterEach {
   implicit val materializer = ActorMaterializer()
 
   protected val config = loadConfig[TestConfig]("testConfig").fold(failure => {
@@ -29,5 +30,10 @@ abstract class Test extends TestKit(ActorSystem("MySpec")) with ImplicitSender
   override def afterAll {
     connections.values.foreach(_.closeConnection())
     TestKit.shutdownActorSystem(system)
+  }
+
+  override def afterEach: Unit = {
+    connections.values.foreach(_.closeConnection())
+    connections = Map.empty
   }
 }

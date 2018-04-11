@@ -50,8 +50,14 @@ object Codec {
     final def apply(a: T): Json = wrap(s, a)(deriveEncoder[T])
   }
 
-  implicit val tableIdEncoder = deriveEncoder[TableId]
-  implicit val tableIdDecoder = deriveDecoder[TableId]
+  implicit val encodeTableId: Encoder[TableId] = (table: TableId) => Json.fromString(table.id)
+  implicit val decodeTableId: Decoder[TableId] = (c: HCursor) => {
+    c.focus.flatMap(_.asString) match {
+      case None     => Left(DecodingFailure("not a string", Nil))
+      case Some(id) => Right(TableId(id))
+    }
+  }
+
   implicit val userEncoder = deriveEncoder[User]
   implicit val userDecoder = deriveDecoder[User]
 
@@ -60,6 +66,8 @@ object Codec {
   implicit lazy val HumanPlayerEncoder = encoder[Player.HumanPlayer]("HumanPlayer")
   implicit lazy val AiPlayerDecoder = decoder[Player.AIPlayer]("AIPlayer")
   implicit lazy val AiPlayerEncoder = encoder[Player.AIPlayer]("AIPlayer")
+  implicit lazy val PlayerDeocer = deriveDecoder[Player]
+  implicit lazy val playerEncoder = deriveEncoder[Player]
 
   implicit val PlayerEncoder: Encoder[Player] = new Encoder[Player] {
     final def apply(a: Player): Json = a match {
@@ -72,18 +80,18 @@ object Codec {
     implicit val inDecoder: Decoder[WsMsg.In] = new Decoder[WsMsg.In] {
       final def apply(c: HCursor): Decoder.Result[WsMsg.In] = {
         def decode(messageType: String, payload: Json): Decoder.Result[WsMsg.In] = messageType match {
-          case "Ping"                      => payload.as[WsMsg.In.Ping](deriveDecoder[WsMsg.In.Ping])
-          case "TableCmd.StartGame"        => payload.as[TableCmd.StartGame](deriveDecoder[TableCmd.StartGame])
-          case "TableCmd.PauseGame"        => payload.as[TableCmd.PauseGame](deriveDecoder[TableCmd.PauseGame])
-          case "UserCmd.GetState"          => payload.as[UserCmd.GetState](deriveDecoder[UserCmd.GetState])
-          case "UserCmd.JoinAsPlayer"      => payload.as[UserCmd.JoinAsPlayer](deriveDecoder[UserCmd.JoinAsPlayer])
-          case "UserCmd.LeftAsPlayer"      => payload.as[UserCmd.LeftAsPlayer](deriveDecoder[UserCmd.LeftAsPlayer])
-          case "UserCmd.JoinAsSpectacular" => payload.as[UserCmd.JoinAsSpectacular](deriveDecoder[UserCmd.JoinAsSpectacular])
-          case "UserCmd.LeftAsSpectacular" => payload.as[UserCmd.LeftAsSpectacular](deriveDecoder[UserCmd.LeftAsSpectacular])
-          case "RiichiCmd.DiscardTile"     => payload.as[RiichiCmd.DiscardTile](deriveDecoder[RiichiCmd.DiscardTile])
-          case "RiichiCmd.GetTileFromWall" => payload.as[RiichiCmd.GetTileFromWall](deriveDecoder[RiichiCmd.GetTileFromWall])
-          case "RiichiCmd.ClaimTile"       => payload.as[RiichiCmd.ClaimTile](deriveDecoder[RiichiCmd.ClaimTile])
-          case "RiichiCmd.DeclareWin"      => payload.as[RiichiCmd.DeclareWin](deriveDecoder[RiichiCmd.DeclareWin])
+          case "Ping"              => payload.as[WsMsg.In.Ping](deriveDecoder[WsMsg.In.Ping])
+          case "StartGame"         => payload.as[TableCmd.StartGame](deriveDecoder[TableCmd.StartGame])
+          case "PauseGame"         => payload.as[TableCmd.PauseGame](deriveDecoder[TableCmd.PauseGame])
+          case "GetState"          => payload.as[UserCmd.GetState](deriveDecoder[UserCmd.GetState])
+          case "JoinAsPlayer"      => payload.as[UserCmd.JoinAsPlayer](deriveDecoder[UserCmd.JoinAsPlayer])
+          case "LeftAsPlayer"      => payload.as[UserCmd.LeftAsPlayer](deriveDecoder[UserCmd.LeftAsPlayer])
+          case "JoinAsSpectacular" => payload.as[UserCmd.JoinAsSpectacular](deriveDecoder[UserCmd.JoinAsSpectacular])
+          case "LeftAsSpectacular" => payload.as[UserCmd.LeftAsSpectacular](deriveDecoder[UserCmd.LeftAsSpectacular])
+          case "DiscardTile"       => payload.as[RiichiCmd.DiscardTile](deriveDecoder[RiichiCmd.DiscardTile])
+          case "GetTileFromWall"   => payload.as[RiichiCmd.GetTileFromWall](deriveDecoder[RiichiCmd.GetTileFromWall])
+          case "ClaimTile"         => payload.as[RiichiCmd.ClaimTile](deriveDecoder[RiichiCmd.ClaimTile])
+          case "DeclareWin"        => payload.as[RiichiCmd.DeclareWin](deriveDecoder[RiichiCmd.DeclareWin])
         }
 
         for {
@@ -137,6 +145,7 @@ object Codec {
           case "SpectacularLeftTable"   => payload.as[WsMsg.Out.Table.SpectacularLeftTable](deriveDecoder[WsMsg.Out.Table.SpectacularLeftTable])
           case "PlayerJoinedTable"      => payload.as[WsMsg.Out.Table.PlayerJoinedTable](deriveDecoder[WsMsg.Out.Table.PlayerJoinedTable])
           case "PlayerLeftTable"        => payload.as[WsMsg.Out.Table.PlayerLeftTable](deriveDecoder[WsMsg.Out.Table.PlayerLeftTable])
+          case "TableState"             => payload.as[WsMsg.Out.Table.TableState](deriveDecoder[WsMsg.Out.Table.TableState])
         }
 
         for {
@@ -159,17 +168,17 @@ object Codec {
     def encodeWsMsg(msg: WsMsg.In): String = {
       val json = msg match {
         case x: WsMsg.In.Ping             => wrap("Ping", x)(deriveEncoder[WsMsg.In.Ping])
-        case x: TableCmd.StartGame        => wrap("TableCmd.StartGame", x)(deriveEncoder[TableCmd.StartGame])
-        case x: TableCmd.PauseGame        => wrap("TableCmd.PauseGame", x)(deriveEncoder[TableCmd.PauseGame])
-        case x: UserCmd.GetState          => wrap("UserCmd.GetState", x)(deriveEncoder[UserCmd.GetState])
-        case x: UserCmd.JoinAsPlayer      => wrap("UserCmd.JoinAsPlayer", x)(deriveEncoder[UserCmd.JoinAsPlayer])
-        case x: UserCmd.LeftAsPlayer      => wrap("UserCmd.LeftAsPlayer", x)(deriveEncoder[UserCmd.LeftAsPlayer])
-        case x: UserCmd.JoinAsSpectacular => wrap("UserCmd.JoinAsSpectacular", x)(deriveEncoder[UserCmd.JoinAsSpectacular])
-        case x: UserCmd.LeftAsSpectacular => wrap("UserCmd.LeftAsSpectacular", x)(deriveEncoder[UserCmd.LeftAsSpectacular])
-        case x: RiichiCmd.DiscardTile     => wrap("RiichiCmd.DiscardTile", x)(deriveEncoder[RiichiCmd.DiscardTile])
-        case x: RiichiCmd.GetTileFromWall => wrap("RiichiCmd.GetTileFromWall", x)(deriveEncoder[RiichiCmd.GetTileFromWall])
-        case x: RiichiCmd.ClaimTile       => wrap("RiichiCmd.ClaimTile", x)(deriveEncoder[RiichiCmd.ClaimTile])
-        case x: RiichiCmd.DeclareWin      => wrap("RiichiCmd.DeclareWin", x)(deriveEncoder[RiichiCmd.DeclareWin])
+        case x: TableCmd.StartGame        => wrap("StartGame", x)(deriveEncoder[TableCmd.StartGame])
+        case x: TableCmd.PauseGame        => wrap("PauseGame", x)(deriveEncoder[TableCmd.PauseGame])
+        case x: UserCmd.GetState          => wrap("GetState", x)(deriveEncoder[UserCmd.GetState])
+        case x: UserCmd.JoinAsPlayer      => wrap("JoinAsPlayer", x)(deriveEncoder[UserCmd.JoinAsPlayer])
+        case x: UserCmd.LeftAsPlayer      => wrap("LeftAsPlayer", x)(deriveEncoder[UserCmd.LeftAsPlayer])
+        case x: UserCmd.JoinAsSpectacular => wrap("JoinAsSpectacular", x)(deriveEncoder[UserCmd.JoinAsSpectacular])
+        case x: UserCmd.LeftAsSpectacular => wrap("LeftAsSpectacular", x)(deriveEncoder[UserCmd.LeftAsSpectacular])
+        case x: RiichiCmd.DiscardTile     => wrap("DiscardTile", x)(deriveEncoder[RiichiCmd.DiscardTile])
+        case x: RiichiCmd.GetTileFromWall => wrap("GetTileFromWall", x)(deriveEncoder[RiichiCmd.GetTileFromWall])
+        case x: RiichiCmd.ClaimTile       => wrap("ClaimTile", x)(deriveEncoder[RiichiCmd.ClaimTile])
+        case x: RiichiCmd.DeclareWin      => wrap("DeclareWin", x)(deriveEncoder[RiichiCmd.DeclareWin])
       }
       json.noSpaces
     }

@@ -48,15 +48,15 @@ class CodecTest extends WordSpec with Matchers {
 
     val testData: List[(WsMsg.Out, String)] = List(
       (Pong(42), """{"type":"Pong","payload":{"id":42}}"""),
-      (Message("hey!"), """{"type":"Text","payload":{"txt":"hey!"}}"""),
+      (Message("hey!"), """{"type":"Message","payload":{"txt":"hey!"}}"""),
       (SpectacularJoinedTable(user, tableId),
         """
           |{
           |  "type": "SpectacularJoinedTable",
           |  "payload": {
           |    "user": {
-          |      "nickName": "Akagi",
-          |      "userId": 42
+          |      "id": 42,
+          |      "nickname": "Akagi"
           |    },
           |    "tableId": "test_table"
           |  }
@@ -68,10 +68,20 @@ class CodecTest extends WordSpec with Matchers {
           |  "type": "SpectacularLeftTable",
           |  "payload": {
           |    "user": {
-          |      "nickName": "Akagi",
-          |      "userId": 42
+          |      "id": 42,
+          |      "nickname": "Akagi"
           |    },
           |    "tableId": "test_table"
+          |  }
+          |}
+        """.stripMargin),
+      (TableState(TableId("table_22"), Set.empty),
+        """
+          |{
+          |  "type": "TableState",
+          |  "payload": {
+          |    "tableId": "table_22",
+          |    "players": []
           |  }
           |}
         """.stripMargin)

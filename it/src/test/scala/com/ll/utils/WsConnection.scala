@@ -48,10 +48,10 @@ class WsConnection(userId: UserId, as: ActorSystem, mat: Materializer, http: Htt
   val sink: Sink[Message, NotUsed] = Flow[Message]
     .mapAsync(1) {
       case TextMessage.Strict(msg) =>
-        log.info(s"WS [${userId.id}] <<<<  $msg")
         decodeWsMsg(msg) match {
           case Left(error)  => log.error(s"Error parsing message from server $error")
           case Right(wsMsg) =>
+            log.info(s"WS [${userId.id}] <<<<  $wsMsg [$msg]")
             probe.ref ! wsMsg
         }
         Future.successful()
@@ -73,12 +73,15 @@ class WsConnection(userId: UserId, as: ActorSystem, mat: Materializer, http: Htt
   def !(msg: WsMsg.In): Unit = ws ! msg
 
   def expectWsMsg(f: PartialFunction[Any, WsMsg.Out]): WsMsg.Out = probe.expectMsgPF(
-    config.defaultTimeout, "expecting")(f)
+    config.defaultTimeout, "expecting")(f orElse { case msg => {
+    log.info(s"Skipping $msg")
+    f(msg)
+  }})
 
   def expectWsMsg[T: ClassTag](implicit tag: TypeTag[T]): T = probe.expectMsgPF(
     config.defaultTimeout, s"expecting type ${tag.tpe}") {
     case msg: T => msg
-    case msg =>
+    case msg    =>
       log.info(s"Skipping $msg")
       expectWsMsg[T]
   }
