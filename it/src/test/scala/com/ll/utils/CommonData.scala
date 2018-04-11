@@ -1,7 +1,8 @@
 package com.ll.utils
 
 import com.ll.domain.auth.{User, UserId}
-import com.ll.domain.games.{GameId, HumanPlayer, TableId}
+import com.ll.domain.games.Player.HumanPlayer
+import com.ll.domain.games.{GameId, TableId}
 
 import scala.util.Random
 
