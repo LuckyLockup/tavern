@@ -1,12 +1,11 @@
 package com.ll.domain.json
 
 import com.ll.domain.auth.User
-import com.ll.domain.games.{Player, TableId}
+import com.ll.domain.games.{Player, PlayerPosition, TableId}
 import com.ll.domain.games.Player.{AIPlayer, HumanPlayer}
+import com.ll.domain.games.riichi.RiichiPosition
 import com.ll.domain.messages.WsMsg
-import com.ll.domain.messages.WsMsg.Out.Table
 import com.ll.domain.persistence.{RiichiCmd, TableCmd, UserCmd}
-import io.circe.Decoder.Result
 import io.circe.generic.decoding.DerivedDecoder
 import io.circe.generic.encoding.DerivedObjectEncoder
 import io.circe.{Decoder, DecodingFailure, Encoder, HCursor, Json, ObjectEncoder}
@@ -16,6 +15,10 @@ import io.circe.parser._
 import shapeless.{::, Generic, HNil, Lazy}
 
 object Codec {
+  implicit def encodeCaseObject[A <: Product](implicit
+    gen: Generic.Aux[A, HNil]
+  ): Encoder[A] = Encoder[String].contramap[A](_.productPrefix)
+
   implicit def encoderValueClass[T <: AnyVal, V](implicit
     g: Lazy[Generic.Aux[T, V :: HNil]],
     e: Encoder[V]
@@ -58,10 +61,35 @@ object Codec {
     }
   }
 
-  implicit val userEncoder = deriveEncoder[User]
-  implicit val userDecoder = deriveDecoder[User]
+  implicit lazy val userEncoder = deriveEncoder[User]
+  implicit lazy val userDecoder = deriveDecoder[User]
 
-  //Human
+  //Player positions
+  implicit lazy val positionEncoder: Encoder[PlayerPosition] = new Encoder[PlayerPosition] {
+    final def apply(a: PlayerPosition): Json = a match {
+      case RiichiPosition.EastPosition  => "EastPosition".asJson
+      case RiichiPosition.SouthPosition => "SouthPosition".asJson
+      case RiichiPosition.WestPosition  => "WestPosition".asJson
+      case RiichiPosition.NorthPosition => "NorthPosition".asJson
+    }
+  }
+
+  implicit lazy val positionDecoder: Decoder[PlayerPosition] = new Decoder[PlayerPosition] {
+    final def apply(c: HCursor): Decoder.Result[PlayerPosition] = {
+      def decode(str: String): Decoder.Result[PlayerPosition] = str match {
+        case "EastPosition"  => Right(RiichiPosition.EastPosition)
+        case "SouthPosition" => Right(RiichiPosition.SouthPosition)
+        case "WestPosition"  => Right(RiichiPosition.WestPosition)
+        case "NorthPosition" => Right(RiichiPosition.NorthPosition)
+        case _               => Left(DecodingFailure(s"$str is not known position", Nil))
+      }
+
+      c.focus.flatMap(_.asString).map(s => decode(s))
+        .getOrElse(Left(DecodingFailure("Can't decode position from", Nil)))
+    }
+  }
+
+  //Players
   implicit lazy val HumanPlayerDecoder = decoder[Player.HumanPlayer]("HumanPlayer")
   implicit lazy val HumanPlayerEncoder = encoder[Player.HumanPlayer]("HumanPlayer")
   implicit lazy val AiPlayerDecoder = decoder[Player.AIPlayer]("AIPlayer")
@@ -92,6 +120,7 @@ object Codec {
           case "GetTileFromWall"   => payload.as[RiichiCmd.GetTileFromWall](deriveDecoder[RiichiCmd.GetTileFromWall])
           case "ClaimTile"         => payload.as[RiichiCmd.ClaimTile](deriveDecoder[RiichiCmd.ClaimTile])
           case "DeclareWin"        => payload.as[RiichiCmd.DeclareWin](deriveDecoder[RiichiCmd.DeclareWin])
+          case _                   => Left(DecodingFailure(s"$messageType is not known type", Nil))
         }
 
         for {

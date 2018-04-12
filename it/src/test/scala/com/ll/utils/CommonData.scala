@@ -8,7 +8,8 @@ import scala.util.Random
 
 class CommonData {
   val tableId = TableId("table_" + Random.nextInt(1000))
+  val nickName = Random.alphanumeric.take(6).mkString("")
   val userId = UserId(Random.nextInt(1000))
-  val user = HumanPlayer(userId, "Ozu")
+  val user = User(userId, nickName)
   val gameId = GameId(Random.nextInt(1000) + 100000)
 }

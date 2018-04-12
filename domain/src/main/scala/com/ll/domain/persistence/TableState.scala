@@ -18,9 +18,7 @@ trait TableState [C <: TableCmd, E <: TableEvent, S <: TableState[C,E,S]] {
 
   def players: Set[Player]
 
-  def humanPlayers = players.collect{case p: HumanPlayer => p}
-
-  def humanIds = players.collect{case p: HumanPlayer => p}.map(_.userId)
+  def humanPlayers: Set[HumanPlayer]
 
   def joinGame(cmd: UserCmd.JoinAsPlayer): Either[ValidationError, (UserEvent.PlayerJoined, S)]
 

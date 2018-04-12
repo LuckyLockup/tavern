@@ -23,7 +23,6 @@ case class PlayerProbe(userId: UserId, ws: WsConnection, http: HttpExt, config: 
 
   val name = Random.alphanumeric.take(6).mkString("")
   val user = User(userId, name)
-  val player = HumanPlayer(userId, name)
 
   def !(msg: WsMsg.In): Unit = ws ! msg
 

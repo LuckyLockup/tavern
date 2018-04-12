@@ -24,7 +24,7 @@ class TableActor[C <: TableCmd: ClassTag, E <: TableEvent: ClassTag, S <: TableS
   var spectaculars: Set[User] = Set.empty[User]
 
   def allUsers: Set[UserId] = {
-    _table.players.collect{case p: HumanPlayer => p}.map(_.userId) ++ spectaculars.map(_.id)
+    _table.humanPlayers.map(_.user.id) ++ spectaculars.map(_.id)
   }
 
   val receiveCommand: Receive = {

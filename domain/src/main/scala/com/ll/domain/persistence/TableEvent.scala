@@ -17,10 +17,10 @@ object TableEvent {
 
 object UserEvent {
   case class PlayerJoined(tableId: TableId, player: HumanPlayer) extends UserEvent {
-    def userId = player.userId
+    def userId = player.user.id
   }
   case class PlayerLeft(tableId: TableId, player: HumanPlayer) extends UserEvent {
-    def userId = player.userId
+    def userId = player.user.id
   }
 }
 

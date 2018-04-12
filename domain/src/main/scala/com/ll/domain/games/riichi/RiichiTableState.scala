@@ -18,13 +18,17 @@ trait RiichiTableState extends TableState[RiichiCmd, RiichiEvent, RiichiTableSta
 case class NoGameOnTable(
   adminId: User,
   tableId: TableId,
-  players: Set[Player] = Set.empty[Player]
+  humanPlayers: Set[HumanPlayer] = Set.empty
 ) extends RiichiTableState {
+  def players: Set[Player] = humanPlayers.toSet
+
   def joinGame(cmd: UserCmd.JoinAsPlayer): Either[ValidationError, (UserEvent.PlayerJoined, RiichiTableState)] = {
-    if (players.size < 4) {
-      val newPlayer = HumanPlayer(cmd.user)
+    if (humanPlayers.exists(_.user.id == cmd.userId)) {
+      Left(ValidationError("You already joined the table"))
+    } else if (players.size < 4) {
+      val (newPlayers, newPlayer) = RiichiPosition.addUser(humanPlayers, cmd.user)
       val event = UserEvent.PlayerJoined(tableId, newPlayer)
-      val newState = this.copy(players = this.players + newPlayer)
+      val newState = this.copy(humanPlayers = newPlayers)
       Right(event, newState)
     } else {
       Left(ValidationError("Table is already full."))
@@ -32,10 +36,10 @@ case class NoGameOnTable(
   }
 
   def leftGame(cmd: UserCmd.LeftAsPlayer): Either[ValidationError, (UserEvent.PlayerLeft, RiichiTableState)] = {
-    players.collect{case p: HumanPlayer => p }.find(p => p.userId == cmd.userId) match {
+    humanPlayers.find(p => p.user.id == cmd.userId) match {
       case Some(player) =>
         val event = UserEvent.PlayerLeft(tableId, player)
-        val newState = this.copy(players = this.players - player)
+        val newState = this.copy(humanPlayers = RiichiPosition.removeUser(this.humanPlayers, player))
         Right(event, newState)
       case None =>
         Left(ValidationError("You are not player on this table"))
@@ -59,6 +63,8 @@ case class GameStarted(
 ) extends RiichiTableState {
 
   def players = hands.keySet
+
+  def humanPlayers: Set[HumanPlayer] = ???
 
   def joinGame(cmd: UserCmd.JoinAsPlayer): Either[ValidationError, (UserEvent.PlayerJoined, RiichiTableState)] = {
     //TODO implement
