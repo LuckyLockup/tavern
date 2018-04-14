@@ -1,6 +1,7 @@
 package com.ll.domain.games
 
-import com.ll.domain.auth.User
+import com.ll.domain.ai.AIType
+import com.ll.domain.auth.{User, UserId}
 
 sealed trait Player {
   def nickName: String
@@ -12,5 +13,8 @@ object Player{
   case class HumanPlayer(user: User, position: PlayerPosition) extends Player {
     def nickName = user.nickname
   }
-  case class AIPlayer(nickName: String, position: PlayerPosition) extends Player
+
+  case class AIPlayer(ai: AIType, position: PlayerPosition) extends Player {
+    def nickName = ai.getClass.getName
+  }
 }

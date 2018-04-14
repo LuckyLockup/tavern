@@ -2,6 +2,7 @@ package com.ll.domain.messages
 
 import com.ll.domain.auth.User
 import com.ll.domain.games.Player.HumanPlayer
+import com.ll.domain.games.riichi.RiichiPosition
 import com.ll.domain.games.{GameId, Player, TableId}
 
 
@@ -15,10 +16,10 @@ object WsMsg {
 
   object Out {
     sealed trait Table extends Out { def tableId: TableId}
-
     case class Pong(id: Int) extends Out
     case class Message(txt: String) extends Out
     case class ValidationError(reason: String) extends Out
+    trait GameEvent extends Table
 
     object Table {
       case class TableState(

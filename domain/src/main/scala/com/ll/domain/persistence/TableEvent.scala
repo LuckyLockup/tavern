@@ -3,12 +3,19 @@ package com.ll.domain.persistence
 import com.ll.domain.auth.UserId
 import com.ll.domain.games.Player.HumanPlayer
 import com.ll.domain.games.deck.Tile
-import com.ll.domain.games.{GameId, TableId}
+import com.ll.domain.games.riichi.RiichiPosition
+import com.ll.domain.games.{GameId, PlayerPosition, TableId}
 
 sealed trait TableEvent {def tableId: TableId}
 sealed trait UserEvent extends TableEvent {def userId: UserId}
-sealed trait GameEvent extends TableEvent {def gameId: GameId}
-sealed trait RiichiEvent extends GameEvent {def turn: Int}
+sealed trait GameEvent[P <: PlayerPosition] extends TableEvent {
+  def gameId: GameId
+  def position: P
+  def turn: Int
+}
+sealed trait RiichiEvent extends GameEvent[RiichiPosition] {
+  def position: RiichiPosition
+}
 
 object TableEvent {
   case class GameStarted(tableId: TableId, gameId: GameId) extends TableEvent
@@ -30,7 +37,8 @@ object RiichiEvent {
     userId: UserId,
     gameId: GameId,
     tile: Tile,
-    turn: Int
+    turn: Int,
+    position: RiichiPosition
   ) extends RiichiEvent
 
   case class TileFromTheWall(
@@ -38,7 +46,8 @@ object RiichiEvent {
     userId: UserId,
     gameId: GameId,
     tile: Tile,
-    turn: Int
+    turn: Int,
+    position: RiichiPosition
   ) extends RiichiEvent
 
   case class TileClaimed(
@@ -46,14 +55,16 @@ object RiichiEvent {
     userId: UserId,
     gameId: GameId,
     tile: Tile,
-    turn: Int
+    turn: Int,
+    position: RiichiPosition
   ) extends RiichiEvent
 
   case class GameFinished(
     tableId: TableId,
     gameId: GameId,
     winner: UserId,
-    turn: Int
+    turn: Int,
+    position: RiichiPosition
   ) extends RiichiEvent
 }
 

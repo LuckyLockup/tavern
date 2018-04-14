@@ -1,7 +1,7 @@
 package com.ll.domain.persistence
 
 import com.ll.domain.auth.{User, UserId}
-import com.ll.domain.games.{GameId, TableId}
+import com.ll.domain.games.{GameId, Player, TableId}
 import com.ll.domain.messages.WsMsg
 
 sealed trait TableCmd extends WsMsg.In {def tableId: TableId}

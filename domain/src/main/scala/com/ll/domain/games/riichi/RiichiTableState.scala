@@ -6,7 +6,7 @@ import com.ll.domain.games.{Player, TableId}
 import com.ll.domain.messages.WsMsg.Out.{Table, ValidationError}
 import com.ll.domain.persistence._
 
-trait RiichiTableState extends TableState[RiichiCmd, RiichiEvent, RiichiTableState] {
+trait RiichiTableState extends TableState[RiichiPosition, RiichiCmd, RiichiEvent, RiichiTableState] {
   def validateCmd(cmd: RiichiCmd): Either[ValidationError, List[RiichiEvent]] = ???
 
   def applyEvent(e: RiichiEvent): RiichiTableState = ???
@@ -39,14 +39,14 @@ case class NoGameOnTable(
     humanPlayers.find(p => p.user.id == cmd.userId) match {
       case Some(player) =>
         val event = UserEvent.PlayerLeft(tableId, player)
-        val newState = this.copy(humanPlayers = RiichiPosition.removeUser(this.humanPlayers, player))
+        val newState = this.copy(humanPlayers = humanPlayers - player)
         Right(event, newState)
       case None =>
         Left(ValidationError("You are not player on this table"))
     }
   }
 
-  def startGame(cmd: TableCmd.StartGame): Either[ValidationError, (UserEvent.PlayerLeft, RiichiTableState)] = {
+  def startGame(cmd: TableCmd.StartGame): Either[ValidationError, (TableEvent.GameStarted, RiichiTableState)] = {
     if (players.isEmpty) {
       Left(ValidationError("You can't start game without players."))
     } else {
@@ -54,6 +54,8 @@ case class NoGameOnTable(
       ???
     }
   }
+
+  def getPlayer(position: RiichiPosition): Option[Player] = humanPlayers.find(p => p.position == position)
 }
 
 case class GameStarted(
@@ -66,6 +68,8 @@ case class GameStarted(
 
   def humanPlayers: Set[HumanPlayer] = ???
 
+  def getPlayer(position: RiichiPosition): Option[Player] = hands.keySet.find(p => p.position == position)
+
   def joinGame(cmd: UserCmd.JoinAsPlayer): Either[ValidationError, (UserEvent.PlayerJoined, RiichiTableState)] = {
     //TODO implement
     Left(ValidationError("Logic is not implemented"))
@@ -76,7 +80,7 @@ case class GameStarted(
     Left(ValidationError("Logic is not implemented"))
   }
 
-  def startGame(cmd: TableCmd.StartGame): Either[ValidationError, (UserEvent.PlayerLeft, RiichiTableState)] = {
+  def startGame(cmd: TableCmd.StartGame): Either[ValidationError, (TableEvent.GameStarted, RiichiTableState)] = {
     Left(ValidationError("Game is already started"))
   }
 }

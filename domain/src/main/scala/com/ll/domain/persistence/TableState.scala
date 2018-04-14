@@ -2,10 +2,10 @@ package com.ll.domain.persistence
 
 import com.ll.domain.auth.{User, UserId}
 import com.ll.domain.games.Player.HumanPlayer
-import com.ll.domain.games.{Player, TableId}
+import com.ll.domain.games.{Player, PlayerPosition, TableId}
 import com.ll.domain.messages.WsMsg.Out.{Table, ValidationError}
 
-trait TableState [C <: TableCmd, E <: TableEvent, S <: TableState[C,E,S]] {
+trait TableState [P <: PlayerPosition, C <: TableCmd, E <: GameEvent[P], S <: TableState[P,C,E,S]] {
   def adminId: User
 
   def tableId: TableId
@@ -24,5 +24,7 @@ trait TableState [C <: TableCmd, E <: TableEvent, S <: TableState[C,E,S]] {
 
   def leftGame(cmd: UserCmd.LeftAsPlayer): Either[ValidationError, (UserEvent.PlayerLeft, S)]
 
-  def startGame(cmd: TableCmd.StartGame): Either[ValidationError, (UserEvent.PlayerLeft, S)]
+  def startGame(cmd: TableCmd.StartGame): Either[ValidationError, (TableEvent.GameStarted, S)]
+
+  def getPlayer(position: P): Option[Player]
 }

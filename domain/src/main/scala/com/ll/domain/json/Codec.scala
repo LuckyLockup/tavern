@@ -1,5 +1,6 @@
 package com.ll.domain.json
 
+import com.ll.domain.ai.AIType
 import com.ll.domain.auth.User
 import com.ll.domain.games.{Player, PlayerPosition, TableId}
 import com.ll.domain.games.Player.{AIPlayer, HumanPlayer}
@@ -60,6 +61,24 @@ object Codec {
       case Some(id) => Right(TableId(id))
     }
   }
+
+  implicit lazy val aiTypeEncoder: Encoder[AIType] = new Encoder[AIType] {
+    final def apply(a: AIType): Json = a match {
+      case AIType.Duck  => "Duck".asJson
+    }
+  }
+  implicit lazy val aiTypeDecoder: Decoder[AIType] = new Decoder[AIType] {
+    final def apply(c: HCursor): Decoder.Result[AIType] = {
+      def decode(str: String): Decoder.Result[AIType] = str match {
+        case "Duck"  => Right(AIType.Duck)
+        case _               => Left(DecodingFailure(s"$str is not known AI type", Nil))
+      }
+
+      c.focus.flatMap(_.asString).map(s => decode(s))
+        .getOrElse(Left(DecodingFailure("Can't decode AI type from", Nil)))
+    }
+  }
+
 
   implicit lazy val userEncoder = deriveEncoder[User]
   implicit lazy val userDecoder = deriveDecoder[User]

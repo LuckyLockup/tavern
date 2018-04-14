@@ -23,10 +23,17 @@ lazy val domain = project
     )
   )
 
+lazy val ai = project
+  .settings(commonSettings)
+  .dependsOn(domain)
+  .settings(libraryDependencies ++= Seq(
+    "ch.qos.logback" % "logback-classic" % versions.LogbackVersion,
+  ))
+
 lazy val riichi = project
   .settings(commonSettings)
-  .aggregate(domain)
-  .dependsOn(domain)
+  .aggregate(domain, ai)
+  .dependsOn(domain, ai)
   .settings(libraryDependencies ++= Seq(
     "com.typesafe.akka" %% "akka-actor" % versions.AkkaVersion,
     "com.typesafe.akka" %% "akka-slf4j" % versions.AkkaVersion,
