@@ -26,7 +26,7 @@ class TableActor[
   var spectaculars: Set[User] = Set.empty[User]
 
   def allUsers: Set[UserId] = {
-    _table.players.collect{case p: HumanPlayer => p}.map(_.user.id) ++ spectaculars.map(_.id)
+    _table.playerIds ++ spectaculars.map(_.id)
   }
 
   val receiveCommand: Receive = {
@@ -36,7 +36,7 @@ class TableActor[
         message match {
           case cmd: UserCmd.GetState              =>
             val state = _table.projection(cmd)
-            sender() ! _table.projection(cmd)
+            sender() ! state
             pubSub.sendToUser(cmd.userId, state)
           case UserCmd.JoinAsSpectacular(_, user) =>
             spectaculars += user
@@ -44,6 +44,25 @@ class TableActor[
           case UserCmd.LeftAsSpectacular(_, user) =>
             spectaculars -= user
             pubSub.sendToUsers(allUsers, Out.Riichi.SpectacularJoinedTable(user, tableId))
+
+          case cmd@UserCmd.JoinAsPlayer(_, user) =>
+            _table.joinGame(cmd) match {
+              case Left(error) => pubSub.sendToUser(user.id, error)
+              case Right((event, newState)) =>
+                persist(event) {e =>
+                  _table = newState
+                  pubSub.sendToUsers(_table.playerIds, WsMsgProjector.convert(event, table))
+                }
+            }
+          case cmd@UserCmd.LeftAsPlayer(_, user) =>
+            _table.leftGame(cmd) match {
+              case Left(error) => pubSub.sendToUser(user.id, error)
+              case Right((event, newState)) =>
+                persist(event) {e =>
+                  _table = newState
+                  pubSub.sendToUsers(_table.playerIds, WsMsgProjector.convert(event, table))
+                }
+            }
           //Game commands are special, because they can be sent to AI
           case cmd: GameCmd[GT] =>
             _table.validateCmd(cmd) match {

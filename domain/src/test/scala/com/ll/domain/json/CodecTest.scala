@@ -1,6 +1,8 @@
 package com.ll.domain.json
 
 import com.ll.domain.auth.{User, UserId}
+import com.ll.domain.games.Player.Riichi.HumanPlayer
+import com.ll.domain.games.position.PlayerPosition.RiichiPosition
 import com.ll.domain.games.{GameId, TableId}
 import com.ll.domain.json.Codec.{Test, decodeWsMsg, encodeWsMsg}
 import com.ll.domain.messages.WsMsg
@@ -62,6 +64,7 @@ class CodecTest extends WordSpec with Matchers {
           |  }
           |}
         """.stripMargin),
+
       (SpectacularLeftTable(user, tableId),
         """
           |{
@@ -75,7 +78,7 @@ class CodecTest extends WordSpec with Matchers {
           |  }
           |}
         """.stripMargin),
-      (RiichiState(TableId("table_22"), Set.empty),
+      (RiichiState(TableId("table_22"), Nil),
         """
           |{
           |  "type": "RiichiState",
@@ -84,23 +87,43 @@ class CodecTest extends WordSpec with Matchers {
           |    "players": []
           |  }
           |}
+        """.stripMargin),
+      (PlayerJoinedTable(tableId, HumanPlayer(user, RiichiPosition.EastPosition)),
+        """
+          |{
+          |  "type": "PlayerJoinedTable",
+          |  "payload": {
+          |    "tableId": "test_table",
+          |    "user": {
+          |      "type": "HumanPlayer",
+          |      "payload": {
+          |        "user": {
+          |          "id": 42,
+          |          "nickname": "Akagi"
+          |        },
+          |        "position": "EastPosition"
+          |      }
+          |    }
+          |  }
+          |}
         """.stripMargin)
     )
   }
 
   abstract class InMessages extends Common {
     import com.ll.domain.messages.WsMsg.In._
-    import com.ll.domain.persistence.RiichiCmd._
+    import com.ll.domain.persistence.RiichiGameCmd._
 
 
     val testData: List[(WsMsg.In, String)] = List(
       (Ping(42), """{"type":"Ping","payload":{"id":42}}"""),
-      (StartGame(tableId),
+      (StartGame(tableId, gameId),
         """
           |{
           |  "type": "StartGame",
           |  "payload": {
-          |    "tableId": "test_table"
+          |    "tableId": "test_table",
+          |    "gameId": 100
           |  }
           |}
         """.stripMargin)

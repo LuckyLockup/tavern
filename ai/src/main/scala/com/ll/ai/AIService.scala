@@ -5,7 +5,7 @@ import com.ll.domain.games.GameType.Riichi
 import com.ll.domain.games.position.PlayerPosition
 import com.ll.domain.messages.WsMsg.Out.GameEvent
 import com.ll.domain.messages.WsMsg.Out.Riichi.RiichiState
-import com.ll.domain.persistence.{RiichiCmd, RiichiEvent, TableCmd, TableEvent}
+import com.ll.domain.persistence._
 import org.slf4j.LoggerFactory
 
 import scala.concurrent.Future
@@ -17,7 +17,7 @@ case class AIService() {
     ai: AIType[Riichi],
     position: PlayerPosition[Riichi],
     outEvent: GameEvent[Riichi],
-    state: RiichiState): Future[List[TableCmd]] = {
+    state: RiichiState): Future[List[GameCmd[Riichi]]] = {
 
     log.info(s"$ai <--- $outEvent")
     outEvent match {

@@ -7,7 +7,10 @@ import com.ll.domain.games.{GameId, GameType, TableId}
 import com.ll.domain.messages.WsMsg
 
 sealed trait TableCmd extends WsMsg.In {def tableId: TableId}
-sealed trait UserCmd extends TableCmd {def userId: UserId}
+sealed trait UserCmd extends TableCmd {
+  def userId: UserId
+}
+
 sealed trait GameCmd[GT <: GameType] extends TableCmd {
   def gameId: GameId
   def position: Option[Either[UserId, PlayerPosition[GT]]]
@@ -15,23 +18,31 @@ sealed trait GameCmd[GT <: GameType] extends TableCmd {
 
 object UserCmd {
   case class GetState(tableId: TableId, userId: UserId) extends UserCmd
-  case class JoinAsPlayer(tableId: TableId, user: User) extends UserCmd {
-    def userId = user.id
-  }
-  case class LeftAsPlayer(tableId: TableId, user: User) extends UserCmd  {
-    def userId = user.id
-  }
+
   case class JoinAsSpectacular(tableId: TableId, user: User) extends UserCmd {
     def userId = user.id
   }
   case class LeftAsSpectacular(tableId: TableId, user: User) extends UserCmd {
     def userId = user.id
   }
+
+  case class JoinAsPlayer(tableId: TableId, user: User) extends UserCmd {
+    def userId = user.id
+  }
+  case class LeftAsPlayer(tableId: TableId, user: User) extends UserCmd  {
+    def userId = user.id
+  }
 }
 
-object RiichiCmd {
-  case class StartGame(tableId: TableId) extends TableCmd
-  case class PauseGame(tableId: TableId) extends TableCmd
+
+object RiichiGameCmd {
+  case class StartGame(tableId: TableId, gameId: GameId) extends GameCmd[Riichi] {
+    def position = None
+  }
+  case class PauseGame(tableId: TableId, gameId: GameId) extends GameCmd[Riichi] {
+    def position = None
+  }
+
   case class DiscardTile(
     tableId: TableId,
     gameId: GameId,

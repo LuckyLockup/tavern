@@ -71,9 +71,12 @@ class PubSub()(implicit system: ActorSystem, mat: Materializer) extends Logging 
     ar ! msg
   }
 
-  def sendToUsers(ids: Set[UserId], msg: WsMsg.Out): Unit = ids.foreach { id =>
-    log.info(s"[${ids.size}] >>> ${Codec.encodeWsMsg(msg)}")
-    wsConnections.get(id).foreach(ar => ar ! msg)
+  def sendToUsers(ids: Set[UserId], msg: WsMsg.Out): Unit = {
+    val validUsers = ids.intersect(wsConnections.keySet)
+    log.info(s"[${validUsers.size}] >>> ${Codec.encodeWsMsg(msg)}")
+    validUsers.foreach { id =>
+      wsConnections.get(id).foreach(ar => ar ! msg)
+    }
   }
 }
 
