@@ -2,9 +2,10 @@ package com.ll.domain.json
 
 import com.ll.domain.ai.AIType
 import com.ll.domain.auth.User
-import com.ll.domain.games.{Player, PlayerPosition, TableId}
-import com.ll.domain.games.Player.{AIPlayer, HumanPlayer}
-import com.ll.domain.games.riichi.RiichiPosition
+import com.ll.domain.games.GameType.Riichi
+import com.ll.domain.games.Player.Riichi.{AIPlayer, HumanPlayer}
+import com.ll.domain.games.position.PlayerPosition
+import com.ll.domain.games.{Player, TableId}
 import com.ll.domain.messages.WsMsg
 import com.ll.domain.persistence.{RiichiCmd, TableCmd, UserCmd}
 import io.circe.generic.decoding.DerivedDecoder
@@ -36,6 +37,25 @@ object Codec {
     }
   }
 
+  implicit def encodeEither[A, B](implicit
+    encoderA: Encoder[A],
+    encoderB: Encoder[B]
+  ): Encoder[Either[A, B]] = {
+    o: Either[A, B] =>
+      o.fold(_.asJson, _.asJson)
+  }
+
+  implicit def decodeEither[A, B](implicit
+    decoderA: Decoder[A],
+    decoderB: Decoder[B]
+  ): Decoder[Either[A, B]] = {
+    c: HCursor =>
+      c.as[A] match {
+        case Right(a) => Right(Left(a))
+        case _        => c.as[B].map(Right(_))
+      }
+  }
+
   def decoder[T: DerivedDecoder](s: String): Decoder[T] = new Decoder[T] {
     final def apply(c: HCursor): Decoder.Result[T] = {
       def decode(messageType: String, payload: Json): Decoder.Result[T] = messageType match {
@@ -62,16 +82,16 @@ object Codec {
     }
   }
 
-  implicit lazy val aiTypeEncoder: Encoder[AIType] = new Encoder[AIType] {
-    final def apply(a: AIType): Json = a match {
-      case AIType.Duck  => "Duck".asJson
+  implicit lazy val aiTypeEncoder: Encoder[AIType[Riichi]] = new Encoder[AIType[Riichi]] {
+    final def apply(a: AIType[Riichi]): Json = a match {
+      case AIType.Riichi.Duck => "Duck".asJson
     }
   }
-  implicit lazy val aiTypeDecoder: Decoder[AIType] = new Decoder[AIType] {
-    final def apply(c: HCursor): Decoder.Result[AIType] = {
-      def decode(str: String): Decoder.Result[AIType] = str match {
-        case "Duck"  => Right(AIType.Duck)
-        case _               => Left(DecodingFailure(s"$str is not known AI type", Nil))
+  implicit lazy val aiTypeDecoder: Decoder[AIType[Riichi]] = new Decoder[AIType[Riichi]] {
+    final def apply(c: HCursor): Decoder.Result[AIType[Riichi]] = {
+      def decode(str: String): Decoder.Result[AIType[Riichi]] = str match {
+        case "Duck" => Right(AIType.Riichi.Duck)
+        case _      => Left(DecodingFailure(s"$str is not known AI type", Nil))
       }
 
       c.focus.flatMap(_.asString).map(s => decode(s))
@@ -79,27 +99,26 @@ object Codec {
     }
   }
 
-
   implicit lazy val userEncoder = deriveEncoder[User]
   implicit lazy val userDecoder = deriveDecoder[User]
 
   //Player positions
-  implicit lazy val positionEncoder: Encoder[PlayerPosition] = new Encoder[PlayerPosition] {
-    final def apply(a: PlayerPosition): Json = a match {
-      case RiichiPosition.EastPosition  => "EastPosition".asJson
-      case RiichiPosition.SouthPosition => "SouthPosition".asJson
-      case RiichiPosition.WestPosition  => "WestPosition".asJson
-      case RiichiPosition.NorthPosition => "NorthPosition".asJson
+  implicit lazy val positionEncoder: Encoder[PlayerPosition[Riichi]] = new Encoder[PlayerPosition[Riichi]] {
+    final def apply(a: PlayerPosition[Riichi]): Json = a match {
+      case PlayerPosition.RiichiPosition.EastPosition  => "EastPosition".asJson
+      case PlayerPosition.RiichiPosition.SouthPosition => "SouthPosition".asJson
+      case PlayerPosition.RiichiPosition.WestPosition  => "WestPosition".asJson
+      case PlayerPosition.RiichiPosition.NorthPosition => "NorthPosition".asJson
     }
   }
 
-  implicit lazy val positionDecoder: Decoder[PlayerPosition] = new Decoder[PlayerPosition] {
-    final def apply(c: HCursor): Decoder.Result[PlayerPosition] = {
-      def decode(str: String): Decoder.Result[PlayerPosition] = str match {
-        case "EastPosition"  => Right(RiichiPosition.EastPosition)
-        case "SouthPosition" => Right(RiichiPosition.SouthPosition)
-        case "WestPosition"  => Right(RiichiPosition.WestPosition)
-        case "NorthPosition" => Right(RiichiPosition.NorthPosition)
+  implicit lazy val positionDecoder: Decoder[PlayerPosition[Riichi]] = new Decoder[PlayerPosition[Riichi]] {
+    final def apply(c: HCursor): Decoder.Result[PlayerPosition[Riichi]] = {
+      def decode(str: String): Decoder.Result[PlayerPosition[Riichi]] = str match {
+        case "EastPosition"  => Right(PlayerPosition.RiichiPosition.EastPosition)
+        case "SouthPosition" => Right(PlayerPosition.RiichiPosition.SouthPosition)
+        case "WestPosition"  => Right(PlayerPosition.RiichiPosition.WestPosition)
+        case "NorthPosition" => Right(PlayerPosition.RiichiPosition.NorthPosition)
         case _               => Left(DecodingFailure(s"$str is not known position", Nil))
       }
 
@@ -109,27 +128,20 @@ object Codec {
   }
 
   //Players
-  implicit lazy val HumanPlayerDecoder = decoder[Player.HumanPlayer]("HumanPlayer")
-  implicit lazy val HumanPlayerEncoder = encoder[Player.HumanPlayer]("HumanPlayer")
-  implicit lazy val AiPlayerDecoder = decoder[Player.AIPlayer]("AIPlayer")
-  implicit lazy val AiPlayerEncoder = encoder[Player.AIPlayer]("AIPlayer")
-  implicit lazy val PlayerDeocer = deriveDecoder[Player]
-  implicit lazy val playerEncoder = deriveEncoder[Player]
-
-  implicit val PlayerEncoder: Encoder[Player] = new Encoder[Player] {
-    final def apply(a: Player): Json = a match {
-      case x: HumanPlayer => wrap("HumanPlayer", x)(deriveEncoder[HumanPlayer])
-      case x: AIPlayer    => wrap("AIPlayer", x)(deriveEncoder[AIPlayer])
-    }
-  }
+  implicit lazy val humanPlayerEncoder = encoder[HumanPlayer]("HumanPlayer")
+  implicit lazy val humanPlayerDecoder = decoder[HumanPlayer]("AIPlayer")
+  implicit lazy val AIPlayerEncoder = encoder[AIPlayer]("AIPlayer")
+  implicit lazy val AIPlayerDecoder = decoder[AIPlayer]("AIPlayer")
+  implicit lazy val PlayerEncoder = deriveEncoder[Player[Riichi]]
+  implicit lazy val PlayerDecoder = deriveDecoder[Player[Riichi]]
 
   def decodeWsMsg(json: String): Either[DecodingFailure, WsMsg.In] = {
     implicit val inDecoder: Decoder[WsMsg.In] = new Decoder[WsMsg.In] {
       final def apply(c: HCursor): Decoder.Result[WsMsg.In] = {
         def decode(messageType: String, payload: Json): Decoder.Result[WsMsg.In] = messageType match {
           case "Ping"              => payload.as[WsMsg.In.Ping](deriveDecoder[WsMsg.In.Ping])
-          case "StartGame"         => payload.as[TableCmd.StartGame](deriveDecoder[TableCmd.StartGame])
-          case "PauseGame"         => payload.as[TableCmd.PauseGame](deriveDecoder[TableCmd.PauseGame])
+          case "StartGame"         => payload.as[RiichiCmd.StartGame](deriveDecoder[RiichiCmd.StartGame])
+          case "PauseGame"         => payload.as[RiichiCmd.PauseGame](deriveDecoder[RiichiCmd.PauseGame])
           case "GetState"          => payload.as[UserCmd.GetState](deriveDecoder[UserCmd.GetState])
           case "JoinAsPlayer"      => payload.as[UserCmd.JoinAsPlayer](deriveDecoder[UserCmd.JoinAsPlayer])
           case "LeftAsPlayer"      => payload.as[UserCmd.LeftAsPlayer](deriveDecoder[UserCmd.LeftAsPlayer])
@@ -159,23 +171,23 @@ object Codec {
 
   def encodeWsMsg(msg: WsMsg.Out): String = {
     val json = msg match {
-      case x: WsMsg.Out.Pong                         => wrap("Pong", x)(deriveEncoder[WsMsg.Out.Pong])
-      case x: WsMsg.Out.Message                      => wrap("Message", x)(deriveEncoder[WsMsg.Out.Message])
-      case x: WsMsg.Out.ValidationError              => wrap("ValidationError", x)(deriveEncoder[WsMsg.Out.ValidationError])
-      case x: WsMsg.Out.Table.PlayerJoinedTable      =>
-        wrap("PlayerJoinedTable", x)(deriveEncoder[WsMsg.Out.Table.PlayerJoinedTable])
-      case x: WsMsg.Out.Table.PlayerLeftTable        =>
-        wrap("PlayerLeftTable", x)(deriveEncoder[WsMsg.Out.Table.PlayerLeftTable])
-      case x: WsMsg.Out.Table.SpectacularJoinedTable =>
-        wrap("SpectacularJoinedTable", x)(deriveEncoder[WsMsg.Out.Table.SpectacularJoinedTable])
-      case x: WsMsg.Out.Table.SpectacularLeftTable   =>
-        wrap("SpectacularLeftTable", x)(deriveEncoder[WsMsg.Out.Table.SpectacularLeftTable])
-      case x: WsMsg.Out.Table.TableState             =>
-        wrap("TableState", x)(deriveEncoder[WsMsg.Out.Table.TableState])
-      case x: WsMsg.Out.Table.GameStarted            =>
-        wrap("GameStarted", x)(deriveEncoder[WsMsg.Out.Table.GameStarted])
-      case x: WsMsg.Out.Table.GamePaused             =>
-        wrap("GamePaused", x)(deriveEncoder[WsMsg.Out.Table.GamePaused])
+      case x: WsMsg.Out.Pong            => wrap("Pong", x)(deriveEncoder[WsMsg.Out.Pong])
+      case x: WsMsg.Out.Message         => wrap("Message", x)(deriveEncoder[WsMsg.Out.Message])
+      case x: WsMsg.Out.ValidationError => wrap("ValidationError", x)(deriveEncoder[WsMsg.Out.ValidationError])
+      case x: WsMsg.Out.Riichi.PlayerJoinedTable      =>
+        wrap("PlayerJoinedTable", x)(deriveEncoder[WsMsg.Out.Riichi.PlayerJoinedTable])
+      case x: WsMsg.Out.Riichi.PlayerLeftTable        =>
+        wrap("PlayerLeftTable", x)(deriveEncoder[WsMsg.Out.Riichi.PlayerLeftTable])
+      case x: WsMsg.Out.Riichi.SpectacularJoinedTable =>
+        wrap("SpectacularJoinedTable", x)(deriveEncoder[WsMsg.Out.Riichi.SpectacularJoinedTable])
+      case x: WsMsg.Out.Riichi.SpectacularLeftTable   =>
+        wrap("SpectacularLeftTable", x)(deriveEncoder[WsMsg.Out.Riichi.SpectacularLeftTable])
+      case x: WsMsg.Out.Riichi.RiichiState            =>
+        wrap("RiichiState", x)(deriveEncoder[WsMsg.Out.Riichi.RiichiState])
+      case x: WsMsg.Out.Riichi.GameStarted            =>
+        wrap("GameStarted", x)(deriveEncoder[WsMsg.Out.Riichi.GameStarted])
+      case x: WsMsg.Out.Riichi.GamePaused             =>
+        wrap("GamePaused", x)(deriveEncoder[WsMsg.Out.Riichi.GamePaused])
     }
     json.noSpaces
   }
@@ -187,13 +199,13 @@ object Codec {
           case "Pong"                   => payload.as[WsMsg.Out.Pong](deriveDecoder[WsMsg.Out.Pong])
           case "Message"                => payload.as[WsMsg.Out.Message](deriveDecoder[WsMsg.Out.Message])
           case "ValidationError"        => payload.as[WsMsg.Out.ValidationError](deriveDecoder[WsMsg.Out.ValidationError])
-          case "GameStarted"            => payload.as[WsMsg.Out.Table.GameStarted](deriveDecoder[WsMsg.Out.Table.GameStarted])
-          case "GamePaused"             => payload.as[WsMsg.Out.Table.GamePaused](deriveDecoder[WsMsg.Out.Table.GamePaused])
-          case "SpectacularJoinedTable" => payload.as[WsMsg.Out.Table.SpectacularJoinedTable](deriveDecoder[WsMsg.Out.Table.SpectacularJoinedTable])
-          case "SpectacularLeftTable"   => payload.as[WsMsg.Out.Table.SpectacularLeftTable](deriveDecoder[WsMsg.Out.Table.SpectacularLeftTable])
-          case "PlayerJoinedTable"      => payload.as[WsMsg.Out.Table.PlayerJoinedTable](deriveDecoder[WsMsg.Out.Table.PlayerJoinedTable])
-          case "PlayerLeftTable"        => payload.as[WsMsg.Out.Table.PlayerLeftTable](deriveDecoder[WsMsg.Out.Table.PlayerLeftTable])
-          case "TableState"             => payload.as[WsMsg.Out.Table.TableState](deriveDecoder[WsMsg.Out.Table.TableState])
+          case "GameStarted"            => payload.as[WsMsg.Out.Riichi.GameStarted](deriveDecoder[WsMsg.Out.Riichi.GameStarted])
+          case "GamePaused"             => payload.as[WsMsg.Out.Riichi.GamePaused](deriveDecoder[WsMsg.Out.Riichi.GamePaused])
+          case "SpectacularJoinedTable" => payload.as[WsMsg.Out.Riichi.SpectacularJoinedTable](deriveDecoder[WsMsg.Out.Riichi.SpectacularJoinedTable])
+          case "SpectacularLeftTable"   => payload.as[WsMsg.Out.Riichi.SpectacularLeftTable](deriveDecoder[WsMsg.Out.Riichi.SpectacularLeftTable])
+          case "PlayerJoinedTable"      => payload.as[WsMsg.Out.Riichi.PlayerJoinedTable](deriveDecoder[WsMsg.Out.Riichi.PlayerJoinedTable])
+          case "PlayerLeftTable"        => payload.as[WsMsg.Out.Riichi.PlayerLeftTable](deriveDecoder[WsMsg.Out.Riichi.PlayerLeftTable])
+          case "RiichiState"             => payload.as[WsMsg.Out.Riichi.RiichiState](deriveDecoder[WsMsg.Out.Riichi.RiichiState])
         }
 
         for {
@@ -214,10 +226,10 @@ object Codec {
     }
 
     def encodeWsMsg(msg: WsMsg.In): String = {
-      val json = msg match {
+      val json: Json = msg match {
         case x: WsMsg.In.Ping             => wrap("Ping", x)(deriveEncoder[WsMsg.In.Ping])
-        case x: TableCmd.StartGame        => wrap("StartGame", x)(deriveEncoder[TableCmd.StartGame])
-        case x: TableCmd.PauseGame        => wrap("PauseGame", x)(deriveEncoder[TableCmd.PauseGame])
+        case x: RiichiCmd.StartGame       => wrap("StartGame", x)(deriveEncoder[RiichiCmd.StartGame])
+        case x: RiichiCmd.PauseGame       => wrap("PauseGame", x)(deriveEncoder[RiichiCmd.PauseGame])
         case x: UserCmd.GetState          => wrap("GetState", x)(deriveEncoder[UserCmd.GetState])
         case x: UserCmd.JoinAsPlayer      => wrap("JoinAsPlayer", x)(deriveEncoder[UserCmd.JoinAsPlayer])
         case x: UserCmd.LeftAsPlayer      => wrap("LeftAsPlayer", x)(deriveEncoder[UserCmd.LeftAsPlayer])

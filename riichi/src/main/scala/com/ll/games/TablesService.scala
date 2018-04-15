@@ -11,7 +11,9 @@ import com.ll.domain.persistence._
 import akka.pattern.{Backoff, BackoffSupervisor, ask}
 import akka.util.Timeout
 import com.ll.config.ServerConfig
-import com.ll.domain.games.riichi.{NoGameOnTable, RiichiPosition, RiichiTableState}
+import com.ll.domain.games.GameType.Riichi
+import com.ll.domain.games.riichi.{NoGameOnTable, RiichiTableState}
+import com.ll.domain.messages.WsMsg.Out.Riichi.RiichiState
 
 import scala.concurrent.Future
 import scala.concurrent.duration._
@@ -22,16 +24,16 @@ class TablesService(pubSub: PubSub, config: ServerConfig)(implicit system: Actor
 
   private var tables: Map[TableId, ActorRef] = Map.empty[TableId, ActorRef]
 
-  def getOrCreate(tableId: TableId, userId: UserId): Future[Table.TableState] = {
+  def getOrCreate(tableId: TableId, userId: UserId): Future[RiichiState] = {
     tables.get(tableId)
       .map(ar => {
         log.info("Table is already created")
-        (ar ? UserCmd.GetState(tableId, userId)).mapTo[Table.TableState]
+        (ar ? UserCmd.GetState(tableId, userId)).mapTo[RiichiState]
       })
       .getOrElse {
         log.info(s"Creating table for $tableId")
         val table: RiichiTableState = NoGameOnTable(User(userId, "God"), tableId)
-        val props: Props = Props(new TableActor[RiichiPosition, RiichiCmd, RiichiEvent, RiichiTableState](table, pubSub))
+        val props: Props = Props(new TableActor[Riichi, RiichiTableState](table, pubSub))
         val supervisor = BackoffSupervisor.props(
           Backoff.onStop(
             props,
@@ -54,7 +56,7 @@ class TablesService(pubSub: PubSub, config: ServerConfig)(implicit system: Actor
           actorRef ! PoisonPill
           tables -= tableId
         }
-        (actorRef ? UserCmd.GetState(tableId, userId)).mapTo[Table.TableState]
+        (actorRef ? UserCmd.GetState(tableId, userId)).mapTo[RiichiState]
       }
   }
 

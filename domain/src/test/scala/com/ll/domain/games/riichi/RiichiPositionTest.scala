@@ -1,7 +1,9 @@
 package com.ll.domain.games.riichi
 
 import com.ll.domain.auth.{User, UserId}
-import com.ll.domain.games.Player.HumanPlayer
+import com.ll.domain.games.Player.Riichi.HumanPlayer
+import com.ll.domain.games.position.PlayerPosition.RiichiPosition
+import com.ll.domain.games.position.PositionUtility
 import org.scalatest.{Matchers, WordSpec}
 
 class RiichiPositionTest extends WordSpec with Matchers{
@@ -13,10 +15,10 @@ class RiichiPositionTest extends WordSpec with Matchers{
     val user3 = User(UserId(3), "Akagi3")
     val user4 = User(UserId(4), "Akagi4")
 
-    players = RiichiPosition.addUser(players, user1)._1
-    players = RiichiPosition.addUser(players, user2)._1
-    players = RiichiPosition.addUser(players, user3)._1
-    players = RiichiPosition.addUser(players, user4)._1
+    players = PositionUtility.addUser(players, user1)._1
+    players = PositionUtility.addUser(players, user2)._1
+    players = PositionUtility.addUser(players, user3)._1
+    players = PositionUtility.addUser(players, user4)._1
 
     players should contain (HumanPlayer(user1, RiichiPosition.EastPosition))
     players should contain (HumanPlayer(user2, RiichiPosition.SouthPosition))
@@ -31,12 +33,12 @@ class RiichiPositionTest extends WordSpec with Matchers{
     val user3 = User(UserId(3), "Akagi3")
     val user4 = User(UserId(4), "Akagi4")
 
-    players = RiichiPosition.addUser(players, user1)._1
-    players = RiichiPosition.addUser(players, user2)._1
-    players = RiichiPosition.addUser(players, user3)._1
-    players = RiichiPosition.removeUser(players, user1)
-    players = RiichiPosition.addUser(players, user4)._1
-    players = RiichiPosition.addUser(players, user1)._1
+    players = PositionUtility.addUser(players, user1)._1
+    players = PositionUtility.addUser(players, user2)._1
+    players = PositionUtility.addUser(players, user3)._1
+    players = PositionUtility.removeUser(players, user1)
+    players = PositionUtility.addUser(players, user4)._1
+    players = PositionUtility.addUser(players, user1)._1
 
     players should contain (HumanPlayer(user4, RiichiPosition.EastPosition))
     players should contain (HumanPlayer(user2, RiichiPosition.SouthPosition))

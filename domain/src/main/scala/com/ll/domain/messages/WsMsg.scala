@@ -1,9 +1,10 @@
 package com.ll.domain.messages
 
 import com.ll.domain.auth.User
-import com.ll.domain.games.Player.HumanPlayer
-import com.ll.domain.games.riichi.RiichiPosition
-import com.ll.domain.games.{GameId, Player, TableId}
+import com.ll.domain.games.GameType.Riichi
+import com.ll.domain.games.Player.Riichi.HumanPlayer
+import com.ll.domain.games.position.PlayerPosition
+import com.ll.domain.games.{GameId, GameType, Player, TableId}
 
 
 object WsMsg {
@@ -19,20 +20,35 @@ object WsMsg {
     case class Pong(id: Int) extends Out
     case class Message(txt: String) extends Out
     case class ValidationError(reason: String) extends Out
-    trait GameEvent extends Table
 
-    object Table {
-      case class TableState(
+    sealed trait GameEvent[GT<: GameType] extends Table
+    sealed trait TableState[GT<: GameType] extends Table
+
+    object Riichi {
+      case class RiichiState(
         tableId: TableId,
-        players: Set[Player]
-      ) extends Table
-      case class GameStarted(tableId: TableId, gameId: GameId) extends Table
-      case class GamePaused(tableId: TableId, gameId: GameId) extends Table
+        players: Set[Player[Riichi]]
+      ) extends TableState[Riichi]
 
-      case class SpectacularJoinedTable(user: User, tableId: TableId) extends Out
-      case class SpectacularLeftTable(user: User, tableId: TableId) extends Out
-      case class PlayerJoinedTable(tableId: TableId, user: HumanPlayer) extends Out
-      case class PlayerLeftTable(tableId: TableId, user: HumanPlayer) extends Out
+      case class GameStarted(tableId: TableId, gameId: GameId) extends GameEvent[Riichi]
+      case class GamePaused(tableId: TableId, gameId: GameId) extends GameEvent[Riichi]
+
+      case class SpectacularJoinedTable(user: User, tableId: TableId) extends GameEvent[Riichi]
+      case class SpectacularLeftTable(user: User, tableId: TableId) extends GameEvent[Riichi]
+      case class PlayerJoinedTable(tableId: TableId, user: HumanPlayer) extends GameEvent[Riichi]
+      case class PlayerLeftTable(tableId: TableId, user: HumanPlayer) extends GameEvent[Riichi]
+
+      case class TileFromWallTaken(
+        tableId: TableId,
+        position: PlayerPosition[Riichi],
+        tile: Option[String]
+      ) extends GameEvent[Riichi]
+
+      case class TileDiscarded(
+        tableId: TableId,
+        position: PlayerPosition[Riichi],
+        tile: String
+      ) extends GameEvent[Riichi]
     }
   }
 }

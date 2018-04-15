@@ -1,30 +1,23 @@
 package com.ll.domain.persistence
 
-import com.ll.domain.auth.{User, UserId}
-import com.ll.domain.games.Player.HumanPlayer
-import com.ll.domain.games.{Player, PlayerPosition, TableId}
+import com.ll.domain.auth.User
+import com.ll.domain.games.position.PlayerPosition
+import com.ll.domain.games.{GameType, Player, TableId}
+import com.ll.domain.messages.WsMsg
 import com.ll.domain.messages.WsMsg.Out.{Table, ValidationError}
 
-trait TableState [P <: PlayerPosition, C <: TableCmd, E <: GameEvent[P], S <: TableState[P,C,E,S]] {
+trait TableState [GT <: GameType, S <: TableState[GT, S]] {
   def adminId: User
 
   def tableId: TableId
 
-  def validateCmd(cmd: C): Either[ValidationError, List[E]]
+  def validateCmd(cmd: GameCmd[GT]): Either[ValidationError, List[GameEvent[GT]]]
 
-  def applyEvent(e: E): S
+  def applyEvent(e: GameEvent[GT]): S
 
-  def projection(cmd: UserCmd.GetState): Table.TableState
+  def projection(cmd: UserCmd.GetState): WsMsg.Out.TableState[GT]
 
-  def players: Set[Player]
+  def players: Set[Player[GT]]
 
-  def humanPlayers: Set[HumanPlayer]
-
-  def joinGame(cmd: UserCmd.JoinAsPlayer): Either[ValidationError, (UserEvent.PlayerJoined, S)]
-
-  def leftGame(cmd: UserCmd.LeftAsPlayer): Either[ValidationError, (UserEvent.PlayerLeft, S)]
-
-  def startGame(cmd: TableCmd.StartGame): Either[ValidationError, (TableEvent.GameStarted, S)]
-
-  def getPlayer(position: P): Option[Player]
+  def getPlayer(position: PlayerPosition[GT]): Option[Player[GT]]
 }

@@ -44,7 +44,7 @@ class CodecTest extends WordSpec with Matchers {
 
   abstract class OutMessages extends Common {
     import com.ll.domain.messages.WsMsg.Out._
-    import com.ll.domain.messages.WsMsg.Out.Table._
+    import com.ll.domain.messages.WsMsg.Out.Riichi._
 
     val testData: List[(WsMsg.Out, String)] = List(
       (Pong(42), """{"type":"Pong","payload":{"id":42}}"""),
@@ -75,10 +75,10 @@ class CodecTest extends WordSpec with Matchers {
           |  }
           |}
         """.stripMargin),
-      (TableState(TableId("table_22"), Set.empty),
+      (RiichiState(TableId("table_22"), Set.empty),
         """
           |{
-          |  "type": "TableState",
+          |  "type": "RiichiState",
           |  "payload": {
           |    "tableId": "table_22",
           |    "players": []
@@ -90,8 +90,6 @@ class CodecTest extends WordSpec with Matchers {
 
   abstract class InMessages extends Common {
     import com.ll.domain.messages.WsMsg.In._
-    import com.ll.domain.persistence.TableCmd._
-    import com.ll.domain.persistence.UserCmd._
     import com.ll.domain.persistence.RiichiCmd._
 
 
@@ -100,7 +98,7 @@ class CodecTest extends WordSpec with Matchers {
       (StartGame(tableId),
         """
           |{
-          |  "type": "TableCmd.StartGame",
+          |  "type": "StartGame",
           |  "payload": {
           |    "tableId": "test_table"
           |  }

@@ -1,16 +1,16 @@
 package com.ll.domain.persistence
 
 import com.ll.domain.auth.{User, UserId}
-import com.ll.domain.games.{GameId, Player, TableId}
+import com.ll.domain.games.GameType.Riichi
+import com.ll.domain.games.position.PlayerPosition
+import com.ll.domain.games.{GameId, GameType, TableId}
 import com.ll.domain.messages.WsMsg
 
 sealed trait TableCmd extends WsMsg.In {def tableId: TableId}
 sealed trait UserCmd extends TableCmd {def userId: UserId}
-sealed trait RiichiCmd extends TableCmd {def gameId: GameId}
-
-object TableCmd {
-  case class StartGame(tableId: TableId) extends TableCmd
-  case class PauseGame(tableId: TableId) extends TableCmd
+sealed trait GameCmd[GT <: GameType] extends TableCmd {
+  def gameId: GameId
+  def position: Option[Either[UserId, PlayerPosition[GT]]]
 }
 
 object UserCmd {
@@ -30,28 +30,33 @@ object UserCmd {
 }
 
 object RiichiCmd {
+  case class StartGame(tableId: TableId) extends TableCmd
+  case class PauseGame(tableId: TableId) extends TableCmd
   case class DiscardTile(
     tableId: TableId,
-    userId: UserId,
     gameId: GameId,
-    tile: String) extends RiichiCmd
+    position: Option[Either[UserId, PlayerPosition[Riichi]]],
+    tile: String) extends GameCmd[Riichi]
 
   case class GetTileFromWall(
     tableId: TableId,
     userId: UserId,
-    gameId: GameId) extends RiichiCmd
+    position: Option[Either[UserId, PlayerPosition[Riichi]]],
+    gameId: GameId) extends GameCmd[Riichi]
 
   case class ClaimTile(
     tableId: TableId,
     userId: UserId,
     gameId: GameId,
+    position: Option[Either[UserId, PlayerPosition[Riichi]]],
     tile: String
-  ) extends RiichiCmd
+  ) extends GameCmd[Riichi]
 
   case class DeclareWin(
     tableId: TableId,
     userId: UserId,
-    gameId: GameId
-  ) extends RiichiCmd
+    gameId: GameId,
+    position: Option[Either[UserId, PlayerPosition[Riichi]]],
+  ) extends GameCmd[Riichi]
 }
 

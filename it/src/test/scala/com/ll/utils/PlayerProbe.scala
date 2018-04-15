@@ -6,7 +6,6 @@ import akka.http.scaladsl.model._
 import akka.http.scaladsl.unmarshalling.Unmarshal
 import akka.stream.Materializer
 import com.ll.domain.auth.{User, UserId}
-import com.ll.domain.games.Player.HumanPlayer
 import com.ll.domain.games.{GameId, TableId}
 import com.ll.domain.messages.WsMsg
 import io.circe.Json

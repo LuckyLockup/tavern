@@ -2,8 +2,8 @@ package com.ll.games
 
 import akka.persistence.PersistentActor
 import com.ll.domain.auth.{User, UserId}
-import com.ll.domain.games.Player.{AIPlayer, HumanPlayer}
-import com.ll.domain.games.PlayerPosition
+import com.ll.domain.games.GameType
+import com.ll.domain.games.Player.Riichi.{AIPlayer, HumanPlayer}
 import com.ll.domain.messages.WsMsg.Out
 import com.ll.domain.messages.WsMsg.Out.ValidationError
 import com.ll.domain.messages.WsMsgProjector
@@ -14,11 +14,9 @@ import com.ll.ws.PubSub
 import scala.reflect.ClassTag
 
 class TableActor[
-  P <: PlayerPosition,
-  C <: TableCmd : ClassTag,
-  E <: GameEvent[P] : ClassTag,
-  S <: TableState[P, C, E, S] : ClassTag
-  ](table: TableState[P, C, E, S], pubSub: PubSub)
+  GT <: GameType,
+  S <: TableState[GT, S] : ClassTag
+  ](table: TableState[GT, S], pubSub: PubSub)
   extends PersistentActor with Logging {
   def tableId = table.tableId
 
@@ -28,7 +26,7 @@ class TableActor[
   var spectaculars: Set[User] = Set.empty[User]
 
   def allUsers: Set[UserId] = {
-    _table.humanPlayers.map(_.user.id) ++ spectaculars.map(_.id)
+    _table.players.collect{case p: HumanPlayer => p}.map(_.user.id) ++ spectaculars.map(_.id)
   }
 
   val receiveCommand: Receive = {
@@ -40,20 +38,16 @@ class TableActor[
             val state = _table.projection(cmd)
             sender() ! _table.projection(cmd)
             pubSub.sendToUser(cmd.userId, state)
-          case cmd: UserCmd.JoinAsPlayer          =>
-            persistAndNotifyClients(_table.joinGame(cmd), cmd.userId)
-          case cmd: UserCmd.LeftAsPlayer          =>
-            persistAndNotifyClients(_table.leftGame(cmd), cmd.userId)
           case UserCmd.JoinAsSpectacular(_, user) =>
             spectaculars += user
-            pubSub.sendToUsers(allUsers, Out.Table.SpectacularJoinedTable(user, tableId))
+            pubSub.sendToUsers(allUsers, Out.Riichi.SpectacularJoinedTable(user, tableId))
           case UserCmd.LeftAsSpectacular(_, user) =>
             spectaculars -= user
-            pubSub.sendToUsers(allUsers, Out.Table.SpectacularJoinedTable(user, tableId))
+            pubSub.sendToUsers(allUsers, Out.Riichi.SpectacularJoinedTable(user, tableId))
           //Game commands are special, because they can be sent to AI
-          case cmd: C =>
+          case cmd: GameCmd[GT] =>
             _table.validateCmd(cmd) match {
-              case Left(error) => pubSub.sendToUser(cmd.userId, error)
+              case Left(error) => ???
               case Right(events) => persistAll(events) { e =>
                 _table.getPlayer(e.position) match {
                   case None => log.warn(s"For $cmd player is not found")
@@ -74,13 +68,6 @@ class TableActor[
     }
   }
 
-  private def persistAndNotifyClients(result: Either[ValidationError, (TableEvent, S)], userId: UserId) = result match {
-    case Left(error)       => pubSub.sendToUser(userId, error)
-    case Right((e, state)) => persist(e) { e =>
-      _table = state
-      pubSub.sendToUsers(allUsers, WsMsgProjector.convert(e, state))
-    }
-  }
 
   val receiveRecover: Receive = {
     case st =>

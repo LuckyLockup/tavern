@@ -1,19 +1,20 @@
 package com.ll.domain.messages
 
+import com.ll.domain.games.GameType
 import com.ll.domain.messages.WsMsg.Out
-import com.ll.domain.messages.WsMsg.Out.Table
-import com.ll.domain.persistence.{TableEvent, TableState, UserEvent}
+import com.ll.domain.messages.WsMsg.Out.Riichi
+import com.ll.domain.persistence.{RiichiEvent, TableEvent, TableState}
 
 object WsMsgProjector {
 
-  def convert(event: TableEvent, state: TableState[_, _, _, _]): Out = event match {
-    case TableEvent.GameStarted(tableId, gameId) =>
-      Table.GameStarted(tableId, gameId)
-    case TableEvent.GamePaused(tableId, gameId) =>
-      Table.GamePaused(tableId, gameId)
-    case UserEvent.PlayerJoined(tableId, player) =>
-      Table.PlayerJoinedTable(tableId, player)
-    case UserEvent.PlayerLeft(tableId, player) =>
-      Table.PlayerLeftTable(tableId, player)
+  def convert[GT<: GameType](event: TableEvent[GT], state: TableState[GT, _]): Out = event match {
+    case RiichiEvent.GameStarted(tableId, gameId)  =>
+      Riichi.GameStarted(tableId, gameId)
+    case RiichiEvent.GamePaused(tableId, gameId)  =>
+      Riichi.GamePaused(tableId, gameId)
+    case RiichiEvent.PlayerJoined(tableId, player) =>
+      Riichi.PlayerJoinedTable(tableId, player)
+    case RiichiEvent.PlayerLeft(tableId, player)   =>
+      Riichi.PlayerLeftTable(tableId, player)
   }
 }

@@ -1,70 +1,56 @@
 package com.ll.domain.persistence
 
 import com.ll.domain.auth.UserId
-import com.ll.domain.games.Player.HumanPlayer
+import com.ll.domain.games.GameType.Riichi
+import com.ll.domain.games.Player.Riichi.HumanPlayer
 import com.ll.domain.games.deck.Tile
-import com.ll.domain.games.riichi.RiichiPosition
-import com.ll.domain.games.{GameId, PlayerPosition, TableId}
+import com.ll.domain.games.position.PlayerPosition
+import com.ll.domain.games.{GameId, GameType, TableId}
 
-sealed trait TableEvent {def tableId: TableId}
-sealed trait UserEvent extends TableEvent {def userId: UserId}
-sealed trait GameEvent[P <: PlayerPosition] extends TableEvent {
+sealed trait TableEvent[GT <: GameType] {def tableId: TableId}
+sealed trait GameEvent[GT <: GameType] extends TableEvent[GT] {
+  def tableId: TableId
   def gameId: GameId
-  def position: P
+  def position: PlayerPosition[GT]
   def turn: Int
-}
-sealed trait RiichiEvent extends GameEvent[RiichiPosition] {
-  def position: RiichiPosition
-}
-
-object TableEvent {
-  case class GameStarted(tableId: TableId, gameId: GameId) extends TableEvent
-  case class GamePaused(tableId: TableId, gameId: GameId) extends TableEvent
-}
-
-object UserEvent {
-  case class PlayerJoined(tableId: TableId, player: HumanPlayer) extends UserEvent {
-    def userId = player.user.id
-  }
-  case class PlayerLeft(tableId: TableId, player: HumanPlayer) extends UserEvent {
-    def userId = player.user.id
-  }
 }
 
 object RiichiEvent {
+  case class GameStarted(tableId: TableId, gameId: GameId) extends TableEvent[Riichi]
+  case class GamePaused(tableId: TableId, gameId: GameId) extends TableEvent[Riichi]
+  case class PlayerJoined(tableId: TableId, player: HumanPlayer) extends TableEvent[Riichi]
+  case class PlayerLeft(tableId: TableId, player: HumanPlayer) extends TableEvent[Riichi]
+
   case class TileDiscared(
     tableId: TableId,
-    userId: UserId,
     gameId: GameId,
     tile: Tile,
     turn: Int,
-    position: RiichiPosition
-  ) extends RiichiEvent
+    position: PlayerPosition[Riichi]
+  ) extends GameEvent[Riichi]
 
   case class TileFromTheWall(
     tableId: TableId,
-    userId: UserId,
     gameId: GameId,
     tile: Tile,
     turn: Int,
-    position: RiichiPosition
-  ) extends RiichiEvent
+    position: PlayerPosition[Riichi]
+  ) extends GameEvent[Riichi]
 
   case class TileClaimed(
     tableId: TableId,
-    userId: UserId,
     gameId: GameId,
     tile: Tile,
     turn: Int,
-    position: RiichiPosition
-  ) extends RiichiEvent
+    position: PlayerPosition[Riichi]
+  ) extends GameEvent[Riichi]
 
   case class GameFinished(
     tableId: TableId,
     gameId: GameId,
     winner: UserId,
     turn: Int,
-    position: RiichiPosition
-  ) extends RiichiEvent
+    position: PlayerPosition[Riichi]
+  ) extends GameEvent[Riichi]
 }
 
