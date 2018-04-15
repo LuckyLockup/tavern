@@ -136,7 +136,11 @@ object Codec {
     case p: HumanPlayer => p.asJson
     case p: AIPlayer => p.asJson
   }
-  implicit lazy val PlayerDecoder: Decoder[Player[Riichi]] = humanPlayerDecoder.or(AIPlayerDecoder)
+  implicit lazy val PlayerDecoder: Decoder[Player[Riichi]] = Decoder.instance{cur =>
+    import cats.syntax.either._
+    humanPlayerDecoder.apply(cur) orElse
+    AIPlayerDecoder.apply(cur)
+  }
 
 
   def decodeWsMsg(json: String): Either[DecodingFailure, WsMsg.In] = {
