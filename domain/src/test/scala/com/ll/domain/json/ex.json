@@ -1,0 +1,16 @@
+{
+  "type": "PlayerJoinedTable",
+  "payload": {
+    "tableId": "table_78",
+    "user": {
+      "type": "HumanPlayer",
+      "payload": {
+        "user": {
+          "id": 101,
+          "nickname": "2un4T0"
+        },
+        "position": "EastPosition"
+      }
+    }
+  }
+}

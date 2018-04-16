@@ -35,8 +35,8 @@ object WsMsg {
 
       case class SpectacularJoinedTable(user: User, tableId: TableId) extends GameEvent[Riichi]
       case class SpectacularLeftTable(user: User, tableId: TableId) extends GameEvent[Riichi]
-      case class PlayerJoinedTable(tableId: TableId, user: HumanPlayer) extends GameEvent[Riichi]
-      case class PlayerLeftTable(tableId: TableId, user: HumanPlayer) extends GameEvent[Riichi]
+      case class PlayerJoinedTable(tableId: TableId, user: HumanPlayer[Riichi]) extends GameEvent[Riichi]
+      case class PlayerLeftTable(tableId: TableId, user: HumanPlayer[Riichi]) extends GameEvent[Riichi]
 
       case class TileFromWallTaken(
         tableId: TableId,

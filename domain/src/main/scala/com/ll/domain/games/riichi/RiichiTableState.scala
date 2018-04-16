@@ -15,7 +15,7 @@ trait RiichiTableState extends TableState[Riichi, RiichiTableState]
 case class NoGameOnTable(
   adminId: User,
   tableId: TableId,
-  humanPlayers: Set[HumanPlayer] = Set.empty
+  humanPlayers: Set[HumanPlayer[Riichi]] = Set.empty
 ) extends RiichiTableState {
 
   def playerIds = humanPlayers.map(_.user.id)
@@ -76,7 +76,7 @@ case class GameStarted(
   hands: Map[Player[Riichi], PlayerState]
 ) extends RiichiTableState {
 
-  def playerIds = hands.keySet.collect{case p: HumanPlayer => p.user.id}
+  def playerIds = hands.keySet.collect{case p: HumanPlayer[Riichi] => p.user.id}
 
   def validateCmd(cmd: GameCmd[Riichi]): Either[ValidationError, List[GameEvent[Riichi]]] = ???
 

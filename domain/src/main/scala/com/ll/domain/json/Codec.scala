@@ -128,13 +128,13 @@ object Codec {
   }
 
   //Players
-  implicit lazy val humanPlayerEncoder = encoder[HumanPlayer]("HumanPlayer")
-  implicit lazy val humanPlayerDecoder: Decoder[HumanPlayer] = decoder[HumanPlayer]("HumanPlayer")
-  implicit lazy val AIPlayerEncoder = encoder[AIPlayer]("AIPlayer")
-  implicit lazy val AIPlayerDecoder: Decoder[AIPlayer] = decoder[AIPlayer]("AIPlayer")
+  implicit lazy val humanPlayerEncoder = encoder[HumanPlayer[Riichi]]("HumanPlayer")
+  implicit lazy val humanPlayerDecoder: Decoder[HumanPlayer[Riichi]] = decoder[HumanPlayer[Riichi]]("HumanPlayer")
+  implicit lazy val AIPlayerEncoder = encoder[AIPlayer[Riichi]]("AIPlayer")
+  implicit lazy val AIPlayerDecoder: Decoder[AIPlayer[Riichi]] = decoder[AIPlayer[Riichi]]("AIPlayer")
   implicit lazy val PlayerEncoder: Encoder[Player[Riichi]] = Encoder.instance {
-    case p: HumanPlayer => p.asJson
-    case p: AIPlayer => p.asJson
+    case p: HumanPlayer[Riichi] => p.asJson
+    case p: AIPlayer[Riichi] => p.asJson
   }
   implicit lazy val PlayerDecoder: Decoder[Player[Riichi]] = Decoder.instance{cur =>
     import cats.syntax.either._

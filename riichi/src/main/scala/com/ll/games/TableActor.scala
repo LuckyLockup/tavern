@@ -70,8 +70,8 @@ class TableActor[
               case Right(events) => persistAll(events) { e =>
                 _table.getPlayer(e.position) match {
                   case None => log.warn(s"For $cmd player is not found")
-                  case Some(humanPlayer: HumanPlayer) =>
-                  case Some(aiPlayer: AIPlayer) =>
+                  case Some(humanPlayer: HumanPlayer[GT]) =>
+                  case Some(aiPlayer: AIPlayer[GT]) =>
                 }
                 ???
               }

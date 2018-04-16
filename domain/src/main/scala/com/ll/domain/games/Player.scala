@@ -13,11 +13,11 @@ sealed trait Player[GT <: GameType] {
 
 object Player {
   object Riichi {
-    case class HumanPlayer(user: User, position: PlayerPosition[Riichi]) extends Player[Riichi] {
+    case class HumanPlayer[GT <: GameType](user: User, position: PlayerPosition[GT]) extends Player[GT] {
       def nickName = user.nickname
     }
 
-    case class AIPlayer(ai: AIType[Riichi], position: PlayerPosition[Riichi]) extends Player[Riichi] {
+    case class AIPlayer[GT <: GameType](ai: AIType[GT], position: PlayerPosition[GT]) extends Player[GT] {
       def nickName = ai.getClass.getName
     }
   }

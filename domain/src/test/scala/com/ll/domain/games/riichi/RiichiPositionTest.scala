@@ -1,6 +1,7 @@
 package com.ll.domain.games.riichi
 
 import com.ll.domain.auth.{User, UserId}
+import com.ll.domain.games.GameType.Riichi
 import com.ll.domain.games.Player.Riichi.HumanPlayer
 import com.ll.domain.games.position.PlayerPosition.RiichiPosition
 import com.ll.domain.games.position.PositionUtility
@@ -9,7 +10,7 @@ import org.scalatest.{Matchers, WordSpec}
 class RiichiPositionTest extends WordSpec with Matchers{
 
   "4 players add in order" in {
-    var players: Set[HumanPlayer] = Set.empty
+    var players: Set[HumanPlayer[Riichi]] = Set.empty
     val user1 = User(UserId(1), "Akagi1")
     val user2 = User(UserId(2), "Akagi2")
     val user3 = User(UserId(3), "Akagi3")
@@ -27,7 +28,7 @@ class RiichiPositionTest extends WordSpec with Matchers{
   }
 
   "4 players add and remove in order" in {
-    var players: Set[HumanPlayer] = Set.empty
+    var players: Set[HumanPlayer[Riichi]] = Set.empty
     val user1 = User(UserId(1), "Akagi1")
     val user2 = User(UserId(2), "Akagi2")
     val user3 = User(UserId(3), "Akagi3")
