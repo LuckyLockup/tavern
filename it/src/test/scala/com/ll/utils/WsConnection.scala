@@ -48,10 +48,10 @@ class WsConnection(userId: UserId, as: ActorSystem, mat: Materializer, http: Htt
   val sink: Sink[Message, NotUsed] = Flow[Message]
     .mapAsync(1) {
       case TextMessage.Strict(msg) =>
+        log.info(s"WS [${userId.id}] <<<< $msg")
         decodeWsMsg(msg) match {
           case Left(error)  => log.error(s"Error parsing message from server $error")
           case Right(wsMsg) =>
-            log.info(s"WS [${userId.id}] <<<<  $wsMsg [$msg]")
             probe.ref ! wsMsg
         }
         Future.successful()
