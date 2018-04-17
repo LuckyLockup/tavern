@@ -35,7 +35,7 @@ class TableActor[
         log.info(s"${table.tableId} Processing $message")
         message match {
           case cmd: UserCmd.GetState              =>
-            val state = _table.projection(cmd)
+            val state = _table.projection(Some(Left(cmd.userId)))
             sender() ! state
             pubSub.sendToUser(cmd.userId, state)
           case UserCmd.JoinAsSpectacular(_, user) =>
@@ -63,17 +63,14 @@ class TableActor[
                   pubSub.sendToUsers(_table.playerIds, WsMsgProjector.convert(event, table))
                 }
             }
-          //Game commands are special, because they can be sent to AI
           case cmd: GameCmd[GT] =>
             _table.validateCmd(cmd) match {
-              case Left(error) => ???
+              case Left(error) => cmd.position
               case Right(events) => persistAll(events) { e =>
-                _table.getPlayer(e.position) match {
-                  case None => log.warn(s"For $cmd player is not found")
-                  case Some(humanPlayer: HumanPlayer[GT]) =>
-                  case Some(aiPlayer: AIPlayer[GT]) =>
+                events.foreach{ event =>
+                  _table = _table.applyEvent(e)
+                  pubSub.sendToUsers(_table.playerIds, WsMsgProjector.convert(event, table))
                 }
-                ???
               }
             }
           case cmd    => log.error(s"Unknown command $cmd")

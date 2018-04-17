@@ -73,10 +73,12 @@ class WsConnection(userId: UserId, as: ActorSystem, mat: Materializer, http: Htt
   def !(msg: WsMsg.In): Unit = ws ! msg
 
   def expectWsMsg(f: PartialFunction[Any, WsMsg.Out]): WsMsg.Out = probe.expectMsgPF(
-    config.defaultTimeout, "expecting")(f orElse { case msg => {
-    log.info(s"Skipping $msg")
-    f(msg)
-  }})
+    config.defaultTimeout, "expecting") {
+    case msg if f.isDefinedAt(msg) => f(msg)
+    case msg =>
+      log.info(s"Skipping $msg")
+      expectWsMsg(f)
+  }
 
   def expectWsMsg[T: ClassTag](implicit tag: TypeTag[T]): T = probe.expectMsgPF(
     config.defaultTimeout, s"expecting type ${tag.tpe}") {

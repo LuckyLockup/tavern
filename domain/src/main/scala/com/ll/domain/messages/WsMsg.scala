@@ -27,8 +27,18 @@ object WsMsg {
     object Riichi {
       case class RiichiState(
         tableId: TableId,
-        players: List[Player[Riichi]]
+        admin: User,
+        states: List[RiichiPlayerState],
+        uraDoras: List[String],
+        deck: Integer
       ) extends TableState[Riichi]
+
+      case class RiichiPlayerState(
+        player: Player[Riichi],
+        closedHand: List[String],
+        discard: List[String] = Nil,
+        online: Boolean = true
+      )
 
       case class GameStarted(tableId: TableId, gameId: GameId) extends GameEvent[Riichi]
       case class GamePaused(tableId: TableId, gameId: GameId) extends GameEvent[Riichi]

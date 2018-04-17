@@ -3,6 +3,7 @@ package com.ll.domain.json
 import com.ll.domain.auth.{User, UserId}
 import com.ll.domain.games.Player.Riichi.HumanPlayer
 import com.ll.domain.games.position.PlayerPosition.RiichiPosition
+import com.ll.domain.games.riichi.RiichiConfig
 import com.ll.domain.games.{GameId, TableId}
 import com.ll.domain.json.Codec.{Test, decodeWsMsg, encodeWsMsg}
 import com.ll.domain.messages.WsMsg
@@ -78,7 +79,12 @@ class CodecTest extends WordSpec with Matchers {
           |  }
           |}
         """.stripMargin),
-      (RiichiState(TableId("table_22"), Nil),
+      (RiichiState(
+        tableId = TableId("table_22"),
+        admin = user,
+        states = Nil,
+        uraDoras = Nil,
+        deck = 0),
         """
           |{
           |  "type": "RiichiState",
@@ -117,7 +123,7 @@ class CodecTest extends WordSpec with Matchers {
 
     val testData: List[(WsMsg.In, String)] = List(
       (Ping(42), """{"type":"Ping","payload":{"id":42}}"""),
-      (StartGame(tableId, gameId),
+      (StartGame(tableId, gameId, RiichiConfig()),
         """
           |{
           |  "type": "StartGame",

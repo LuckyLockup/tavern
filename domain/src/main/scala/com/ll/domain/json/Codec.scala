@@ -5,6 +5,7 @@ import com.ll.domain.auth.User
 import com.ll.domain.games.GameType.Riichi
 import com.ll.domain.games.Player.Riichi.{AIPlayer, HumanPlayer}
 import com.ll.domain.games.position.PlayerPosition
+import com.ll.domain.games.riichi.RiichiConfig
 import com.ll.domain.games.{Player, TableId}
 import com.ll.domain.messages.WsMsg
 import com.ll.domain.persistence.{RiichiGameCmd, UserCmd}
@@ -141,6 +142,15 @@ object Codec {
     humanPlayerDecoder.apply(cur) orElse
     AIPlayerDecoder.apply(cur)
   }
+
+  //Configs
+  implicit lazy val riichiConfigEncoder = encoder[RiichiConfig]("RiichiConfig")
+  implicit lazy val riichiConfigDecoder: Decoder[RiichiConfig] = decoder[RiichiConfig]("RiichiConfig")
+
+  //Riichi out player state
+  implicit lazy val riichiPlayerStateEncoder = encoder[WsMsg.Out.Riichi.RiichiPlayerState]("RiichiPlayerState")
+  implicit lazy val riichiPlayerStateDecoder = decoder[WsMsg.Out.Riichi.RiichiPlayerState]("RiichiPlayerState")
+
 
 
   def decodeWsMsg(json: String): Either[DecodingFailure, WsMsg.In] = {

@@ -48,7 +48,7 @@ class PlayersJoinLeftTableTest extends Test {
     player1.ws ! UserCmd.GetState(tableId, player1.userId)
     player1.ws.expectWsMsg{
       case state: WsMsg.Out.Riichi.RiichiState =>
-        state.players shouldBe empty
+        state.states shouldBe empty
         state
     }
 
@@ -57,7 +57,7 @@ class PlayersJoinLeftTableTest extends Test {
 
     player1.ws ! UserCmd.GetState(tableId, player1.userId)
     player1.ws.expectWsMsg{
-      case state: WsMsg.Out.Riichi.RiichiState if state.players.size == 1 => state
+      case state: WsMsg.Out.Riichi.RiichiState if state.states.size == 1 => state
     }
 
 
@@ -67,7 +67,7 @@ class PlayersJoinLeftTableTest extends Test {
     player1.ws ! UserCmd.GetState(tableId, player1.userId)
     player1.ws.expectWsMsg{
       case state: WsMsg.Out.Riichi.RiichiState  =>
-        state.players.size should be (2)
+        state.states.size should be (2)
         state
     }
 
@@ -77,7 +77,7 @@ class PlayersJoinLeftTableTest extends Test {
     player1.ws ! UserCmd.GetState(tableId, player1.userId)
     player1.ws.expectWsMsg{
       case state: WsMsg.Out.Riichi.RiichiState  =>
-        state.players.size should be (1)
+        state.states.size should be (1)
         state
     }
 

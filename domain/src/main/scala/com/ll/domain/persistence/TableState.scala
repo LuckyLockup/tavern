@@ -7,7 +7,7 @@ import com.ll.domain.messages.WsMsg
 import com.ll.domain.messages.WsMsg.Out.{Table, ValidationError}
 
 trait TableState [GT <: GameType, S <: TableState[GT, S]] {
-  def adminId: User
+  def admin: User
 
   def tableId: TableId
 
@@ -15,11 +15,11 @@ trait TableState [GT <: GameType, S <: TableState[GT, S]] {
 
   def leftGame(cmd: UserCmd.LeftAsPlayer): Either[ValidationError, (TableEvent[GT], S)]
 
-  def validateCmd(cmd: GameCmd[GT]): Either[ValidationError, List[GameEvent[GT]]]
+  def validateCmd(cmd: GameCmd[GT]): Either[ValidationError, List[TableEvent[GT]]]
 
-  def applyEvent(e: GameEvent[GT]): S
+  def applyEvent(e: TableEvent[GT]): S
 
-  def projection(cmd: UserCmd.GetState): WsMsg.Out.TableState[GT]
+  def projection(position: Option[Either[UserId, PlayerPosition[GT]]]): WsMsg.Out.TableState[GT]
 
   def playerIds: Set[UserId]
 

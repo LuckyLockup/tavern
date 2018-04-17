@@ -3,6 +3,7 @@ package com.ll.domain.persistence
 import com.ll.domain.auth.{User, UserId}
 import com.ll.domain.games.GameType.Riichi
 import com.ll.domain.games.position.PlayerPosition
+import com.ll.domain.games.riichi.RiichiConfig
 import com.ll.domain.games.{GameId, GameType, TableId}
 import com.ll.domain.messages.WsMsg
 
@@ -36,7 +37,7 @@ object UserCmd {
 
 
 object RiichiGameCmd {
-  case class StartGame(tableId: TableId, gameId: GameId) extends GameCmd[Riichi] {
+  case class StartGame(tableId: TableId, gameId: GameId, config: RiichiConfig) extends GameCmd[Riichi] {
     def position = None
   }
   case class PauseGame(tableId: TableId, gameId: GameId) extends GameCmd[Riichi] {
