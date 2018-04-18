@@ -2,17 +2,27 @@ package com.ll.utils
 
 import akka.actor.ActorSystem
 import akka.http.scaladsl.{Http, HttpExt}
-import akka.stream.ActorMaterializer
+import akka.stream.{ActorMaterializer, ActorMaterializerSettings, Supervision}
 import akka.testkit.{ImplicitSender, TestKit}
 import com.ll.domain.auth.UserId
 import org.scalatest._
 import pureconfig._
 
+import scala.util.control.NonFatal
+
 abstract class Test extends TestKit(ActorSystem("MySpec")) with ImplicitSender
   with WordSpecLike with Matchers with BeforeAndAfterAll with Logging
   with BeforeAndAfterEach {
-  implicit val materializer = ActorMaterializer()
+  implicit val materializer = ActorMaterializer(ActorMaterializerSettings(system).withSupervisionStrategy(decider()))(system)
 
+  private def decider(): Supervision.Decider = {
+    case NonFatal(ex) =>
+      log.error("Error in stream: ", ex)
+      Supervision.Resume
+    case ex                      =>
+      log.error("Fatal error: " + ex.getMessage)
+      Supervision.Stop
+  }
   protected val config = loadConfig[TestConfig]("testConfig").fold(failure => {
     throw new RuntimeException(failure.toString) }, identity)
 

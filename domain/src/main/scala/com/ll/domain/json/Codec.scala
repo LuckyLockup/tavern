@@ -61,6 +61,7 @@ object Codec {
     final def apply(c: HCursor): Decoder.Result[T] = {
       def decode(messageType: String, payload: Json): Decoder.Result[T] = messageType match {
         case _ if messageType == s => payload.as[T](deriveDecoder[T])
+        case _ => Left(DecodingFailure(s"Message is not $messageType", Nil))
       }
 
       for {
@@ -223,7 +224,7 @@ object Codec {
           case "SpectacularLeftTable"   => payload.as[WsMsg.Out.Riichi.SpectacularLeftTable](deriveDecoder[WsMsg.Out.Riichi.SpectacularLeftTable])
           case "PlayerJoinedTable"      => payload.as[WsMsg.Out.Riichi.PlayerJoinedTable](deriveDecoder[WsMsg.Out.Riichi.PlayerJoinedTable])
           case "PlayerLeftTable"        => payload.as[WsMsg.Out.Riichi.PlayerLeftTable](deriveDecoder[WsMsg.Out.Riichi.PlayerLeftTable])
-          case "RiichiState"             => payload.as[WsMsg.Out.Riichi.RiichiState](deriveDecoder[WsMsg.Out.Riichi.RiichiState])
+          case "RiichiState"            => payload.as[WsMsg.Out.Riichi.RiichiState](deriveDecoder[WsMsg.Out.Riichi.RiichiState])
         }
 
         for {

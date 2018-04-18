@@ -51,8 +51,7 @@ class WsConnection(userId: UserId, as: ActorSystem, mat: Materializer, http: Htt
         log.info(s"WS [${userId.id}] <<<< $msg")
         decodeWsMsg(msg) match {
           case Left(error)  => log.error(s"Error parsing message from server $error")
-          case Right(wsMsg) =>
-            probe.ref ! wsMsg
+          case Right(wsMsg) => probe.ref ! wsMsg
         }
         Future.successful()
     }
@@ -75,7 +74,7 @@ class WsConnection(userId: UserId, as: ActorSystem, mat: Materializer, http: Htt
   def expectWsMsg(f: PartialFunction[Any, WsMsg.Out]): WsMsg.Out = probe.expectMsgPF(
     config.defaultTimeout, "expecting") {
     case msg if f.isDefinedAt(msg) => f(msg)
-    case msg =>
+    case msg                       =>
       log.info(s"Skipping $msg")
       expectWsMsg(f)
   }

@@ -41,6 +41,7 @@ class GameFlowTest extends Test{
         state.states.size should be (4)
         state
     }
+
     player2.ws ! UserCmd.GetState(tableId, player2.userId)
     player2.ws.expectWsMsg{
       case state: WsMsg.Out.Riichi.RiichiState =>
