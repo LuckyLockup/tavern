@@ -16,24 +16,24 @@ class PlayersJoinLeftTableTest extends Test {
     val player5 = createNewPlayer(UserId(105))
 
     player1.ws ! WsMsg.In.Ping(23)
-    player1.ws.expectWsMsg[Out.Pong]
+    player1.ws.expectWsMsgT[Out.Pong]()
 
     player1.createTable(tableId)
 
     player1.ws ! UserCmd.JoinAsPlayer(tableId, player1.user)
-    player1.ws.expectWsMsg[WsMsg.Out.Riichi.PlayerJoinedTable]
+    player1.ws.expectWsMsgT[WsMsg.Out.Riichi.PlayerJoinedTable]()
 
     player2.ws ! UserCmd.JoinAsPlayer(tableId, player2.user)
-    player1.ws.expectWsMsg[WsMsg.Out.Riichi.PlayerJoinedTable]
+    player1.ws.expectWsMsgT[WsMsg.Out.Riichi.PlayerJoinedTable]()
 
     player3.ws ! UserCmd.JoinAsPlayer(tableId, player3.user)
-    player1.ws.expectWsMsg[WsMsg.Out.Riichi.PlayerJoinedTable]
+    player1.ws.expectWsMsgT[WsMsg.Out.Riichi.PlayerJoinedTable]()
 
     player4.ws ! UserCmd.JoinAsPlayer(tableId, player4.user)
-    player1.ws.expectWsMsg[WsMsg.Out.Riichi.PlayerJoinedTable]
+    player1.ws.expectWsMsgT[WsMsg.Out.Riichi.PlayerJoinedTable]()
 
     player5.ws ! UserCmd.JoinAsPlayer(tableId, player5.user)
-    player5.ws.expectWsMsg[WsMsg.Out.ValidationError]
+    player5.ws.expectWsMsgT[WsMsg.Out.ValidationError]()
   }
 
   "Join & left game" in new CommonData {
@@ -41,7 +41,7 @@ class PlayersJoinLeftTableTest extends Test {
     val player2 = createNewPlayer(UserId(102))
 
     player1.ws ! WsMsg.In.Ping(23)
-    player1.ws.expectWsMsg[Out.Pong]
+    player1.ws.expectWsMsgT[Out.Pong]()
 
     player1.createTable(tableId)
 
@@ -53,7 +53,7 @@ class PlayersJoinLeftTableTest extends Test {
     }
 
     player1.ws ! UserCmd.JoinAsPlayer(tableId, player1.user)
-    player1.ws.expectWsMsg[WsMsg.Out.Riichi.PlayerJoinedTable]
+    player1.ws.expectWsMsgT[WsMsg.Out.Riichi.PlayerJoinedTable]()
 
     player1.ws ! UserCmd.GetState(tableId, player1.userId)
     player1.ws.expectWsMsg{
@@ -62,7 +62,7 @@ class PlayersJoinLeftTableTest extends Test {
 
 
     player2.ws ! UserCmd.JoinAsPlayer(tableId, player2.user)
-    player1.ws.expectWsMsg[WsMsg.Out.Riichi.PlayerJoinedTable]
+    player1.ws.expectWsMsgT[WsMsg.Out.Riichi.PlayerJoinedTable]()
 
     player1.ws ! UserCmd.GetState(tableId, player1.userId)
     player1.ws.expectWsMsg{
@@ -72,7 +72,7 @@ class PlayersJoinLeftTableTest extends Test {
     }
 
     player2.ws ! UserCmd.LeftAsPlayer(tableId, player2.user)
-    player1.ws.expectWsMsg[WsMsg.Out.Riichi.PlayerLeftTable]
+    player1.ws.expectWsMsgT[WsMsg.Out.Riichi.PlayerLeftTable]()
 
     player1.ws ! UserCmd.GetState(tableId, player1.userId)
     player1.ws.expectWsMsg{

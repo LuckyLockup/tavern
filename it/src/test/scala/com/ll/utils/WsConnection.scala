@@ -12,12 +12,10 @@ import com.ll.domain.auth.UserId
 import com.ll.domain.json.Codec
 import com.ll.domain.messages.WsMsg
 import io.circe._
-import io.circe.generic.auto._
-import io.circe.parser._
-import io.circe.syntax._
 import org.reactivestreams.Publisher
 
 import scala.concurrent.Future
+import scala.concurrent.duration.Duration
 import scala.reflect.ClassTag
 import scala.reflect.runtime.universe._
 
@@ -79,12 +77,12 @@ class WsConnection(userId: UserId, as: ActorSystem, mat: Materializer, http: Htt
       expectWsMsg(f)
   }
 
-  def expectWsMsg[T: ClassTag](implicit tag: TypeTag[T]): T = probe.expectMsgPF(
-    config.defaultTimeout, s"expecting type ${tag.tpe}") {
+  def expectWsMsgT[T: ClassTag](duration: Duration = config.defaultTimeout)(implicit tag: TypeTag[T]): T = probe.expectMsgPF(
+    duration, s"expecting type ${tag.tpe}") {
     case msg: T => msg
     case msg    =>
       log.info(s"Skipping $msg")
-      expectWsMsg[T]
+      expectWsMsgT[T](duration)
   }
 
   def closeConnection() = {

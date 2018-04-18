@@ -36,7 +36,6 @@ class TableActor[
         message match {
           case cmd: UserCmd.GetState              =>
             val state = _table.projection(Some(Left(cmd.userId)))
-            sender() ! state
             pubSub.sendToUser(cmd.userId, state)
           case UserCmd.JoinAsSpectacular(_, user) =>
             spectaculars += user

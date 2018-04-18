@@ -9,7 +9,7 @@ class PingPongTest extends Test {
     val player = createNewPlayer(userId)
 
     player.ws ! WsMsg.In.Ping(22)
-    player.ws.expectWsMsg[WsMsg.Out.Pong]
+    player.ws.expectWsMsgT[WsMsg.Out.Pong]()
   }
 }
 

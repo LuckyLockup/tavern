@@ -29,13 +29,10 @@ class RiichiEndpoints[F[_] : Effect](config: ServerConfig)(implicit system: Acto
       } ~
         post(
           decodeRequest {
+            //TODO create request with {userId: , tableId: }
             entity(as[String]) { id =>
-              async(riichi.getOrCreate(TableId(id), UserId(0))
-                .map(st => {
-                  log.info(s"returning: ${Codec.encodeWsMsg(st)}")
-                  complete(HttpEntity(ContentTypes.`application/json`, Codec.encodeWsMsg(st)))
-                })
-              )
+              riichi.getOrCreate(TableId(id), UserId(0))
+              complete(HttpEntity(ContentTypes.`application/json`, "Table creation is started"))
             }
           }
         )

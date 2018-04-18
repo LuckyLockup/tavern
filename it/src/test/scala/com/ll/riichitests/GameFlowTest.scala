@@ -16,27 +16,28 @@ class GameFlowTest extends Test{
     val player5 = createNewPlayer(UserId(105))
 
     player1.ws ! WsMsg.In.Ping(23)
-    player1.ws.expectWsMsg[Out.Pong]
+    player1.ws.expectWsMsgT[Out.Pong]()
 
     player1.createTable(tableId)
+    player1.ws.expectWsMsgT[WsMsg.Out.Riichi.RiichiPlayerState]()
 
     player1.ws ! UserCmd.JoinAsPlayer(tableId, player1.user)
-    player1.ws.expectWsMsg[WsMsg.Out.Riichi.PlayerJoinedTable]
+    player1.ws.expectWsMsgT[WsMsg.Out.Riichi.PlayerJoinedTable]()
 
     player2.ws ! UserCmd.JoinAsPlayer(tableId, player2.user)
-    player1.ws.expectWsMsg[WsMsg.Out.Riichi.PlayerJoinedTable]
+    player1.ws.expectWsMsgT[WsMsg.Out.Riichi.PlayerJoinedTable]()
 
     player3.ws ! UserCmd.JoinAsPlayer(tableId, player3.user)
-    player1.ws.expectWsMsg[WsMsg.Out.Riichi.PlayerJoinedTable]
+    player1.ws.expectWsMsgT[WsMsg.Out.Riichi.PlayerJoinedTable]()
 
     player4.ws ! UserCmd.JoinAsPlayer(tableId, player4.user)
-    player1.ws.expectWsMsg[WsMsg.Out.Riichi.PlayerJoinedTable]
+    player1.ws.expectWsMsgT[WsMsg.Out.Riichi.PlayerJoinedTable]()
 
     player1.ws ! RiichiGameCmd.StartGame(tableId, gameId, RiichiConfig())
-    player1.ws.expectWsMsg[WsMsg.Out.Riichi.GameStarted]
+    player1.ws.expectWsMsgT[WsMsg.Out.Riichi.GameStarted]()
 
     player1.ws ! UserCmd.GetState(tableId, player1.userId)
-    player1.ws.expectWsMsg{
+    player1.ws.expectWsMsg {
       case state: WsMsg.Out.Riichi.RiichiState =>
         state.states.size should be (4)
         state
