@@ -7,7 +7,7 @@ import com.ll.domain.games.Player.Riichi.{AIPlayer, HumanPlayer}
 import com.ll.domain.games.position.PlayerPosition
 import com.ll.domain.games.riichi.RiichiConfig
 import com.ll.domain.games.{Player, TableId}
-import com.ll.domain.messages.WsMsg
+import com.ll.domain.messages.{HttpMessage, WsMsg}
 import com.ll.domain.persistence.{RiichiGameCmd, UserCmd}
 import io.circe.generic.decoding.DerivedDecoder
 import io.circe.generic.encoding.DerivedObjectEncoder
@@ -89,6 +89,7 @@ object Codec {
       case AIType.Riichi.Duck => "Duck".asJson
     }
   }
+
   implicit lazy val aiTypeDecoder: Decoder[AIType[Riichi]] = new Decoder[AIType[Riichi]] {
     final def apply(c: HCursor): Decoder.Result[AIType[Riichi]] = {
       def decode(str: String): Decoder.Result[AIType[Riichi]] = str match {
@@ -266,4 +267,8 @@ object Codec {
   private def wrap[T](name: String, msg: T)(implicit encoder: ObjectEncoder[T]) = Json.obj(
     "type" -> name.asJson,
     "payload" -> msg.asJson)
+
+  //HTTP messages
+  implicit lazy val createTableEncoder = encoder[HttpMessage.Riichi.CreateTable]("CreateTable")
+  implicit lazy val createTableDecoder = decoder[HttpMessage.Riichi.CreateTable]("CreateTable")
 }

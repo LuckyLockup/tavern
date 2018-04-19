@@ -19,7 +19,7 @@ class GameFlowTest extends Test{
     player1.ws.expectWsMsgT[Out.Pong]()
 
     player1.createTable(tableId)
-    player1.ws.expectWsMsgT[WsMsg.Out.Riichi.RiichiPlayerState]()
+    player1.ws.expectWsMsgT[WsMsg.Out.Riichi.RiichiState]()
 
     player1.ws ! UserCmd.JoinAsPlayer(tableId, player1.user)
     player1.ws.expectWsMsgT[WsMsg.Out.Riichi.PlayerJoinedTable]()

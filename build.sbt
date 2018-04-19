@@ -64,7 +64,9 @@ lazy val riichi = project
     "com.h2database" % "h2" % versions.H2Version,
     "ch.qos.logback" % "logback-classic" % versions.LogbackVersion,
     "org.flywaydb" % "flyway-core" % versions.FlywayVersion,
-    "org.fusesource.leveldbjni" % "leveldbjni-all" % "1.8"
+    "org.fusesource.leveldbjni" % "leveldbjni-all" % "1.8",
+
+    "de.heikoseeberger" %% "akka-http-circe" % "1.20.1"
   ),
     mainClass in assembly := Some("com.ll.Main")
   )
@@ -146,5 +148,6 @@ lazy val commonSettings =
       case x                              =>
         val oldStrategy = (assemblyMergeStrategy in assembly).value
         oldStrategy(x)
-    }
+    },
+    resolvers += Resolver.bintrayRepo("hseeberger", "maven")
   )

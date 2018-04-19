@@ -77,7 +77,7 @@ class WsConnection(userId: UserId, as: ActorSystem, mat: Materializer, http: Htt
       expectWsMsg(f)
   }
 
-  def expectWsMsgT[T: ClassTag](duration: Duration = config.defaultTimeout)(implicit tag: TypeTag[T]): T = probe.expectMsgPF(
+  def expectWsMsgT[T <: WsMsg.Out: ClassTag](duration: Duration = config.defaultTimeout)(implicit tag: TypeTag[T]): T = probe.expectMsgPF(
     duration, s"expecting type ${tag.tpe}") {
     case msg: T => msg
     case msg    =>

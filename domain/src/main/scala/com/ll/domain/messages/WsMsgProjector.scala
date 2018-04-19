@@ -8,7 +8,7 @@ import com.ll.domain.persistence.{RiichiEvent, TableEvent, TableState}
 object WsMsgProjector {
 
   def convert[GT<: GameType](event: TableEvent[GT], state: TableState[GT, _]): Out = event match {
-    case RiichiEvent.GameStarted(tableId, gameId)  =>
+    case RiichiEvent.GameStarted(tableId, gameId, config)  =>
       Riichi.GameStarted(tableId, gameId)
     case RiichiEvent.GamePaused(tableId, gameId)  =>
       Riichi.GamePaused(tableId, gameId)

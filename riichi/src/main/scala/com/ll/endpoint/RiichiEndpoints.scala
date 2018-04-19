@@ -11,13 +11,16 @@ import com.ll.config.ServerConfig
 import com.ll.domain.auth.UserId
 import com.ll.domain.games.{GameId, TableId}
 import com.ll.domain.json.Codec
+import com.ll.domain.messages.HttpMessage.Riichi.CreateTable
 import com.ll.games.TablesService
 import com.ll.ws.PubSub
+import de.heikoseeberger.akkahttpcirce.FailFastCirceSupport._
 
 import scala.util.{Failure, Success}
 
 class RiichiEndpoints[F[_] : Effect](config: ServerConfig)(implicit system: ActorSystem, mat: Materializer)
   extends Logging with EndpointUtils {
+  import Codec._
 
   implicit val timeout = config.defaultTimeout
   implicit val ec = system.dispatcher
@@ -29,9 +32,8 @@ class RiichiEndpoints[F[_] : Effect](config: ServerConfig)(implicit system: Acto
       } ~
         post(
           decodeRequest {
-            //TODO create request with {userId: , tableId: }
-            entity(as[String]) { id =>
-              riichi.getOrCreate(TableId(id), UserId(0))
+            entity(as[CreateTable]) { req =>
+              riichi.getOrCreate(req.tableId, req.userId)
               complete(HttpEntity(ContentTypes.`application/json`, "Table creation is started"))
             }
           }
