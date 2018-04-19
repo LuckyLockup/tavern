@@ -1,10 +1,9 @@
 package com.ll.ai
 
-import com.ll.domain.ai.AIType
-import com.ll.domain.games.GameType.Riichi
-import com.ll.domain.games.position.PlayerPosition
-import com.ll.domain.messages.WsMsg.Out.GameEvent
-import com.ll.domain.messages.WsMsg.Out.Riichi.RiichiState
+import com.ll.domain.games.GameType
+import com.ll.domain.games.Player.Riichi.AIPlayer
+import com.ll.domain.messages.WsMsg.Out
+import com.ll.domain.messages.WsMsg.Out.{GameEvent, TableState}
 import com.ll.domain.persistence._
 import org.slf4j.LoggerFactory
 
@@ -13,16 +12,14 @@ import scala.concurrent.Future
 case class AIService() {
   protected lazy val log = LoggerFactory.getLogger(this.getClass)
 
-  def processEvent(
-    ai: AIType[Riichi],
-    position: PlayerPosition[Riichi],
-    outEvent: GameEvent[Riichi],
-    state: RiichiState): Future[List[GameCmd[Riichi]]] = {
-
-    log.info(s"$ai <--- $outEvent")
+  def processEvent[GT <: GameType](
+    aiPlayer: AIPlayer[GT],
+    outEvent: Out,
+    state: TableState[GT]): Future[List[GameCmd[GT]]] = {
+    log.info(s"$aiPlayer received: $outEvent")
     outEvent match {
       case _ =>
     }
-    ???
+    Future.successful(Nil)
   }
 }

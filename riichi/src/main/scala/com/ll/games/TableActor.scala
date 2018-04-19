@@ -1,12 +1,10 @@
 package com.ll.games
 
 import akka.persistence.PersistentActor
+import com.ll.ai.AIService
 import com.ll.domain.auth.{User, UserId}
 import com.ll.domain.games.GameType
-import com.ll.domain.games.Player.Riichi.{AIPlayer, HumanPlayer}
 import com.ll.domain.messages.WsMsg.Out
-import com.ll.domain.messages.WsMsg.Out.ValidationError
-import com.ll.domain.messages.WsMsgProjector
 import com.ll.domain.persistence._
 import com.ll.utils.Logging
 import com.ll.ws.PubSub
@@ -21,6 +19,11 @@ class TableActor[
   def tableId = table.tableId
 
   override def persistenceId = s"solo_${table.tableId.id.toString}"
+
+  object services {
+    val aiService = AIService()
+    val dispatcher = new Dispatcher[GT, S](pubSub, aiService)
+  }
 
   var _table = table
   var spectaculars: Set[User] = Set.empty[User]
@@ -50,7 +53,7 @@ class TableActor[
               case Right((event, newState)) =>
                 persist(event) {e =>
                   _table = newState
-                  pubSub.sendToUsers(_table.playerIds, WsMsgProjector.convert(event, table))
+                  services.dispatcher.dispatchEvent(_table, spectaculars, event)
                 }
             }
           case cmd@UserCmd.LeftAsPlayer(_, user) =>
@@ -59,7 +62,7 @@ class TableActor[
               case Right((event, newState)) =>
                 persist(event) {e =>
                   _table = newState
-                  pubSub.sendToUsers(_table.playerIds, WsMsgProjector.convert(event, table))
+                  services.dispatcher.dispatchEvent(_table, spectaculars, event)
                 }
             }
           case cmd: GameCmd[GT] =>
@@ -68,7 +71,7 @@ class TableActor[
               case Right(events) => persistAll(events) { e =>
                 events.foreach{ event =>
                   _table = _table.applyEvent(e)
-                  pubSub.sendToUsers(_table.playerIds, WsMsgProjector.convert(event, table))
+                  services.dispatcher.dispatchEvent(_table, spectaculars, event)
                 }
               }
             }

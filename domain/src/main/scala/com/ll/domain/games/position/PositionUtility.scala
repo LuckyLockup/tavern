@@ -2,11 +2,12 @@ package com.ll.domain.games.position
 
 import com.ll.domain.auth.User
 import com.ll.domain.games.GameType.Riichi
-import com.ll.domain.games.Player.Riichi.HumanPlayer
+import com.ll.domain.games.Player
+import com.ll.domain.games.Player.Riichi.{AIPlayer, HumanPlayer}
 import com.ll.domain.games.position.PlayerPosition.RiichiPosition
 
 object PositionUtility {
-  def addUser(humans: Set[HumanPlayer[Riichi]], user: User): (Set[HumanPlayer[Riichi]], HumanPlayer[Riichi]) = {
+  def addUser(humans: Set[Player[Riichi]], user: User): (Set[Player[Riichi]], HumanPlayer[Riichi]) = {
     humans.map(_.position) match {
       case positions if !positions.contains(RiichiPosition.EastPosition)  =>
         val player = HumanPlayer(user, RiichiPosition.EastPosition)
@@ -22,14 +23,6 @@ object PositionUtility {
         (humans + player, player)
       case positions                                                      =>
         (humans, HumanPlayer(user, RiichiPosition.EastPosition))
-    }
-  }
-
-  def removeUser(humans: Set[HumanPlayer[Riichi]], user: User): Set[HumanPlayer[Riichi]] = {
-    humans.find(p => p.user.id == user.id) match {
-      case Some(player) =>
-        humans - player
-      case None => humans
     }
   }
 }

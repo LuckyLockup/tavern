@@ -11,6 +11,10 @@ If state is not found in Redis events are replayed from db to get the state.
 `sbt docker:publishLocal`
 
 # Cassandra connection:
+/usr/local/Cellar/cassandra/3.11.2_1/bin/cqlsh 127.0.0.1 9042 -u cassandra -p cassandra
 
-export DOCKERHOST=$(ifconfig | grep -E "([0-9]{1,3}\.){3}[0-9]{1,3}" | grep -v 127.0.0.1 | awk '{ print $2 }' | cut -f2 -d: | head -n1)
-docker-compose up -d
+# CQLSH tutorial
+
+```
+DESCRIBE keyspaces;
+```

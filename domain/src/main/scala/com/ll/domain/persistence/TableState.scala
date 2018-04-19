@@ -1,6 +1,7 @@
 package com.ll.domain.persistence
 
 import com.ll.domain.auth.{User, UserId}
+import com.ll.domain.games.Player.Riichi.{AIPlayer, HumanPlayer}
 import com.ll.domain.games.position.PlayerPosition
 import com.ll.domain.games.{GameType, Player, TableId}
 import com.ll.domain.messages.WsMsg
@@ -21,7 +22,13 @@ trait TableState [GT <: GameType, S <: TableState[GT, S]] {
 
   def projection(position: Option[Either[UserId, PlayerPosition[GT]]]): WsMsg.Out.TableState[GT]
 
-  def playerIds: Set[UserId]
+  def players: Set[Player[GT]]
+
+  def humanPlayers: Set[HumanPlayer[GT]] = players.collect{case p: HumanPlayer[GT] => p}
+
+  def aiPlayers: Set[AIPlayer[GT]] = players.collect{case p: AIPlayer[GT] => p}
+
+  def playerIds: Set[UserId] = humanPlayers.map(_.user.id)
 
   def getPlayer(position: PlayerPosition[GT]): Option[Player[GT]]
 }

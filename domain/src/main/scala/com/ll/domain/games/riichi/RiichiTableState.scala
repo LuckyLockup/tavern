@@ -21,10 +21,8 @@ trait RiichiTableState extends TableState[Riichi, RiichiTableState]
 case class NoGameOnTable(
   admin: User,
   tableId: TableId,
-  humanPlayers: Set[HumanPlayer[Riichi]] = Set.empty
+  players: Set[Player[Riichi]] = Set.empty
 ) extends RiichiTableState {
-
-  def playerIds = humanPlayers.map(_.user.id)
 
   def validateCmd(cmd: GameCmd[Riichi]): Either[ValidationError, List[TableEvent[Riichi]]] = cmd match {
     case StartGame(`tableId`, gameId, config) =>
@@ -76,17 +74,15 @@ case class NoGameOnTable(
       deck = 0
     )
 
-  def players: Set[Player[Riichi]] = humanPlayers.toSet
-
   def getPlayer(position: PlayerPosition[Riichi]): Option[Player[Riichi]] = humanPlayers.find(p => p.position == position)
 
   def joinGame(cmd: UserCmd.JoinAsPlayer): Either[ValidationError, (RiichiEvent.PlayerJoined, NoGameOnTable)] = {
     if (humanPlayers.exists(_.user.id == cmd.userId)) {
       Left(ValidationError("You already joined the table"))
     } else if (players.size < 4) {
-      val (newPlayers, newPlayer) = PositionUtility.addUser(humanPlayers, cmd.user)
+      val (newPlayers, newPlayer) = PositionUtility.addUser(players, cmd.user)
       val event = RiichiEvent.PlayerJoined(tableId, newPlayer)
-      val newState = this.copy(humanPlayers = newPlayers)
+      val newState = this.copy(players = newPlayers)
       Right(event, newState)
     } else {
       Left(ValidationError("Table is already full."))
@@ -97,7 +93,7 @@ case class NoGameOnTable(
     humanPlayers.find(p => p.user.id == cmd.userId) match {
       case Some(player) =>
         val event = RiichiEvent.PlayerLeft(tableId, player)
-        val newState = this.copy(humanPlayers = humanPlayers - player)
+        val newState = this.copy(players = players - player)
         Right(event, newState)
       case None         =>
         Left(ValidationError("You are not player on this table"))
@@ -122,8 +118,6 @@ case class GameStarted(
   uraDoras: List[Tile],
   deck: List[Tile]
 ) extends RiichiTableState {
-
-  def playerIds = players.collect { case p: HumanPlayer[Riichi] => p.user.id }
 
   def validateCmd(cmd: GameCmd[Riichi]): Either[ValidationError, List[TableEvent[Riichi]]] = ???
 
