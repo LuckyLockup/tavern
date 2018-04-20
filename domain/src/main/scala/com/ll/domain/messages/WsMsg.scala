@@ -30,7 +30,8 @@ object WsMsg {
         admin: User,
         states: List[RiichiPlayerState],
         uraDoras: List[String],
-        deck: Integer
+        deck: Integer,
+        turn: Integer
       ) extends TableState[Riichi]
 
       case class RiichiPlayerState(

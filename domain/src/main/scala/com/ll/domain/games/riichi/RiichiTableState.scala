@@ -77,7 +77,8 @@ case class NoGameOnTable(
       admin = admin,
       states = humanPlayers.toList.map(p => WsMsg.Out.Riichi.RiichiPlayerState(p, Nil)),
       uraDoras = Nil,
-      deck = 0
+      deck = 0,
+      turn = 1
     )
 
   def getPlayer(position: PlayerPosition[Riichi]): Option[Player[Riichi]] = humanPlayers.find(p => p.position == position)
@@ -177,7 +178,8 @@ case class GameStarted(
           )
       },
       uraDoras = uraDoras.map(_.repr),
-      deck = deck.size
+      deck = deck.size,
+      turn = turn
     )
 
   def players: Set[Player[Riichi]] = playerStates.map(_.player).toSet

@@ -24,6 +24,7 @@ class SinglePlayerTest extends Test{
     val state1: WsMsg.Out.Riichi.RiichiState = player1.ws.expectWsMsg {
       case state: WsMsg.Out.Riichi.RiichiState =>
         state.states.size should be (4)
+        state.turn should be (1)
         state
     }
 
@@ -41,6 +42,7 @@ class SinglePlayerTest extends Test{
       case state: WsMsg.Out.Riichi.RiichiState =>
         state.states.size should be (4)
         val east = state.states.head
+        state.turn should be (2)
         east.closedHand.size should be (13)
         east.currentTile should be (None)
         east.discard should be (List(tileToDiscard))

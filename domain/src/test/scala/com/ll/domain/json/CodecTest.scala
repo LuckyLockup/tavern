@@ -84,7 +84,9 @@ class CodecTest extends WordSpec with Matchers {
         admin = user,
         states = Nil,
         uraDoras = Nil,
-        deck = 0),
+        deck = 0,
+        turn = 0
+      ),
         """
           |{
           |  "type": "RiichiState",
