@@ -14,7 +14,7 @@ import org.reactivestreams.Publisher
 import akka.stream.scaladsl.Sink
 import com.ll.domain.json.Codec
 import com.ll.domain.messages.WsMsg
-import com.ll.domain.persistence.TableCmd
+import com.ll.domain.persistence.{GameCmd, TableCmd}
 import com.ll.games.TablesService
 
 import scala.concurrent.Future
@@ -55,6 +55,9 @@ class PubSub()(implicit system: ActorSystem, mat: Materializer) extends Logging 
         case WsMsg.In.Ping(n) =>
           actorRef ! WsMsg.Out.Pong(n)
           Future.successful("Pong!")
+        case msg: GameCmd[_]    =>
+          tables.sendToGame(msg.updatePosition(Left(id)))
+          Future.successful {"Done"}
         case msg: TableCmd    =>
           tables.sendToGame(msg)
           Future.successful {"Done"}

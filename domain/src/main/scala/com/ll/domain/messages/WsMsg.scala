@@ -36,6 +36,7 @@ object WsMsg {
       case class RiichiPlayerState(
         player: Player[Riichi],
         closedHand: List[String],
+        currentTile: Option[String] = None,
         discard: List[String] = Nil,
         online: Boolean = true
       )
@@ -56,8 +57,10 @@ object WsMsg {
 
       case class TileDiscarded(
         tableId: TableId,
-        position: PlayerPosition[Riichi],
-        tile: String
+        gameId: GameId,
+        tile: String,
+        turn: Int,
+        position: PlayerPosition[Riichi]
       ) extends GameEvent[Riichi]
     }
   }

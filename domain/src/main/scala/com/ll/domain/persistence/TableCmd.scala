@@ -15,6 +15,7 @@ sealed trait UserCmd extends TableCmd {
 sealed trait GameCmd[GT <: GameType] extends TableCmd {
   def gameId: GameId
   def position: Option[Either[UserId, PlayerPosition[GT]]]
+  def updatePosition(position: Either[UserId, PlayerPosition[GT]]): GameCmd[GT]
 }
 
 object UserCmd {
@@ -39,36 +40,52 @@ object UserCmd {
 object RiichiGameCmd {
   case class StartGame(tableId: TableId, gameId: GameId, config: RiichiConfig) extends GameCmd[Riichi] {
     def position = None
+    def updatePosition(position: Either[UserId, PlayerPosition[Riichi]]): StartGame = this
   }
   case class PauseGame(tableId: TableId, gameId: GameId) extends GameCmd[Riichi] {
     def position = None
+    def updatePosition(position: Either[UserId, PlayerPosition[Riichi]]): PauseGame = this
   }
 
   case class DiscardTile(
     tableId: TableId,
     gameId: GameId,
-    position: Option[Either[UserId, PlayerPosition[Riichi]]],
-    tile: String) extends GameCmd[Riichi]
+    tile: String,
+    position: Option[Either[UserId, PlayerPosition[Riichi]]] = None) extends GameCmd[Riichi] {
+    def updatePosition(position: Either[UserId, PlayerPosition[Riichi]]): DiscardTile =
+      this.copy(position = Some(position))
+  }
 
   case class GetTileFromWall(
     tableId: TableId,
     userId: UserId,
-    position: Option[Either[UserId, PlayerPosition[Riichi]]],
-    gameId: GameId) extends GameCmd[Riichi]
+    gameId: GameId,
+    position: Option[Either[UserId, PlayerPosition[Riichi]]] = None
+   ) extends GameCmd[Riichi] {
+    def updatePosition(position: Either[UserId, PlayerPosition[Riichi]]): GetTileFromWall =
+      this.copy(position = Some(position))
+  }
 
   case class ClaimTile(
     tableId: TableId,
     userId: UserId,
     gameId: GameId,
-    position: Option[Either[UserId, PlayerPosition[Riichi]]],
-    tile: String
-  ) extends GameCmd[Riichi]
+    tile: String,
+    position: Option[Either[UserId, PlayerPosition[Riichi]]] = None
+  ) extends GameCmd[Riichi]{
+    def updatePosition(position: Either[UserId, PlayerPosition[Riichi]]): ClaimTile =
+      this.copy(position = Some(position))
+  }
 
-  case class DeclareWin(
+
+  case class DeclareRon(
     tableId: TableId,
     userId: UserId,
     gameId: GameId,
-    position: Option[Either[UserId, PlayerPosition[Riichi]]],
-  ) extends GameCmd[Riichi]
+    position: Option[Either[UserId, PlayerPosition[Riichi]]] = None
+  ) extends GameCmd[Riichi]{
+    def updatePosition(position: Either[UserId, PlayerPosition[Riichi]]): DeclareRon =
+      this.copy(position = Some(position))
+  }
 }
 

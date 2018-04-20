@@ -40,7 +40,7 @@ class TablesService(pubSub: PubSub, config: ServerConfig)(implicit system: Actor
           ).withSupervisorStrategy(
             OneForOneStrategy() {
               case ex  =>
-                log.error(s"Exception in table actor: ${ex.getMessage}")
+                log.error(s"Exception in table actor: ${ex.getMessage}", ex)
                 SupervisorStrategy.Resume
             })
         )

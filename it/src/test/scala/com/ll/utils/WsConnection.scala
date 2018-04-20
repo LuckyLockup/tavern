@@ -69,7 +69,7 @@ class WsConnection(userId: UserId, as: ActorSystem, mat: Materializer, http: Htt
 
   def !(msg: WsMsg.In): Unit = ws ! msg
 
-  def expectWsMsg(f: PartialFunction[Any, WsMsg.Out]): WsMsg.Out = probe.expectMsgPF(
+  def expectWsMsg[T<: WsMsg.Out](f: PartialFunction[Any, T]): T = probe.expectMsgPF(
     config.defaultTimeout, "expecting") {
     case msg if f.isDefinedAt(msg) => f(msg)
     case msg                       =>

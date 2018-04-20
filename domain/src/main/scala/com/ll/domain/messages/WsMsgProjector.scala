@@ -27,6 +27,8 @@ object WsMsgProjector {
         Riichi.PlayerJoinedTable(tableId, player)
       case RiichiEvent.PlayerLeft(tableId, player)          =>
         Riichi.PlayerLeftTable(tableId, player)
+      case RiichiEvent.TileDiscared(tableId, gameId, tile, turn, pos) =>
+        Riichi.TileDiscarded(tableId, gameId, tile.repr, turn, pos)
     }
   }
 }

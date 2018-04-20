@@ -68,7 +68,7 @@ class TableActor[
             }
           case cmd: GameCmd[GT] =>
             _table.validateCmd(cmd) match {
-              case Left(error) => cmd.position
+              case Left(error) => services.dispatcher.dispatchError(_table, error, cmd.position)
               case Right(events) => persistAll(events) { e =>
                 events.foreach{ event =>
                   _table = _table.applyEvent(e)

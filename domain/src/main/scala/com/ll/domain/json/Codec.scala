@@ -170,7 +170,7 @@ object Codec {
           case "DiscardTile"       => payload.as[RiichiGameCmd.DiscardTile](deriveDecoder[RiichiGameCmd.DiscardTile])
           case "GetTileFromWall"   => payload.as[RiichiGameCmd.GetTileFromWall](deriveDecoder[RiichiGameCmd.GetTileFromWall])
           case "ClaimTile"         => payload.as[RiichiGameCmd.ClaimTile](deriveDecoder[RiichiGameCmd.ClaimTile])
-          case "DeclareWin"        => payload.as[RiichiGameCmd.DeclareWin](deriveDecoder[RiichiGameCmd.DeclareWin])
+          case "DeclareRon"        => payload.as[RiichiGameCmd.DeclareRon](deriveDecoder[RiichiGameCmd.DeclareRon])
           case _                   => Left(DecodingFailure(s"$messageType is not known type", Nil))
         }
 
@@ -208,6 +208,8 @@ object Codec {
         wrap("GameStarted", x)(deriveEncoder[WsMsg.Out.Riichi.GameStarted])
       case x: WsMsg.Out.Riichi.GamePaused             =>
         wrap("GamePaused", x)(deriveEncoder[WsMsg.Out.Riichi.GamePaused])
+      case x: WsMsg.Out.Riichi.TileDiscarded             =>
+        wrap("TileDiscarded", x)(deriveEncoder[WsMsg.Out.Riichi.TileDiscarded])
     }
     json.noSpaces
   }
@@ -226,6 +228,7 @@ object Codec {
           case "PlayerJoinedTable"      => payload.as[WsMsg.Out.Riichi.PlayerJoinedTable](deriveDecoder[WsMsg.Out.Riichi.PlayerJoinedTable])
           case "PlayerLeftTable"        => payload.as[WsMsg.Out.Riichi.PlayerLeftTable](deriveDecoder[WsMsg.Out.Riichi.PlayerLeftTable])
           case "RiichiState"            => payload.as[WsMsg.Out.Riichi.RiichiState](deriveDecoder[WsMsg.Out.Riichi.RiichiState])
+          case "TileDiscarded"          => payload.as[WsMsg.Out.Riichi.TileDiscarded](deriveDecoder[WsMsg.Out.Riichi.TileDiscarded])
         }
 
         for {
@@ -258,7 +261,7 @@ object Codec {
         case x: RiichiGameCmd.DiscardTile     => wrap("DiscardTile", x)(deriveEncoder[RiichiGameCmd.DiscardTile])
         case x: RiichiGameCmd.GetTileFromWall => wrap("GetTileFromWall", x)(deriveEncoder[RiichiGameCmd.GetTileFromWall])
         case x: RiichiGameCmd.ClaimTile       => wrap("ClaimTile", x)(deriveEncoder[RiichiGameCmd.ClaimTile])
-        case x: RiichiGameCmd.DeclareWin      => wrap("DeclareWin", x)(deriveEncoder[RiichiGameCmd.DeclareWin])
+        case x: RiichiGameCmd.DeclareRon      => wrap("DeclareRon", x)(deriveEncoder[RiichiGameCmd.DeclareRon])
       }
       json.noSpaces
     }
