@@ -53,11 +53,11 @@ case class NoGameOnTable(
       val game = GameStarted(
         admin = admin,
         tableId = tableId,
-        playerStates = Map(
-          east -> PlayerState(eastHand),
-          south -> PlayerState(westHand),
-          west -> PlayerState(westHand),
-          north -> PlayerState(northHand)
+        playerStates = List(
+          PlayerState(east, eastHand),
+          PlayerState(south, southHand),
+          PlayerState(west, westHand),
+          PlayerState(north, northHand)
         ),
         uraDoras = uraDoras,
         deck = remaining
@@ -114,7 +114,7 @@ case class NoGameOnTable(
 case class GameStarted(
   admin: User,
   tableId: TableId,
-  playerStates: Map[Player[Riichi], PlayerState],
+  playerStates: List[PlayerState],
   uraDoras: List[Tile],
   deck: List[Tile]
 ) extends RiichiTableState {
@@ -127,16 +127,16 @@ case class GameStarted(
     WsMsg.Out.Riichi.RiichiState(
       tableId = tableId,
       admin = admin,
-      states = playerStates.toList.map {
-        case (player, state) =>
-          val hand = (player, position) match {
+      states = playerStates.map {
+        case state =>
+          val hand = (state.player, position) match {
             case (p: HumanPlayer[Riichi], Some(Left(userId))) if p.user.id == userId =>
               state.closedHand.map(_.repr)
             case (_, Some(Right(`position`))) =>  state.closedHand.map(_.repr)
             case _ => state.closedHand.map(_ => Const.ClosedTile)
           }
           RiichiPlayerState(
-            player = player,
+            player = state.player,
             closedHand = hand,
             discard = state.discard.map(_.repr),
             online = state.online
@@ -148,9 +148,11 @@ case class GameStarted(
       deck = deck.size
     )
 
-  def players: Set[Player[Riichi]] = playerStates.keySet
+  def players: Set[Player[Riichi]] = playerStates.map(_.player).toSet
 
-  def getPlayer(position: PlayerPosition[Riichi]): Option[Player[Riichi]] = playerStates.keySet.find(p => p.position == position)
+  def getPlayer(position: PlayerPosition[Riichi]): Option[Player[Riichi]] = playerStates
+    .map(_.player)
+    .find(p => p.position == position)
 
   def joinGame(cmd: UserCmd.JoinAsPlayer): Either[ValidationError, (RiichiEvent.PlayerJoined, GameStarted)] = {
     ???

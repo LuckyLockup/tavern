@@ -21,8 +21,9 @@ class TableActor[
   override def persistenceId = s"solo_${table.tableId.id.toString}"
 
   object services {
+    implicit val ec = context.dispatcher
     val aiService = AIService()
-    val dispatcher = new Dispatcher[GT, S](pubSub, aiService)
+    val dispatcher = new Dispatcher[GT, S](pubSub, aiService, self)
   }
 
   var _table = table

@@ -50,4 +50,25 @@ class GameFlowTest extends Test{
         state
     }
   }
+
+  "Start game with 1 player" in new CommonData {
+    val player1 = createNewPlayer(UserId(101))
+
+    player1.createTable(tableId)
+    player1.ws.expectWsMsgT[WsMsg.Out.Riichi.RiichiState]()
+
+    player1.ws ! UserCmd.JoinAsPlayer(tableId, player1.user)
+    player1.ws.expectWsMsgT[WsMsg.Out.Riichi.PlayerJoinedTable]()
+
+
+    player1.ws ! RiichiGameCmd.StartGame(tableId, gameId, RiichiConfig())
+    player1.ws.expectWsMsgT[WsMsg.Out.Riichi.GameStarted]()
+
+    player1.ws ! UserCmd.GetState(tableId, player1.userId)
+    player1.ws.expectWsMsg {
+      case state: WsMsg.Out.Riichi.RiichiState =>
+        state.states.size should be (4)
+        state
+    }
+  }
 }
