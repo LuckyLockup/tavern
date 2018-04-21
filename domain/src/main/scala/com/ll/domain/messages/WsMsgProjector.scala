@@ -20,9 +20,9 @@ object WsMsgProjector {
   def riichiProjection(event: TableEvent[Riichi], position: Option[PlayerPosition[Riichi]] = None): Out = {
     event match {
       case RiichiEvent.GameStarted(tableId, gameId, config) =>
-        Riichi.GameStarted(tableId, gameId)
-      case RiichiEvent.GamePaused(tableId, gameId)          =>
-        Riichi.GamePaused(tableId, gameId)
+        Riichi.GameStarted(tableId, gameId, 1)
+      case RiichiEvent.GamePaused(tableId, gameId, turn)          =>
+        Riichi.GamePaused(tableId, gameId, turn)
       case RiichiEvent.PlayerJoined(tableId, player)        =>
         Riichi.PlayerJoinedTable(tableId, player)
       case RiichiEvent.PlayerLeft(tableId, player)          =>

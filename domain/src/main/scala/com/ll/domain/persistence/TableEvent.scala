@@ -18,7 +18,7 @@ sealed trait GameEvent[GT <: GameType] extends TableEvent[GT] {
 
 object RiichiEvent {
   case class GameStarted(tableId: TableId, gameId: GameId, config: RiichiConfig) extends TableEvent[Riichi]
-  case class GamePaused(tableId: TableId, gameId: GameId) extends TableEvent[Riichi]
+  case class GamePaused(tableId: TableId, gameId: GameId, turn: Int) extends TableEvent[Riichi]
   case class PlayerJoined(tableId: TableId, player: HumanPlayer[Riichi]) extends TableEvent[Riichi]
   case class PlayerLeft(tableId: TableId, player: HumanPlayer[Riichi]) extends TableEvent[Riichi]
 

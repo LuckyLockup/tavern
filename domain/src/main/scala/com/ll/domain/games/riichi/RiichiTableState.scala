@@ -13,6 +13,7 @@ import com.ll.domain.messages.WsMsg.Out.Riichi.RiichiPlayerState
 import com.ll.domain.messages.WsMsg.Out.{Table, ValidationError}
 import com.ll.domain.persistence.RiichiGameCmd.StartGame
 import com.ll.domain.persistence._
+import com.ll.domain.ops.EitherOps._
 
 import scala.util.Random
 
@@ -115,24 +116,20 @@ case class GameStarted(
   playerStates: List[PlayerState],
   uraDoras: List[Tile],
   deck: List[Tile],
-  turn: Int = 0
+  turn: Int = 1
 ) extends RiichiTableState {
 
   def validateCmd(cmd: GameCmd[Riichi]): Either[ValidationError, List[TableEvent[Riichi]]] = cmd match {
-    case _: StartGame                                    => Left(ValidationError("Game already started"))
-    case RiichiGameCmd.DiscardTile(_, _, tile, position) =>
-      getPlayerState(position) match {
-        case None        => Left(ValidationError("Player is not found on the table"))
-        case Some(state) =>
-          if (state.currentTile.nonEmpty) {
-            (state.closedHand ::: state.currentTile.toList).find(t => t.repr == tile) match {
-              case None             => Left(ValidationError(s"Tile $tile is not in hand"))
-              case Some(tileInHand) => Right(List(RiichiEvent.TileDiscared(tableId, gameId, tileInHand, turn, state.player.position)))
-            }
-          } else {
-            Left(ValidationError("You can't discard tile"))
-          }
-      }
+    case _: StartGame                                                 => Left(ValidationError("Game already started"))
+
+    case RiichiGameCmd.DiscardTile(_, _, tile, commandTurn, position) =>
+      for {
+        _          <- (commandTurn == turn).asEither("Not correct turn")
+        state      <- getPlayerState(position).asEither(s"No player at $position")
+        _          <- state.currentTile.nonEmpty.asEither("You can't discard tile")
+        tileInHand <- (state.closedHand ::: state.currentTile.toList).find(t => t.repr == tile)
+          .asEither(s"Tile $tile is not in hand")
+      } yield List(RiichiEvent.TileDiscared(tableId, gameId, tileInHand, turn, state.player.position))
   }
 
   def applyEvent(e: TableEvent[Riichi]): RiichiTableState = e match {

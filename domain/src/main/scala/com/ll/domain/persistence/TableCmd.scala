@@ -51,6 +51,7 @@ object RiichiGameCmd {
     tableId: TableId,
     gameId: GameId,
     tile: String,
+    turn: Int,
     position: Option[Either[UserId, PlayerPosition[Riichi]]] = None) extends GameCmd[Riichi] {
     def updatePosition(position: Either[UserId, PlayerPosition[Riichi]]): DiscardTile =
       this.copy(position = Some(position))

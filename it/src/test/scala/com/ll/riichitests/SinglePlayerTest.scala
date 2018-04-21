@@ -29,7 +29,7 @@ class SinglePlayerTest extends Test{
     }
 
     val tileToDiscard = state1.states.head.closedHand.head
-    player1.ws ! RiichiGameCmd.DiscardTile(tableId, gameId, tileToDiscard)
+    player1.ws ! RiichiGameCmd.DiscardTile(tableId, gameId, tileToDiscard, 1)
     player1.ws.expectWsMsg {
       case discarded: WsMsg.Out.Riichi.TileDiscarded =>
         discarded.tile should be (tileToDiscard)

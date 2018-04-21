@@ -21,7 +21,9 @@ object WsMsg {
     case class Message(txt: String) extends Out
     case class ValidationError(reason: String) extends Out
 
-    sealed trait GameEvent[GT<: GameType] extends Table
+    sealed trait GameEvent[GT<: GameType] extends Table {
+      def turn: Int
+    }
     sealed trait TableState[GT<: GameType] extends Table
 
     object Riichi {
@@ -30,8 +32,8 @@ object WsMsg {
         admin: User,
         states: List[RiichiPlayerState],
         uraDoras: List[String],
-        deck: Integer,
-        turn: Integer
+        deck: Int,
+        turn: Int
       ) extends TableState[Riichi]
 
       case class RiichiPlayerState(
@@ -42,18 +44,27 @@ object WsMsg {
         online: Boolean = true
       )
 
-      case class GameStarted(tableId: TableId, gameId: GameId) extends GameEvent[Riichi]
-      case class GamePaused(tableId: TableId, gameId: GameId) extends GameEvent[Riichi]
+      case class GameStarted(tableId: TableId, gameId: GameId, turn: Int) extends GameEvent[Riichi]
+      case class GamePaused(tableId: TableId, gameId: GameId, turn: Int) extends GameEvent[Riichi]
 
-      case class SpectacularJoinedTable(user: User, tableId: TableId) extends GameEvent[Riichi]
-      case class SpectacularLeftTable(user: User, tableId: TableId) extends GameEvent[Riichi]
-      case class PlayerJoinedTable(tableId: TableId, user: HumanPlayer[Riichi]) extends GameEvent[Riichi]
-      case class PlayerLeftTable(tableId: TableId, user: HumanPlayer[Riichi]) extends GameEvent[Riichi]
+      case class SpectacularJoinedTable(user: User, tableId: TableId) extends GameEvent[Riichi] {
+        def turn = 0
+      }
+      case class SpectacularLeftTable(user: User, tableId: TableId) extends GameEvent[Riichi] {
+        def turn = 0
+      }
+      case class PlayerJoinedTable(tableId: TableId, user: HumanPlayer[Riichi]) extends GameEvent[Riichi] {
+        def turn = 0
+      }
+      case class PlayerLeftTable(tableId: TableId, user: HumanPlayer[Riichi]) extends GameEvent[Riichi] {
+        def turn = 0
+      }
 
       case class TileFromWallTaken(
         tableId: TableId,
         position: PlayerPosition[Riichi],
-        tile: Option[String]
+        tile: Option[String],
+        turn: Int
       ) extends GameEvent[Riichi]
 
       case class TileDiscarded(
