@@ -1,16 +1,144 @@
 {
-  "type": "PlayerJoinedTable",
+  "type": "RiichiState",
   "payload": {
-    "tableId": "table_78",
-    "user": {
-      "type": "HumanPlayer",
-      "payload": {
-        "user": {
-          "id": 101,
-          "nickname": "2un4T0"
-        },
-        "position": "EastPosition"
+    "tableId": "table_881",
+    "admin": {
+      "id": 0,
+      "nickname": "God"
+    },
+    "states": [
+      {
+        "type": "RiichiPlayerState",
+        "payload": {
+          "player": {
+            "type": "HumanPlayer",
+            "payload": {
+              "user": {
+                "id": 101,
+                "nickname": "tXfDIR"
+              },
+              "position": "EastPosition"
+            }
+          },
+          "closedHand": [
+            "2_sou",
+            "2_sou",
+            "south",
+            "7_wan",
+            "3_wan",
+            "8_sou",
+            "5_wan",
+            "1_wan",
+            "north",
+            "red",
+            "6_pin",
+            "5_pin",
+            "green"
+          ],
+          "discard": [],
+          "online": true
+        }
+      },
+      {
+        "type": "RiichiPlayerState",
+        "payload": {
+          "player": {
+            "type": "HumanPlayer",
+            "payload": {
+              "user": {
+                "id": 102,
+                "nickname": "FzHD74"
+              },
+              "position": "SouthPosition"
+            }
+          },
+          "closedHand": [
+            "7_sou",
+            "6_pin",
+            "6_sou",
+            "7_wan",
+            "3_wan",
+            "3_sou",
+            "4_pin",
+            "3_wan",
+            "west",
+            "3_pin",
+            "7_sou",
+            "1_pin",
+            "3_pin"
+          ],
+          "discard": [],
+          "online": true
+        }
+      },
+      {
+        "type": "RiichiPlayerState",
+        "payload": {
+          "player": {
+            "type": "HumanPlayer",
+            "payload": {
+              "user": {
+                "id": 103,
+                "nickname": "tZYEqd"
+              },
+              "position": "WestPosition"
+            }
+          },
+          "closedHand": [
+            "7_sou",
+            "6_pin",
+            "6_sou",
+            "7_wan",
+            "3_wan",
+            "3_sou",
+            "4_pin",
+            "3_wan",
+            "west",
+            "3_pin",
+            "7_sou",
+            "1_pin",
+            "3_pin"
+          ],
+          "discard": [],
+          "online": true
+        }
+      },
+      {
+        "type": "RiichiPlayerState",
+        "payload": {
+          "player": {
+            "type": "HumanPlayer",
+            "payload": {
+              "user": {
+                "id": 104,
+                "nickname": "T2Z2LL"
+              },
+              "position": "NorthPosition"
+            }
+          },
+          "closedHand": [
+            "4_sou",
+            "6_wan",
+            "2_pin",
+            "8_wan",
+            "5_wan",
+            "5_pin",
+            "9_wan",
+            "5_wan",
+            "white",
+            "south",
+            "5_sou",
+            "8_pin",
+            "3_pin"
+          ],
+          "discard": [],
+          "online": true
+        }
       }
-    }
+    ],
+    "uraDoras": [
+      "green"
+    ],
+    "deck": 83
   }
 }

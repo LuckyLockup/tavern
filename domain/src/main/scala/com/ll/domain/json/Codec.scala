@@ -17,6 +17,8 @@ import io.circe.syntax._
 import io.circe.parser._
 import shapeless.{::, Generic, HNil, Lazy}
 
+import scala.concurrent.duration.{Duration, FiniteDuration}
+
 object Codec {
   implicit def encodeCaseObject[A <: Product](implicit
     gen: Generic.Aux[A, HNil]
@@ -61,7 +63,7 @@ object Codec {
     final def apply(c: HCursor): Decoder.Result[T] = {
       def decode(messageType: String, payload: Json): Decoder.Result[T] = messageType match {
         case _ if messageType == s => payload.as[T](deriveDecoder[T])
-        case _ => Left(DecodingFailure(s"Message is not $messageType", Nil))
+        case _                     => Left(DecodingFailure(s"Message is not $messageType", Nil))
       }
 
       for {
@@ -137,23 +139,29 @@ object Codec {
   implicit lazy val AIPlayerDecoder: Decoder[AIPlayer[Riichi]] = decoder[AIPlayer[Riichi]]("AIPlayer")
   implicit lazy val PlayerEncoder: Encoder[Player[Riichi]] = Encoder.instance {
     case p: HumanPlayer[Riichi] => p.asJson
-    case p: AIPlayer[Riichi] => p.asJson
+    case p: AIPlayer[Riichi]    => p.asJson
   }
-  implicit lazy val PlayerDecoder: Decoder[Player[Riichi]] = Decoder.instance{cur =>
+  implicit lazy val PlayerDecoder: Decoder[Player[Riichi]] = Decoder.instance { cur =>
     import cats.syntax.either._
     humanPlayerDecoder.apply(cur) orElse
-    AIPlayerDecoder.apply(cur)
+      AIPlayerDecoder.apply(cur)
   }
 
   //Configs
+  implicit lazy val FiniteDurationEncoder: Encoder[FiniteDuration] = (d: FiniteDuration) => Json.fromString(d.toString())
+  implicit lazy val FiniteDurationDecoder: Decoder[FiniteDuration] = (c: HCursor) => {
+    c.focus.flatMap(_.asString) match {
+      case None           => Left(DecodingFailure("not a duration", Nil))
+      case Some(duration) => Right(Duration(duration).asInstanceOf[FiniteDuration])
+    }
+  }
+
   implicit lazy val riichiConfigEncoder = encoder[RiichiConfig]("RiichiConfig")
   implicit lazy val riichiConfigDecoder: Decoder[RiichiConfig] = decoder[RiichiConfig]("RiichiConfig")
 
   //Riichi out player state
   implicit lazy val riichiPlayerStateEncoder = encoder[WsMsg.Out.Riichi.RiichiPlayerState]("RiichiPlayerState")
   implicit lazy val riichiPlayerStateDecoder = decoder[WsMsg.Out.Riichi.RiichiPlayerState]("RiichiPlayerState")
-
-
 
   def decodeWsMsg(json: String): Either[DecodingFailure, WsMsg.In] = {
     implicit val inDecoder: Decoder[WsMsg.In] = new Decoder[WsMsg.In] {
@@ -191,9 +199,9 @@ object Codec {
 
   def encodeWsMsg(msg: WsMsg.Out): String = {
     val json = msg match {
-      case x: WsMsg.Out.Pong            => wrap("Pong", x)(deriveEncoder[WsMsg.Out.Pong])
-      case x: WsMsg.Out.Message         => wrap("Message", x)(deriveEncoder[WsMsg.Out.Message])
-      case x: WsMsg.Out.ValidationError => wrap("ValidationError", x)(deriveEncoder[WsMsg.Out.ValidationError])
+      case x: WsMsg.Out.Pong                          => wrap("Pong", x)(deriveEncoder[WsMsg.Out.Pong])
+      case x: WsMsg.Out.Message                       => wrap("Message", x)(deriveEncoder[WsMsg.Out.Message])
+      case x: WsMsg.Out.ValidationError               => wrap("ValidationError", x)(deriveEncoder[WsMsg.Out.ValidationError])
       case x: WsMsg.Out.Riichi.PlayerJoinedTable      =>
         wrap("PlayerJoinedTable", x)(deriveEncoder[WsMsg.Out.Riichi.PlayerJoinedTable])
       case x: WsMsg.Out.Riichi.PlayerLeftTable        =>
@@ -208,8 +216,10 @@ object Codec {
         wrap("GameStarted", x)(deriveEncoder[WsMsg.Out.Riichi.GameStarted])
       case x: WsMsg.Out.Riichi.GamePaused             =>
         wrap("GamePaused", x)(deriveEncoder[WsMsg.Out.Riichi.GamePaused])
-      case x: WsMsg.Out.Riichi.TileDiscarded             =>
+      case x: WsMsg.Out.Riichi.TileDiscarded          =>
         wrap("TileDiscarded", x)(deriveEncoder[WsMsg.Out.Riichi.TileDiscarded])
+      case x: WsMsg.Out.Riichi.TileFromWallTaken      =>
+        wrap("TileFromWallTaken", x)(deriveEncoder[WsMsg.Out.Riichi.TileFromWallTaken])
     }
     json.noSpaces
   }
@@ -229,6 +239,7 @@ object Codec {
           case "PlayerLeftTable"        => payload.as[WsMsg.Out.Riichi.PlayerLeftTable](deriveDecoder[WsMsg.Out.Riichi.PlayerLeftTable])
           case "RiichiState"            => payload.as[WsMsg.Out.Riichi.RiichiState](deriveDecoder[WsMsg.Out.Riichi.RiichiState])
           case "TileDiscarded"          => payload.as[WsMsg.Out.Riichi.TileDiscarded](deriveDecoder[WsMsg.Out.Riichi.TileDiscarded])
+          case "TileFromWallTaken"      => payload.as[WsMsg.Out.Riichi.TileFromWallTaken](deriveDecoder[WsMsg.Out.Riichi.TileFromWallTaken])
         }
 
         for {

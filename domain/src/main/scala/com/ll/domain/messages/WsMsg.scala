@@ -62,9 +62,10 @@ object WsMsg {
 
       case class TileFromWallTaken(
         tableId: TableId,
-        position: PlayerPosition[Riichi],
-        tile: Option[String],
-        turn: Int
+        gameId: GameId,
+        tile: String,
+        turn: Int,
+        position: PlayerPosition[Riichi]
       ) extends GameEvent[Riichi]
 
       case class TileDiscarded(

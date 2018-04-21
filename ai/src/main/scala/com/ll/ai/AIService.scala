@@ -1,9 +1,10 @@
 package com.ll.ai
 
 import com.ll.domain.games.GameType
+import com.ll.domain.games.GameType.Riichi
 import com.ll.domain.games.Player.Riichi.AIPlayer
 import com.ll.domain.messages.WsMsg.Out
-import com.ll.domain.messages.WsMsg.Out.{GameEvent, TableState}
+import com.ll.domain.messages.WsMsg.Out.{TableState}
 import com.ll.domain.persistence._
 import org.slf4j.LoggerFactory
 
@@ -15,11 +16,25 @@ case class AIService() {
   def processEvent[GT <: GameType](
     aiPlayer: AIPlayer[GT],
     outEvent: Out,
-    state: TableState[GT]): Future[List[GameCmd[GT]]] = {
+    state: TableState[GT]): Future[List[GameCmd[_]]] = {
     log.info(s"$aiPlayer received: $outEvent")
-    outEvent match {
-      case _ =>
+    (aiPlayer, state) match {
+      case (riichiAi: AIPlayer[Riichi], riichiState: TableState[Riichi]) =>
+        processRiichiEvent(riichiAi, outEvent, riichiState)
     }
-    Future.successful(Nil)
+  }
+
+  def processRiichiEvent(
+    aiPlayer: AIPlayer[Riichi],
+    outEvent: Out,
+    state: TableState[Riichi]): Future[List[GameCmd[Riichi]]] = {
+    outEvent match {
+      case Out.Riichi.TileFromWallTaken(tableId, gameId, tile, turn, aiPlayer.position) =>
+        Future.successful {
+          Thread.sleep(1000)
+          List(RiichiGameCmd.DiscardTile(tableId, gameId, tile, turn + 1, Some(Right(aiPlayer.position))))
+        }
+      case _                                                                            => Future.successful(Nil)
+    }
   }
 }

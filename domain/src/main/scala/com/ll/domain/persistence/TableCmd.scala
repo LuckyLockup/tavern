@@ -59,8 +59,8 @@ object RiichiGameCmd {
 
   case class GetTileFromWall(
     tableId: TableId,
-    userId: UserId,
     gameId: GameId,
+    turn: Int,
     position: Option[Either[UserId, PlayerPosition[Riichi]]] = None
    ) extends GameCmd[Riichi] {
     def updatePosition(position: Either[UserId, PlayerPosition[Riichi]]): GetTileFromWall =

@@ -1,5 +1,6 @@
 package com.ll.domain.messages
 
+import com.ll.domain.Const
 import com.ll.domain.games.GameType
 import com.ll.domain.games.GameType.Riichi
 import com.ll.domain.games.position.PlayerPosition
@@ -29,6 +30,9 @@ object WsMsgProjector {
         Riichi.PlayerLeftTable(tableId, player)
       case RiichiEvent.TileDiscared(tableId, gameId, tile, turn, pos) =>
         Riichi.TileDiscarded(tableId, gameId, tile.repr, turn, pos)
+      case RiichiEvent.TileFromTheWallTaken(tableId, gameId, tile, turn, playerPosition) =>
+        val tileRepr = position.filter(p => p == playerPosition).map(_ => tile.repr).getOrElse(Const.ClosedTile)
+        Riichi.TileFromWallTaken(tableId, gameId, tileRepr, turn, playerPosition)
     }
   }
 }

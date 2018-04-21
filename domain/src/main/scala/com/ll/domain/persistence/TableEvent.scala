@@ -30,7 +30,7 @@ object RiichiEvent {
     position: PlayerPosition[Riichi]
   ) extends GameEvent[Riichi]
 
-  case class TileFromTheWall(
+  case class TileFromTheWallTaken(
     tableId: TableId,
     gameId: GameId,
     tile: Tile,

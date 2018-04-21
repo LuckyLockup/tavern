@@ -3,7 +3,7 @@ package com.ll.games
 import akka.persistence.PersistentActor
 import com.ll.ai.AIService
 import com.ll.domain.auth.{User, UserId}
-import com.ll.domain.games.GameType
+import com.ll.domain.games.{GameType, ScheduledCommand}
 import com.ll.domain.messages.WsMsg.Out
 import com.ll.domain.persistence._
 import com.ll.utils.Logging
@@ -16,9 +16,12 @@ class TableActor[
   S <: TableState[GT, S] : ClassTag
   ](table: TableState[GT, S], pubSub: PubSub)
   extends PersistentActor with Logging {
+
   def tableId = table.tableId
 
   override def persistenceId = s"solo_${table.tableId.id.toString}"
+
+  implicit val ec = context.dispatcher
 
   object services {
     implicit val ec = context.dispatcher
@@ -71,7 +74,12 @@ class TableActor[
               case Left(error) => services.dispatcher.dispatchError(_table, error, cmd.position)
               case Right(events) => persistAll(events) { e =>
                 events.foreach{ event =>
-                  _table = _table.applyEvent(e)
+                  val (cmds, newState) = _table.applyEvent(e)
+                  _table = newState
+                  cmds.foreach{
+                    case ScheduledCommand(duration, cmd) =>
+                      context.system.scheduler.scheduleOnce(duration, self, cmd)
+                  }
                   services.dispatcher.dispatchEvent(_table, spectaculars, event)
                 }
               }
