@@ -150,7 +150,7 @@ case class GameStarted(
           val newClosedHand = ((st.currentTile.toList ::: st.closedHand).toSet - tile).toList
           val newDiscard = tile :: st.discard
           st.copy(
-            closedHand = newClosedHand,
+            closedHand = newClosedHand.sortBy(_.order),
             discard = newDiscard,
             currentTile = None
           )

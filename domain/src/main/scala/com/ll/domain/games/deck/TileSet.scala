@@ -2,7 +2,7 @@ package com.ll.domain.games.deck
 
 sealed trait TileSet
 
-case object TileSet {
+object TileSet {
   case class TilesPair(x: Tile, y: Tile) extends TileSet
   case class Pung(x: Tile, y: Tile, z: Tile) extends TileSet
   case class Chow(x: Tile, y: Tile, z: Tile) extends TileSet
