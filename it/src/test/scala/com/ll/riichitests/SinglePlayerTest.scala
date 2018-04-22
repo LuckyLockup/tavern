@@ -94,5 +94,12 @@ class SinglePlayerTest extends Test{
           tileDiscarded
       }
     }
+    player1.ws ! UserCmd.GetState(tableId, player1.userId)
+    player1.ws.expectWsMsg {
+      case state: WsMsg.Out.Riichi.RiichiState =>
+        state.states.size should be (4)
+        state.turn should be (1)
+        state
+    }
   }
 }

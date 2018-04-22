@@ -6,7 +6,9 @@ import com.ll.domain.games.GameType.Riichi
 import com.ll.domain.games.position.PlayerPosition
 import com.ll.domain.messages.WsMsg.Out
 import com.ll.domain.messages.WsMsg.Out.Riichi
-import com.ll.domain.persistence.{RiichiEvent, TableEvent, TableState}
+import com.ll.domain.persistence.{GameCmd, RiichiEvent, TableEvent, TableState}
+
+import scala.collection.immutable
 
 
 object WsMsgProjector {
@@ -28,8 +30,10 @@ object WsMsgProjector {
         Riichi.PlayerJoinedTable(tableId, player)
       case RiichiEvent.PlayerLeft(tableId, player)          =>
         Riichi.PlayerLeftTable(tableId, player)
-      case RiichiEvent.TileDiscared(tableId, gameId, tile, turn, pos) =>
-        Riichi.TileDiscarded(tableId, gameId, tile.repr, turn, pos)
+      case RiichiEvent.TileDiscared(tableId, gameId, tile, turn, pos, cmds) =>
+        //TODO send real cmds
+        val cmdsToPlayer: List[GameCmd[Riichi]] = position.flatMap(p => cmds.get(p)).toList.flatten
+        Riichi.TileDiscarded(tableId, gameId, tile.repr, turn, pos, Nil)
       case RiichiEvent.TileFromTheWallTaken(tableId, gameId, tile, turn, playerPosition) =>
         val tileRepr = position.filter(p => p == playerPosition).map(_ => tile.repr).getOrElse(Const.ClosedTile)
         Riichi.TileFromWallTaken(tableId, gameId, tileRepr, turn, playerPosition)

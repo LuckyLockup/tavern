@@ -91,10 +91,10 @@ class WsConnection(userId: UserId, as: ActorSystem, mat: Materializer, http: Htt
   }
 
   private def decodeWsMsg(json: String): Either[Error, WsMsg.Out] = {
-    Codec.Test.decodeWsMsg(json)
+    Codec.Test.decodeWsOutMsg(json)
   }
 
   private def encodeWsMsg(msg: WsMsg.In): String = {
-    Codec.Test.encodeWsMsg(msg)
+    Codec.Test.encodeWsInMsg(msg)
   }
 }

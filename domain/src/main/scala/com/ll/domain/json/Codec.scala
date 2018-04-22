@@ -250,7 +250,7 @@ object Codec {
       }
     }
 
-    def decodeWsMsg(json: String): Either[DecodingFailure, WsMsg.Out] = {
+    def decodeWsOutMsg(json: String): Either[DecodingFailure, WsMsg.Out] = {
       parse(json)
         .flatMap(json => json.as[WsMsg.Out](outDecoder))
         .fold(
@@ -259,7 +259,7 @@ object Codec {
         )
     }
 
-    def encodeWsMsg(msg: WsMsg.In): String = {
+    def encodeWsInMsg(msg: WsMsg.In): String = {
       val json: Json = msg match {
         case x: WsMsg.In.Ping                 => wrap("Ping", x)(deriveEncoder[WsMsg.In.Ping])
         case x: RiichiGameCmd.StartGame       => wrap("StartGame", x)(deriveEncoder[RiichiGameCmd.StartGame])

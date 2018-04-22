@@ -88,5 +88,15 @@ object RiichiGameCmd {
     def updatePosition(position: Either[UserId, PlayerPosition[Riichi]]): DeclareRon =
       this.copy(position = Some(position))
   }
+
+  case class DeclareTsumo(
+    tableId: TableId,
+    userId: UserId,
+    gameId: GameId,
+    position: Option[Either[UserId, PlayerPosition[Riichi]]] = None
+  ) extends GameCmd[Riichi]{
+    def updatePosition(position: Either[UserId, PlayerPosition[Riichi]]): DeclareTsumo =
+      this.copy(position = Some(position))
+  }
 }
 

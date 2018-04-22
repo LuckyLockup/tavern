@@ -21,14 +21,14 @@ class CodecTest extends WordSpec with Matchers {
 
   "Decode Out messages" in new OutMessages {
     testData.foreach { case (msg, json) =>
-      Test.decodeWsMsg(json) should be (Right(msg))
+      Test.decodeWsOutMsg(json) should be (Right(msg))
     }
   }
 
   "Encode In messages" in new InMessages {
     testData.foreach { case (msg, json) =>
-      println(Test.encodeWsMsg(msg))
-      JsonDiff.diff(Test.encodeWsMsg(msg), json, false).ops shouldBe empty
+      println(Test.encodeWsInMsg(msg))
+      JsonDiff.diff(Test.encodeWsInMsg(msg), json, false).ops shouldBe empty
     }
   }
 

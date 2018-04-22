@@ -131,7 +131,8 @@ case class GameStarted(
         _ <- state.currentTile.nonEmpty.asEither("You can't discard tile")
         tileInHand <- (state.closedHand ::: state.currentTile.toList).find(t => t.repr == tile)
           .asEither(s"Tile $tile is not in hand")
-      } yield List(RiichiEvent.TileDiscared(tableId, gameId, tileInHand, turn, state.player.position))
+        cmds = CommandPredictor.predictsCommands(tileInHand, this, state.player.position)
+      } yield List(RiichiEvent.TileDiscared(tableId, gameId, tileInHand, turn, state.player.position, cmds))
 
     case RiichiGameCmd.GetTileFromWall(_, _, commandTurn, position) =>
       for {
@@ -142,7 +143,7 @@ case class GameStarted(
   }
 
   def applyEvent(e: TableEvent[Riichi]): (List[ScheduledCommand], RiichiTableState) = e match {
-    case RiichiEvent.TileDiscared(_, _, tile, _, position) =>
+    case RiichiEvent.TileDiscared(_, _, tile, _, position, _) =>
       val updatedStates = this.playerStates.map {
         case st if st.player.position != position => st
         case st if st.player.position == position =>

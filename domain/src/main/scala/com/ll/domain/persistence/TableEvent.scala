@@ -27,7 +27,8 @@ object RiichiEvent {
     gameId: GameId,
     tile: Tile,
     turn: Int,
-    position: PlayerPosition[Riichi]
+    position: PlayerPosition[Riichi],
+    commands: Map[PlayerPosition[Riichi], List[GameCmd[Riichi]]]
   ) extends GameEvent[Riichi]
 
   case class TileFromTheWallTaken(

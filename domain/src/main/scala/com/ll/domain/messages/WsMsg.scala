@@ -73,7 +73,8 @@ object WsMsg {
         gameId: GameId,
         tile: String,
         turn: Int,
-        position: PlayerPosition[Riichi]
+        position: PlayerPosition[Riichi],
+        commands: List[String]
       ) extends GameEvent[Riichi]
     }
   }
