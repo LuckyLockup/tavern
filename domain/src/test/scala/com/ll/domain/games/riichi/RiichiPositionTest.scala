@@ -3,7 +3,7 @@ package com.ll.domain.games.riichi
 import com.ll.domain.auth.{User, UserId}
 import com.ll.domain.games.GameType.Riichi
 import com.ll.domain.games.Player
-import com.ll.domain.games.Player.Riichi.HumanPlayer
+import com.ll.domain.games.Player.HumanPlayer
 import com.ll.domain.games.position.PlayerPosition.RiichiPosition
 import com.ll.domain.games.position.PositionUtility
 import org.scalatest.{Matchers, WordSpec}

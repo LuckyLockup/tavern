@@ -2,10 +2,9 @@ package com.ll.ai
 
 import com.ll.domain.games.GameType
 import com.ll.domain.games.GameType.Riichi
-import com.ll.domain.games.Player.Riichi.AIPlayer
-import com.ll.domain.messages.WsMsg.Out
-import com.ll.domain.messages.WsMsg.Out.{TableState}
-import com.ll.domain.persistence._
+import com.ll.domain.games.Player.AIPlayer
+import com.ll.domain.ws.WsMsgIn.{GameCmd, RiichiGameCmd}
+import com.ll.domain.ws.WsMsgOut
 import org.slf4j.LoggerFactory
 
 import scala.concurrent.Future
@@ -15,21 +14,21 @@ case class AIService() {
 
   def processEvent[GT <: GameType](
     aiPlayer: AIPlayer[GT],
-    outEvent: Out,
-    state: TableState[GT]): Future[List[GameCmd[_]]] = {
+    outEvent: WsMsgOut,
+    state: WsMsgOut.TableState[GT]): Future[List[GameCmd[_]]] = {
     log.info(s"$aiPlayer received: $outEvent")
     (aiPlayer, state) match {
-      case (riichiAi: AIPlayer[Riichi], riichiState: TableState[Riichi]) =>
+      case (riichiAi: AIPlayer[Riichi], riichiState: WsMsgOut.Riichi.RiichiTableState) =>
         processRiichiEvent(riichiAi, outEvent, riichiState)
     }
   }
 
   def processRiichiEvent(
     aiPlayer: AIPlayer[Riichi],
-    outEvent: Out,
-    state: TableState[Riichi]): Future[List[GameCmd[Riichi]]] = {
+    outEvent: WsMsgOut,
+    state: WsMsgOut.TableState[Riichi]): Future[List[GameCmd[Riichi]]] = {
     outEvent match {
-      case Out.Riichi.TileFromWallTaken(tableId, gameId, tile, turn, aiPlayer.position) =>
+      case WsMsgOut.Riichi.TileFromWallTaken(tableId, gameId, tile, turn, aiPlayer.position) =>
         Future.successful {
           Thread.sleep(1000)
           List(RiichiGameCmd.DiscardTile(tableId, gameId, tile, turn + 1, Some(Right(aiPlayer.position))))

@@ -1,6 +1,6 @@
 package com.ll.domain.games
 
-import com.ll.domain.persistence.TableCmd
+import com.ll.domain.ws.WsMsgIn.TableCmd
 
 import scala.concurrent.duration.FiniteDuration
 

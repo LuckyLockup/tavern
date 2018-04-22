@@ -1,6 +1,6 @@
 package com.ll.domain.ops
 
-import com.ll.domain.messages.WsMsg.Out.ValidationError
+import com.ll.domain.ws.WsMsgOut.ValidationError
 
 object EitherOps {
   //https://github.com/typelevel/mouse/blob/master/shared/src/main/scala/mouse/boolean.scala

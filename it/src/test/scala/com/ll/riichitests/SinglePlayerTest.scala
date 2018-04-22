@@ -3,8 +3,8 @@ package com.ll.riichitests
 import com.ll.domain.auth.UserId
 import com.ll.domain.games.position.PlayerPosition.RiichiPosition
 import com.ll.domain.games.riichi.RiichiConfig
-import com.ll.domain.messages.WsMsg
-import com.ll.domain.persistence.{RiichiGameCmd, UserCmd}
+import com.ll.domain.ws.WsMsgIn.{RiichiGameCmd, UserCmd}
+import com.ll.domain.ws.WsMsgOut
 import com.ll.utils.{CommonData, Test}
 
 class SinglePlayerTest extends Test{
@@ -12,18 +12,18 @@ class SinglePlayerTest extends Test{
     val player1 = createNewPlayer(UserId(101))
 
     player1.createTable(tableId)
-    player1.ws.expectWsMsgT[WsMsg.Out.Riichi.RiichiState]()
+    player1.ws.expectWsMsgT[WsMsgOut.Riichi.RiichiState]()
 
     player1.ws ! UserCmd.JoinAsPlayer(tableId, player1.user)
-    player1.ws.expectWsMsgT[WsMsg.Out.Riichi.PlayerJoinedTable]()
+    player1.ws.expectWsMsgT[WsMsgOut.Riichi.PlayerJoinedTable]()
 
 
     player1.ws ! RiichiGameCmd.StartGame(tableId, gameId, RiichiConfig())
-    player1.ws.expectWsMsgT[WsMsg.Out.Riichi.GameStarted]()
+    player1.ws.expectWsMsgT[WsMsgOut.Riichi.GameStarted]()
 
     player1.ws ! UserCmd.GetState(tableId, player1.userId)
-    val state1: WsMsg.Out.Riichi.RiichiState = player1.ws.expectWsMsg {
-      case state: WsMsg.Out.Riichi.RiichiState =>
+    val state1: WsMsgOut.Riichi.RiichiState = player1.ws.expectWsMsg {
+      case state: WsMsgOut.Riichi.RiichiState =>
         state.states.size should be (4)
         state.turn should be (1)
         state
@@ -32,7 +32,7 @@ class SinglePlayerTest extends Test{
     val tileToDiscard = state1.states.head.closedHand.head
     player1.ws ! RiichiGameCmd.DiscardTile(tableId, gameId, tileToDiscard, 1)
     player1.ws.expectWsMsg {
-      case discarded: WsMsg.Out.Riichi.TileDiscarded =>
+      case discarded: WsMsgOut.Riichi.TileDiscarded =>
         discarded.tile should be (tileToDiscard)
         discarded.turn should be (1)
         discarded
@@ -40,7 +40,7 @@ class SinglePlayerTest extends Test{
 
     player1.ws ! UserCmd.GetState(tableId, player1.userId)
     player1.ws.expectWsMsg {
-      case state: WsMsg.Out.Riichi.RiichiState =>
+      case state: WsMsgOut.Riichi.RiichiState =>
         state.states.size should be (4)
         val east = state.states.head
         state.turn should be (2)
@@ -55,18 +55,18 @@ class SinglePlayerTest extends Test{
     val player1 = createNewPlayer(UserId(101))
 
     player1.createTable(tableId)
-    player1.ws.expectWsMsgT[WsMsg.Out.Riichi.RiichiState]()
+    player1.ws.expectWsMsgT[WsMsgOut.Riichi.RiichiState]()
 
     player1.ws ! UserCmd.JoinAsPlayer(tableId, player1.user)
-    player1.ws.expectWsMsgT[WsMsg.Out.Riichi.PlayerJoinedTable]()
+    player1.ws.expectWsMsgT[WsMsgOut.Riichi.PlayerJoinedTable]()
 
 
     player1.ws ! RiichiGameCmd.StartGame(tableId, gameId, RiichiConfig())
-    player1.ws.expectWsMsgT[WsMsg.Out.Riichi.GameStarted]()
+    player1.ws.expectWsMsgT[WsMsgOut.Riichi.GameStarted]()
 
     player1.ws ! UserCmd.GetState(tableId, player1.userId)
-    val state1: WsMsg.Out.Riichi.RiichiState = player1.ws.expectWsMsg {
-      case state: WsMsg.Out.Riichi.RiichiState =>
+    val state1: WsMsgOut.Riichi.RiichiState = player1.ws.expectWsMsg {
+      case state: WsMsgOut.Riichi.RiichiState =>
         state.states.size should be (4)
         state.turn should be (1)
         state
@@ -75,7 +75,7 @@ class SinglePlayerTest extends Test{
     val tileToDiscard = state1.states.head.closedHand.head
     player1.ws ! RiichiGameCmd.DiscardTile(tableId, gameId, tileToDiscard, 1)
     player1.ws.expectWsMsg {
-      case discarded: WsMsg.Out.Riichi.TileDiscarded =>
+      case discarded: WsMsgOut.Riichi.TileDiscarded =>
         discarded.tile should be (tileToDiscard)
         discarded.turn should be (1)
         discarded
@@ -83,22 +83,22 @@ class SinglePlayerTest extends Test{
 
     List(RiichiPosition.SouthPosition, RiichiPosition.WestPosition, RiichiPosition.NorthPosition).foreach {pos =>
       player1.ws.expectWsMsg {
-        case tileTaken: WsMsg.Out.Riichi.TileFromWallTaken =>
+        case tileTaken: WsMsgOut.Riichi.TileFromWallTaken =>
           tileTaken.position should be (pos)
           tileTaken
       }
 
       player1.ws.expectWsMsg {
-        case tileDiscarded: WsMsg.Out.Riichi.TileDiscarded =>
+        case tileDiscarded: WsMsgOut.Riichi.TileDiscarded =>
           tileDiscarded.position should be (pos)
           tileDiscarded
       }
     }
     player1.ws ! UserCmd.GetState(tableId, player1.userId)
     player1.ws.expectWsMsg {
-      case state: WsMsg.Out.Riichi.RiichiState =>
+      case state: WsMsgOut.Riichi.RiichiState =>
         state.states.size should be (4)
-        state.turn should be (1)
+        state.turn should be (8)
         state
     }
   }

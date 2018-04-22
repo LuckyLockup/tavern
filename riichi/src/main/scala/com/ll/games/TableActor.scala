@@ -4,8 +4,9 @@ import akka.persistence.PersistentActor
 import com.ll.ai.AIService
 import com.ll.domain.auth.{User, UserId}
 import com.ll.domain.games.{GameType, ScheduledCommand}
-import com.ll.domain.messages.WsMsg.Out
 import com.ll.domain.persistence._
+import com.ll.domain.ws.WsMsgIn.{GameCmd, UserCmd}
+import com.ll.domain.ws.WsMsgOut
 import com.ll.utils.Logging
 import com.ll.ws.PubSub
 
@@ -46,10 +47,10 @@ class TableActor[
             pubSub.sendToUser(cmd.userId, state)
           case UserCmd.JoinAsSpectacular(_, user) =>
             spectaculars += user
-            pubSub.sendToUsers(allUsers, Out.Riichi.SpectacularJoinedTable(user, tableId))
+            pubSub.sendToUsers(allUsers, WsMsgOut.SpectacularJoinedTable(user, tableId))
           case UserCmd.LeftAsSpectacular(_, user) =>
             spectaculars -= user
-            pubSub.sendToUsers(allUsers, Out.Riichi.SpectacularJoinedTable(user, tableId))
+            pubSub.sendToUsers(allUsers, WsMsgOut.SpectacularJoinedTable(user, tableId))
 
           case cmd@UserCmd.JoinAsPlayer(_, user) =>
             _table.joinGame(cmd) match {

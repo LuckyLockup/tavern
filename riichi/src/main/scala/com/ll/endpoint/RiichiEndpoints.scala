@@ -10,8 +10,8 @@ import akka.stream.Materializer
 import com.ll.config.ServerConfig
 import com.ll.domain.auth.UserId
 import com.ll.domain.games.{GameId, TableId}
-import com.ll.domain.json.Codec
 import com.ll.domain.messages.HttpMessage.Riichi.CreateTable
+import com.ll.domain.ws.WsMsgCodec
 import com.ll.games.TablesService
 import com.ll.ws.PubSub
 import de.heikoseeberger.akkahttpcirce.FailFastCirceSupport._
@@ -20,7 +20,7 @@ import scala.util.{Failure, Success}
 
 class RiichiEndpoints[F[_] : Effect](config: ServerConfig)(implicit system: ActorSystem, mat: Materializer)
   extends Logging with EndpointUtils {
-  import Codec._
+  import WsMsgCodec._
 
   implicit val timeout = config.defaultTimeout
   implicit val ec = system.dispatcher

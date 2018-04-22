@@ -3,7 +3,7 @@ package com.ll.domain.games.position
 import com.ll.domain.auth.User
 import com.ll.domain.games.GameType.Riichi
 import com.ll.domain.games.Player
-import com.ll.domain.games.Player.Riichi.{AIPlayer, HumanPlayer}
+import com.ll.domain.games.Player.HumanPlayer
 import com.ll.domain.games.position.PlayerPosition.RiichiPosition
 
 object PositionUtility {

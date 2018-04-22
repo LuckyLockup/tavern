@@ -3,17 +3,17 @@ package com.ll.domain.games.riichi
 import com.ll.domain.Const
 import com.ll.domain.auth.{User, UserId}
 import com.ll.domain.games.GameType.Riichi
-import com.ll.domain.games.Player.Riichi.{AIPlayer, HumanPlayer}
+import com.ll.domain.games.Player.{AIPlayer, HumanPlayer}
 import com.ll.domain.games.deck.Tile
 import com.ll.domain.games.position.{PlayerPosition, PositionUtility}
 import com.ll.domain.games.position.PlayerPosition.RiichiPosition
 import com.ll.domain.games.{GameId, Player, ScheduledCommand, TableId}
-import com.ll.domain.messages.WsMsg
-import com.ll.domain.messages.WsMsg.Out.Riichi.RiichiPlayerState
-import com.ll.domain.messages.WsMsg.Out.{Table, ValidationError}
-import com.ll.domain.persistence.RiichiGameCmd.StartGame
 import com.ll.domain.persistence._
 import com.ll.domain.ops.EitherOps._
+import com.ll.domain.ws.WsMsgIn.{GameCmd, RiichiGameCmd, UserCmd}
+import com.ll.domain.ws.WsMsgOut
+import com.ll.domain.ws.WsMsgOut.ValidationError
+import com.ll.domain.ws.WsRiichi.RiichiPlayerState
 
 import scala.util.Random
 
@@ -26,7 +26,7 @@ case class NoGameOnTable(
 ) extends RiichiTableState {
 
   def validateCmd(cmd: GameCmd[Riichi]): Either[ValidationError, List[TableEvent[Riichi]]] = cmd match {
-    case StartGame(`tableId`, gameId, config) =>
+    case RiichiGameCmd.StartGame(`tableId`, gameId, config) =>
       if (humanPlayers.nonEmpty) {
         Right(List(RiichiEvent.GameStarted(tableId, gameId, config)))
       } else {
@@ -73,14 +73,14 @@ case class NoGameOnTable(
     case _                                          => (Nil, this)
   }
 
-  def projection(position: Option[Either[UserId, PlayerPosition[Riichi]]]): WsMsg.Out.Riichi.RiichiState =
-    WsMsg.Out.Riichi.RiichiState(
+  def projection(position: Option[Either[UserId, PlayerPosition[Riichi]]]): WsMsgOut.Riichi.RiichiState =
+    WsMsgOut.Riichi.RiichiState(
       tableId = tableId,
       admin = admin,
-      states = humanPlayers.toList.map(p => WsMsg.Out.Riichi.RiichiPlayerState(p, Nil)),
+      states = humanPlayers.toList.map(p => RiichiPlayerState(p, Nil)),
       uraDoras = Nil,
       deck = 0,
-      turn = 1
+      turn = 0
     )
 
   def getPlayer(position: PlayerPosition[Riichi]): Option[Player[Riichi]] = humanPlayers.find(p => p.position == position)
@@ -122,7 +122,7 @@ case class GameStarted(
 ) extends RiichiTableState {
 
   def validateCmd(cmd: GameCmd[Riichi]): Either[ValidationError, List[TableEvent[Riichi]]] = cmd match {
-    case _: StartGame => Left(ValidationError("Game already started"))
+    case _: RiichiGameCmd.StartGame => Left(ValidationError("Game already started"))
 
     case RiichiGameCmd.DiscardTile(_, _, tile, commandTurn, position) =>
       for {
@@ -177,8 +177,8 @@ case class GameStarted(
       (List(), updatedState)
   }
 
-  def projection(position: Option[Either[UserId, PlayerPosition[Riichi]]]): WsMsg.Out.Riichi.RiichiState =
-    WsMsg.Out.Riichi.RiichiState(
+  def projection(position: Option[Either[UserId, PlayerPosition[Riichi]]]): WsMsgOut.Riichi.RiichiState =
+    WsMsgOut.Riichi.RiichiState(
       tableId = tableId,
       admin = admin,
       states = playerStates.map {

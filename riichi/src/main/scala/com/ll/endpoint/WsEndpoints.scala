@@ -8,7 +8,7 @@ import akka.http.scaladsl.server.Directives._
 import akka.http.scaladsl.server.Route
 import akka.stream.Materializer
 import com.ll.domain.auth.UserId
-import com.ll.domain.messages.WsMsg
+import com.ll.domain.ws.WsMsgOut
 import com.ll.games.TablesService
 import com.ll.ws.PubSub
 
@@ -31,7 +31,7 @@ class WsEndpoints[F[_] : Effect] extends Logging {
       post {
         decodeRequest {
           entity(as[String]) { str =>
-            pubSub.sendToUser(UserId(id), WsMsg.Out.Message(str))
+            pubSub.sendToUser(UserId(id), WsMsgOut.Message(str))
             complete(HttpResponse(200, entity = "We are ok"))
           }
         }

@@ -4,11 +4,12 @@ import akka.actor.ActorRef
 import com.ll.ai.AIService
 import com.ll.domain.auth.{User, UserId}
 import com.ll.domain.games.GameType
-import com.ll.domain.games.Player.Riichi.{AIPlayer, HumanPlayer}
+import com.ll.domain.games.Player.{AIPlayer, HumanPlayer}
 import com.ll.domain.games.position.PlayerPosition
-import com.ll.domain.messages.WsMsg.Out.ValidationError
 import com.ll.domain.messages.WsMsgProjector
-import com.ll.domain.persistence.{GameCmd, TableEvent, TableState}
+import com.ll.domain.persistence.{TableEvent, TableState}
+import com.ll.domain.ws.WsMsgIn.GameCmd
+import com.ll.domain.ws.WsMsgOut.ValidationError
 import com.ll.utils.Logging
 import com.ll.ws.PubSub
 

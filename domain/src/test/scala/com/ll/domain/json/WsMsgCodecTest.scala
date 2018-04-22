@@ -1,16 +1,20 @@
 package com.ll.domain.json
 
 import com.ll.domain.auth.{User, UserId}
-import com.ll.domain.games.Player.Riichi.HumanPlayer
+import com.ll.domain.games.Player.HumanPlayer
 import com.ll.domain.games.position.PlayerPosition.RiichiPosition
 import com.ll.domain.games.riichi.RiichiConfig
 import com.ll.domain.games.{GameId, TableId}
-import com.ll.domain.json.Codec.{Test, decodeWsMsg, encodeWsMsg}
-import com.ll.domain.messages.WsMsg
+import com.ll.domain.ws.WsMsgCodec.{Test, decodeWsMsg, encodeWsMsg}
+import com.ll.domain.ws.{WsMsgIn, WsMsgOut}
+import com.ll.domain.ws.WsMsgIn.Ping
+import com.ll.domain.ws.WsMsgIn.RiichiGameCmd.StartGame
+import com.ll.domain.ws.WsMsgOut.Riichi._
+import com.ll.domain.ws.WsMsgOut.{Message, Pong, SpectacularJoinedTable, SpectacularLeftTable}
 import org.scalatest.{Matchers, WordSpec}
 import gnieh.diffson.circe._
 
-class CodecTest extends WordSpec with Matchers {
+class WsMsgCodecTest extends WordSpec with Matchers {
 
   "Encode Out messages" in new OutMessages {
     testData.foreach { case (msg, json) =>
@@ -46,10 +50,8 @@ class CodecTest extends WordSpec with Matchers {
   }
 
   abstract class OutMessages extends Common {
-    import com.ll.domain.messages.WsMsg.Out._
-    import com.ll.domain.messages.WsMsg.Out.Riichi._
 
-    val testData: List[(WsMsg.Out, String)] = List(
+    val testData: List[(WsMsgOut, String)] = List(
       (Pong(42), """{"type":"Pong","payload":{"id":42}}"""),
       (Message("hey!"), """{"type":"Message","payload":{"txt":"hey!"}}"""),
       (SpectacularJoinedTable(user, tableId),
@@ -119,11 +121,9 @@ class CodecTest extends WordSpec with Matchers {
   }
 
   abstract class InMessages extends Common {
-    import com.ll.domain.messages.WsMsg.In._
-    import com.ll.domain.persistence.RiichiGameCmd._
 
 
-    val testData: List[(WsMsg.In, String)] = List(
+    val testData: List[(WsMsgIn, String)] = List(
       (Ping(42), """{"type":"Ping","payload":{"id":42}}"""),
       (StartGame(tableId, gameId, RiichiConfig()),
         """

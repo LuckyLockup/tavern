@@ -9,8 +9,7 @@ import akka.stream.scaladsl.{Flow, Sink, Source, _}
 import akka.testkit.{TestKitBase, TestProbe}
 import akka.{Done, NotUsed}
 import com.ll.domain.auth.UserId
-import com.ll.domain.json.Codec
-import com.ll.domain.messages.WsMsg
+import com.ll.domain.ws.{WsMsgCodec, WsMsgIn, WsMsgOut}
 import io.circe._
 import org.reactivestreams.Publisher
 
@@ -34,11 +33,11 @@ class WsConnection(userId: UserId, as: ActorSystem, mat: Materializer, http: Htt
   val probe = TestProbe()
 
   val (ws: ActorRef, publisher: Publisher[TextMessage.Strict]) = Source
-    .actorRef[WsMsg.In](16, OverflowStrategy.fail)
+    .actorRef[WsMsgIn](16, OverflowStrategy.fail)
     .log(s"$userId sent: ")
     .map(msg => {
       val json = encodeWsMsg(msg)
-      log.info(s"WS [${userId.id}] >>>>  $json")
+      log.info(s"WS [${userId.id}] >>>> $json")
       TextMessage.Strict(json)
     })
     .toMat(Sink.asPublisher(false))(Keep.both).run()
@@ -67,9 +66,9 @@ class WsConnection(userId: UserId, as: ActorSystem, mat: Materializer, http: Htt
     }
   }
 
-  def !(msg: WsMsg.In): Unit = ws ! msg
+  def !(msg: WsMsgIn): Unit = ws ! msg
 
-  def expectWsMsg[T<: WsMsg.Out](f: PartialFunction[Any, T]): T = probe.expectMsgPF(
+  def expectWsMsg[T<: WsMsgOut](f: PartialFunction[Any, T]): T = probe.expectMsgPF(
     config.defaultTimeout, "expecting") {
     case msg if f.isDefinedAt(msg) => f(msg)
     case msg                       =>
@@ -77,7 +76,7 @@ class WsConnection(userId: UserId, as: ActorSystem, mat: Materializer, http: Htt
       expectWsMsg(f)
   }
 
-  def expectWsMsgT[T <: WsMsg.Out: ClassTag](duration: Duration = config.defaultTimeout)(implicit tag: TypeTag[T]): T = probe.expectMsgPF(
+  def expectWsMsgT[T <: WsMsgOut: ClassTag](duration: Duration = config.defaultTimeout)(implicit tag: TypeTag[T]): T = probe.expectMsgPF(
     duration, s"expecting type ${tag.tpe}") {
     case msg: T => msg
     case msg    =>
@@ -90,11 +89,11 @@ class WsConnection(userId: UserId, as: ActorSystem, mat: Materializer, http: Htt
     ws ! Status.Success("Done")
   }
 
-  private def decodeWsMsg(json: String): Either[Error, WsMsg.Out] = {
-    Codec.Test.decodeWsOutMsg(json)
+  private def decodeWsMsg(json: String): Either[Error, WsMsgOut] = {
+    WsMsgCodec.Test.decodeWsOutMsg(json)
   }
 
-  private def encodeWsMsg(msg: WsMsg.In): String = {
-    Codec.Test.encodeWsInMsg(msg)
+  private def encodeWsMsg(msg: WsMsgIn): String = {
+    WsMsgCodec.Test.encodeWsInMsg(msg)
   }
 }

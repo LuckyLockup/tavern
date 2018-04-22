@@ -12,9 +12,8 @@ import akka.stream.OverflowStrategy
 import akka.stream.scaladsl._
 import org.reactivestreams.Publisher
 import akka.stream.scaladsl.Sink
-import com.ll.domain.json.Codec
-import com.ll.domain.messages.WsMsg
-import com.ll.domain.persistence.{GameCmd, TableCmd}
+import com.ll.domain.ws.{WsMsgCodec, WsMsgIn, WsMsgOut}
+import com.ll.domain.ws.WsMsgIn.{GameCmd, TableCmd}
 import com.ll.games.TablesService
 
 import scala.concurrent.Future
@@ -32,8 +31,8 @@ class PubSub()(implicit system: ActorSystem, mat: Materializer) extends Logging 
       ar ! Status.Success("Done")
     }
 
-    val (actorRef: ActorRef, publisher: Publisher[TextMessage.Strict]) = Source.actorRef[WsMsg.Out](16, OverflowStrategy.fail)
-      .map(msg => TextMessage.Strict(Codec.encodeWsMsg(msg)))
+    val (actorRef: ActorRef, publisher: Publisher[TextMessage.Strict]) = Source.actorRef[WsMsgOut](16, OverflowStrategy.fail)
+      .map(msg => TextMessage.Strict(WsMsgCodec.encodeWsMsg(msg)))
       .toMat(Sink.asPublisher(false))(Keep.both).run()
 
     val sink: Sink[Message, Unit] = Flow[Message]
@@ -44,7 +43,7 @@ class PubSub()(implicit system: ActorSystem, mat: Materializer) extends Logging 
       .mapConcat {
         case TextMessage.Strict(msg) =>
           log.info(s"$id <<< $msg")
-          Codec.decodeWsMsg(msg).fold(err => {
+          WsMsgCodec.decodeWsMsg(msg).fold(err => {
             log.info(s"Unknown message $msg. Parsing error: $err")
             Nil
           }, msg => List(msg))
@@ -52,8 +51,8 @@ class PubSub()(implicit system: ActorSystem, mat: Materializer) extends Logging 
           Nil
       }
       .mapAsync(4) {
-        case WsMsg.In.Ping(n) =>
-          actorRef ! WsMsg.Out.Pong(n)
+        case WsMsgIn.Ping(n) =>
+          actorRef ! WsMsgOut.Pong(n)
           Future.successful("Pong!")
         case msg: GameCmd[_]    =>
           tables.sendToGame(msg.updatePosition(Left(id)))
@@ -69,14 +68,14 @@ class PubSub()(implicit system: ActorSystem, mat: Materializer) extends Logging 
     Flow.fromSinkAndSource(sink, Source.fromPublisher(publisher))
   }
 
-  def sendToUser(id: UserId, msg: WsMsg.Out): Unit = wsConnections.get(id).foreach { ar =>
-    log.info(s"$id >>> ${Codec.encodeWsMsg(msg)}")
+  def sendToUser(id: UserId, msg: WsMsgOut): Unit = wsConnections.get(id).foreach { ar =>
+    log.info(s"$id >>> ${WsMsgCodec.encodeWsMsg(msg)}")
     ar ! msg
   }
 
-  def sendToUsers(ids: Set[UserId], msg: WsMsg.Out): Unit = {
+  def sendToUsers(ids: Set[UserId], msg: WsMsgOut): Unit = {
     val validUsers = ids.intersect(wsConnections.keySet)
-    log.info(s"[${validUsers.size}] >>> ${Codec.encodeWsMsg(msg)}")
+    log.info(s"[${validUsers.size}] >>> ${WsMsgCodec.encodeWsMsg(msg)}")
     validUsers.foreach { id =>
       wsConnections.get(id).foreach(ar => ar ! msg)
     }
