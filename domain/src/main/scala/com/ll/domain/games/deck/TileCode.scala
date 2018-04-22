@@ -43,4 +43,19 @@ object TileCode {
   case object White extends TileCode { def code = "white"}
   case object Green extends TileCode { def code = "green"}
   case object Red extends TileCode { def code = "red"}
+
+  def generatePinCode(number: Int): String = {
+    assert(number >= 1 && number <= 9)
+    s"${number}_pin"
+  }
+
+  def generateSouCode(number: Int): String = {
+    assert(number >= 1 && number <= 9)
+    s"${number}_sou"
+  }
+
+  def generateWanCode(number: Int): String = {
+    assert(number >= 1 && number <= 9)
+    s"${number}_wan"
+  }
 }

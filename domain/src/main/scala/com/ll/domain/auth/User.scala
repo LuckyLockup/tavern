@@ -1,5 +1,6 @@
 package com.ll.domain.auth
 
+import com.ll.domain.json.CommonTypesCodec
 import io.circe.{Decoder, Encoder}
 import io.circe.generic.semiauto.{deriveDecoder, deriveEncoder}
 

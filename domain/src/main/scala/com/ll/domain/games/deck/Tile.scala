@@ -6,20 +6,20 @@ sealed trait Tile {
 }
 
 object Tile {
-  sealed trait Pin extends Tile
-  sealed trait Sou extends Tile
-  sealed trait Wan extends Tile
+  sealed trait Number extends Tile {def number: Int}
+  sealed trait `1` extends Number {def number = 1}
+  sealed trait `2` extends Number {def number = 2}
+  sealed trait `3` extends Number {def number = 3}
+  sealed trait `4` extends Number {def number = 4}
+  sealed trait `5` extends Number {def number = 5}
+  sealed trait `6` extends Number {def number = 6}
+  sealed trait `7` extends Number {def number = 7}
+  sealed trait `8` extends Number {def number = 8}
+  sealed trait `9` extends Number {def number = 9}
 
-  sealed trait Number extends Tile
-  sealed trait `1` extends Number
-  sealed trait `2` extends Number
-  sealed trait `3` extends Number
-  sealed trait `4` extends Number
-  sealed trait `5` extends Number
-  sealed trait `6` extends Number
-  sealed trait `7` extends Number
-  sealed trait `8` extends Number
-  sealed trait `9` extends Number
+  sealed trait Pin extends Number
+  sealed trait Sou extends Number
+  sealed trait Wan extends Number
 
   sealed trait Wind extends Tile
   sealed trait East extends Wind
