@@ -2,6 +2,8 @@ package com.ll.domain.games.riichi
 
 import com.ll.domain.games.deck.{Tile, TileCode, TileSet}
 
+import scala.annotation.tailrec
+
 object TileSetsHelper {
   case class GroupedTiles(
     sets: List[TileSet] = Nil,
@@ -10,6 +12,35 @@ object TileSetsHelper {
   def groupTiles(tiles: List[Tile], grouped: List[GroupedTiles]): List[GroupedTiles] = tiles match {
     case Nil => grouped
 
+  }
+  /**
+    * Compute tenpai for ordered hand
+    */
+  def tenpai(tiles: List[Tile]): List[SetsCombination] = {
+   _tenpai(tiles, Nil)
+  }
+
+  case class SetsCombination(sets: List[TileSet], notInSets: List[Tile]) {
+    def waitingOn: List[String] = tilesWaitFor(notInSets)
+  }
+
+  private def _tenpai(tiles: List[Tile], notInSets: List[Tile]): List[SetsCombination] = {
+    tiles match {
+      case Nil          => List(SetsCombination(Nil, notInSets))
+      case head :: tail => findSetsForTiles(head, tail) match {
+        case Nil => if (tilesWaitFor(head :: notInSets).nonEmpty) {
+          _tenpai(tail, head :: notInSets)
+        } else {
+          Nil
+        }
+        case combinations => combinations.flatMap{
+          case (set, remaining) =>
+            _tenpai(remaining, notInSets).map{
+            case comb => comb.copy(sets = set :: comb.sets)
+          }
+        }
+      }
+    }
   }
 
   def findSetsForTiles(tile: Tile, tiles: List[Tile]): List[(TileSet, List[Tile])] = {
@@ -41,20 +72,21 @@ object TileSetsHelper {
         case (t1: Tile.Sou, t2: Tile.Sou) if t1.number + 1 == t2.number => true
         case (t1: Tile.Wan, t2: Tile.Wan) if t1.number + 1 == t2.number => true
         case (t1: Tile.Pin, t2: Tile.Pin) if t1.number + 1 == t2.number => true
-        case _ => false
+        case _                                                          => false
       }
     })
-    val afterNextTile =  tiles.find(t => {
+    val afterNextTile = tiles.find(t => {
       (tile, t) match {
         case (t1: Tile.Sou, t2: Tile.Sou) if t1.number + 2 == t2.number => true
         case (t1: Tile.Wan, t2: Tile.Wan) if t1.number + 2 == t2.number => true
         case (t1: Tile.Pin, t2: Tile.Pin) if t1.number + 2 == t2.number => true
-        case _ => false
+        case _                                                          => false
       }
     })
     val chows = (nextTile, afterNextTile) match {
       case (Some(t1), Some(t2)) =>
-        List((TileSet.Chow(tile, t1, t2), (tiles.toSet - t1 - t2).toList))
+        val remaining = tiles.filter(t => t != t1 && t != t2)
+        List((TileSet.Chow(tile, t1, t2), remaining))
       case _                    => Nil
     }
     pairs ::: pungs ::: chows

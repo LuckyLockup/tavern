@@ -2,6 +2,8 @@ package com.ll.domain.games.solo
 
 import com.ll.domain.games.deck.{Tile, TileSet}
 
+import scala.annotation.tailrec
+
 sealed trait GameResult
 
 /**

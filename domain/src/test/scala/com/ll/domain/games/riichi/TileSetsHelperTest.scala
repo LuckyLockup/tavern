@@ -28,30 +28,48 @@ class TileSetsHelperTest extends WordSpec with Matchers with TileHelper {
 
   "Find sets for tiles" in {
     val testData = Map(
-      ("1_pin",  List("2_pin", "3_pin", "4_pin")) -> Map("chow" -> List("4_pin")),
-      ("2_pin",  List("2_pin", "2_pin", "4_pin")) -> Map("pair" -> List("2_pin", "4_pin"), "pung" -> List("4_pin")),
-      ("2_pin",  List("2_pin", "3_pin", "4_pin")) -> Map("pair" -> List("3_pin", "4_pin"), "chow" -> List("2_pin")),
-      ("east",  List()) -> Map.empty[String, List[String]],
-      ("east",  List("east", "west")) ->  Map("pair" -> List("west")),
-      ("west",  List("west", "west")) ->  Map("pair" -> List("west"), "pung" -> Nil)
+      ("1_pin", List("2_pin", "3_pin", "4_pin")) -> Map("chow" -> List("4_pin")),
+      ("2_pin", List("2_pin", "2_pin", "4_pin")) -> Map("pair" -> List("2_pin", "4_pin"), "pung" -> List("4_pin")),
+      ("2_pin", List("2_pin", "3_pin", "4_pin")) -> Map("pair" -> List("3_pin", "4_pin"), "chow" -> List("2_pin")),
+      ("east", List()) -> Map.empty[String, List[String]],
+      ("east", List("east", "west")) -> Map("pair" -> List("west")),
+      ("west", List("west", "west")) -> Map("pair" -> List("west"), "pung" -> Nil)
     )
     testData.map {
       case ((tile, tiles), result) => ((tile.riichiTile, tiles.map(_.riichiTile)), result)
     }.foreach {
       case ((tile, tiles), expected) =>
-        val resultList = TileSetsHelper.findSetsForTiles(tile, tiles).map{
+        val resultList = TileSetsHelper.findSetsForTiles(tile, tiles).map {
           case (set, rem) =>
             (set.short, rem.map(_.repr))
         }
         val resultMap = resultList.toMap
-        resultList.size should be (resultMap.size)
-        resultList.size should be (expected.size)
-        resultList.foreach{
+        resultList.size should be(resultMap.size)
+        resultList.size should be(expected.size)
+        resultList.foreach {
           case (actualSet, actualRemaining) =>
             expected.get(actualSet) should not be empty
             expected.get(actualSet).get should contain theSameElementsAs actualRemaining
         }
+    }
+  }
 
+  "Tenpai" in {
+    val testData = Map(
+      List("1_pin", "2_pin", "3_pin", "1_wan", "2_wan", "3_wan", "east", "east", "east", "red")
+        -> List("red"),
+      List("1_pin", "1_pin", "1_wan", "2_wan", "3_wan", "east", "east", "east", "2_sou", "3_sou")
+        -> List("1_sou", "4_sou"),
+      List("1_pin", "1_pin", "1_wan", "2_wan", "3_wan", "east", "east", "east", "2_sou", "4_sou")
+        -> List("3_sou"),
+      List("1_pin", "1_pin", "1_wan", "2_wan", "3_wan", "east", "east", "east", "2_sou", "5_sou")
+        -> List()
+    )
+    testData.map {
+      case (tiles, expectedTiles) => (tiles.map(_.riichiTile), expectedTiles)
+    }.foreach {
+      case (tiles, expectedTiles) =>
+        TileSetsHelper.tenpai(tiles).flatMap(_.waitingOn) should contain theSameElementsAs expectedTiles
     }
   }
 }
