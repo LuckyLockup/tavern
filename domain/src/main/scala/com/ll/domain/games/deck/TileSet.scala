@@ -1,11 +1,13 @@
 package com.ll.domain.games.deck
 
-sealed trait TileSet
+sealed trait TileSet {
+  def short: String
+}
 
 object TileSet {
-  case class TilesPair(x: Tile, y: Tile) extends TileSet
-  case class Pung(x: Tile, y: Tile, z: Tile) extends TileSet
-  case class Chow(x: Tile, y: Tile, z: Tile) extends TileSet
+  case class TilesPair(x: Tile, y: Tile) extends TileSet {def short = "pair"}
+  case class Pung(x: Tile, y: Tile, z: Tile) extends TileSet {def short = "pung"}
+  case class Chow(x: Tile, y: Tile, z: Tile) extends TileSet {def short = "chow"}
 
   def getSet(x: Tile, y: Tile): Option[TileSet] = {
     if (isPair(x, y)) {
@@ -39,39 +41,39 @@ object TileSet {
   }
 
   def isSameNonNumber(x: Tile, y: Tile) = (x, y) match {
-    case (_ : Tile.White, _: Tile.White) => true
-    case (_ : Tile.Green, _: Tile.Green) => true
-    case (_ : Tile.Red, _: Tile.Red) => true
-    case (_ : Tile.East, _: Tile.East) => true
-    case (_ : Tile.South, _: Tile.South) => true
-    case (_ : Tile.West, _: Tile.West) => true
-    case (_ : Tile.North, _: Tile.North) => true
-    case _ => false
+    case (_: Tile.White, _: Tile.White) => true
+    case (_: Tile.Green, _: Tile.Green) => true
+    case (_: Tile.Red, _: Tile.Red)     => true
+    case (_: Tile.East, _: Tile.East)   => true
+    case (_: Tile.South, _: Tile.South) => true
+    case (_: Tile.West, _: Tile.West)   => true
+    case (_: Tile.North, _: Tile.North) => true
+    case _                              => false
   }
 
   def isSameNonNumber(x: Tile, y: Tile, z: Tile) = (x, y, z) match {
-    case (_ : Tile.White, _: Tile.White, _: Tile.White) => true
-    case (_ : Tile.Green, _: Tile.Green, _: Tile.Green) => true
-    case (_ : Tile.Red, _: Tile.Red, _: Tile.Red) => true
-    case (_ : Tile.East, _: Tile.East, _: Tile.East) => true
-    case (_ : Tile.South, _: Tile.South, _: Tile.South) => true
-    case (_ : Tile.West, _: Tile.West, _: Tile.West) => true
-    case (_ : Tile.North, _: Tile.North, _: Tile.North) => true
-    case _ => false
+    case (_: Tile.White, _: Tile.White, _: Tile.White) => true
+    case (_: Tile.Green, _: Tile.Green, _: Tile.Green) => true
+    case (_: Tile.Red, _: Tile.Red, _: Tile.Red)       => true
+    case (_: Tile.East, _: Tile.East, _: Tile.East)    => true
+    case (_: Tile.South, _: Tile.South, _: Tile.South) => true
+    case (_: Tile.West, _: Tile.West, _: Tile.West)    => true
+    case (_: Tile.North, _: Tile.North, _: Tile.North) => true
+    case _                                             => false
   }
 
   def isSameSuit(x: Tile, y: Tile): Boolean = (x, y) match {
     case (_: Tile.Pin, y: Tile.Pin) => true
     case (_: Tile.Sou, y: Tile.Sou) => true
     case (_: Tile.Wan, y: Tile.Wan) => true
-    case _ => false
+    case _                          => false
   }
 
   def isSameSuit(x: Tile, y: Tile, z: Tile): Boolean = (x, y, z) match {
     case (_: Tile.Pin, y: Tile.Pin, z: Tile.Pin) => true
     case (_: Tile.Sou, y: Tile.Sou, z: Tile.Sou) => true
     case (_: Tile.Wan, y: Tile.Wan, z: Tile.Wan) => true
-    case _ => false
+    case _                                       => false
   }
 
   def isSameNumber(x: Tile, y: Tile) = (x, y) match {
@@ -84,7 +86,7 @@ object TileSet {
     case (_: Tile.`7`, y: Tile.`7`) => true
     case (_: Tile.`8`, y: Tile.`8`) => true
     case (_: Tile.`9`, y: Tile.`9`) => true
-    case _ => false
+    case _                          => false
   }
 
   def isSameNumber(x: Tile, y: Tile, z: Tile) = (x, y, z) match {
@@ -97,7 +99,7 @@ object TileSet {
     case (_: Tile.`7`, y: Tile.`7`, z: Tile.`7`) => true
     case (_: Tile.`8`, y: Tile.`8`, z: Tile.`8`) => true
     case (_: Tile.`9`, y: Tile.`9`, z: Tile.`9`) => true
-    case _ => false
+    case _                                       => false
   }
 
   def isInRow(x: Tile, y: Tile, z: Tile) = (x, y, z) match {
@@ -108,6 +110,6 @@ object TileSet {
     case (_: Tile.`5`, y: Tile.`6`, z: Tile.`7`) => true
     case (_: Tile.`6`, y: Tile.`7`, z: Tile.`8`) => true
     case (_: Tile.`7`, y: Tile.`8`, z: Tile.`9`) => true
-    case _ => false
+    case _                                       => false
   }
 }
