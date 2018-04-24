@@ -3,10 +3,11 @@ package com.ll.domain.games.deck
 sealed trait Tile {
   def repr: String
   def order: Int
+  override def toString: String = repr
 }
 
 object Tile {
-  sealed trait Number extends Tile {def number: Int}
+  sealed trait Number extends Tile {def number: Int; def suit: String}
   sealed trait `1` extends Number {def number = 1}
   sealed trait `2` extends Number {def number = 2}
   sealed trait `3` extends Number {def number = 3}
@@ -17,9 +18,9 @@ object Tile {
   sealed trait `8` extends Number {def number = 8}
   sealed trait `9` extends Number {def number = 9}
 
-  sealed trait Pin extends Number
-  sealed trait Sou extends Number
-  sealed trait Wan extends Number
+  sealed trait Pin extends Number {def suit = "pin"}
+  sealed trait Sou extends Number {def suit = "sou"}
+  sealed trait Wan extends Number {def suit = "wan"}
 
   sealed trait Wind extends Tile
   sealed trait East extends Wind

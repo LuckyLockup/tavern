@@ -5,9 +5,24 @@ sealed trait TileSet {
 }
 
 object TileSet {
-  case class TilesPair(x: Tile, y: Tile) extends TileSet {def short = "pair"}
-  case class Pung(x: Tile, y: Tile, z: Tile) extends TileSet {def short = "pung"}
-  case class Chow(x: Tile, y: Tile, z: Tile) extends TileSet {def short = "chow"}
+  case class TilesPair(x: Tile, y: Tile) extends TileSet {
+    def short = "pair"
+    override def toString: String = x match {
+      case t: Tile.Number => s"(${t.number}${t.number}${t.suit})"
+      case t => s"(${t}_$t)"
+    }
+  }
+  case class Pung(x: Tile, y: Tile, z: Tile) extends TileSet {
+    def short = "pung"
+    override def toString: String = x match {
+      case t: Tile.Number => s"(${t.number}${t.number}${t.number},${t.suit})"
+      case t => s"(${t}_${t}_$t)"
+    }
+  }
+  case class Chow(x: Tile.Number, y: Tile.Number, z: Tile.Number) extends TileSet {
+    def short = "chow"
+    override def toString: String = s"(${x.number}${y.number}${z.number}${x.suit})"
+  }
 
   def getSet(x: Tile, y: Tile): Option[TileSet] = {
     if (isPair(x, y)) {
@@ -20,10 +35,13 @@ object TileSet {
   def getSet(x: Tile, y: Tile, z: Tile): Option[TileSet] = {
     if (isPung(x, y, z)) {
       Some(Pung(x, y, z))
-    } else if (isChow(x, y, z)) {
-      Some(Chow(x, y, z))
     } else {
-      None
+      (x,y,z) match {
+        case (t1 : Tile.Sou, t2: Tile.Sou, t3: Tile.Sou) if isChow(t1, t2, t3) => Some(Chow(t1, t2, t3))
+        case (t1 : Tile.Wan, t2: Tile.Wan, t3: Tile.Wan) if isChow(t1, t2, t3) => Some(Chow(t1, t2, t3))
+        case (t1 : Tile.Pin, t2: Tile.Pin, t3: Tile.Pin) if isChow(t1, t2, t3) => Some(Chow(t1, t2, t3))
+        case _ => None
+      }
     }
   }
 
@@ -35,7 +53,7 @@ object TileSet {
     isSameNonNumber(x, y, z) || (isSameSuit(x, y, z) && isSameNumber(x, y, z))
   }
 
-  def isChow(x: Tile, y: Tile, z: Tile) = {
+  def isChow(x: Tile.Number, y:  Tile.Number, z:  Tile.Number) = {
     val sorted = List(x, y, z).sortBy(_.order)
     isSameSuit(x, y, z) && isInRow(sorted(0), sorted(1), sorted(2))
   }

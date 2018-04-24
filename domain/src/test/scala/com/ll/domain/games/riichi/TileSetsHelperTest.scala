@@ -63,12 +63,21 @@ class TileSetsHelperTest extends WordSpec with Matchers with TileHelper {
       List("1_pin", "1_pin", "1_wan", "2_wan", "3_wan", "east", "east", "east", "2_sou", "4_sou")
         -> List("3_sou"),
       List("1_pin", "1_pin", "1_wan", "2_wan", "3_wan", "east", "east", "east", "2_sou", "5_sou")
-        -> List()
+        -> List(),
+      //3334445678889 -> 4789
+      List("3_pin", "3_pin", "3_pin",
+           "4_pin", "4_pin", "4_pin",
+           "5_pin", "6_pin", "7_pin",
+           "8_pin", "8_pin", "8_pin", "9_pin") -> List("4_pin", "7_pin", "8_pin", "9_pin")
     )
     testData.map {
       case (tiles, expectedTiles) => (tiles.map(_.riichiTile), expectedTiles)
     }.foreach {
       case (tiles, expectedTiles) =>
+        println(s"Here we go with $tiles\n\n")
+        val combs = TileSetsHelper.tenpai(tiles)
+        combs.foreach(println)
+
         TileSetsHelper.tenpai(tiles).flatMap(_.waitingOn) should contain theSameElementsAs expectedTiles
     }
   }
