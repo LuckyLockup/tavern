@@ -1,27 +1,22 @@
 package com.ll.domain.games.deck
 
-sealed trait TileSet {
-  def short: String
-}
+sealed trait TileSet
 
 object TileSet {
   case class TilesPair(x: Tile, y: Tile) extends TileSet {
-    def short = "pair"
     override def toString: String = x match {
-      case t: Tile.Number => s"(${t.number}${t.number}${t.suit})"
-      case t => s"(${t}_$t)"
+      case t: Tile.Number => s"${t.number}${t.number}${t.suit}"
+      case t => s"${t}_$t"
     }
   }
   case class Pung(x: Tile, y: Tile, z: Tile) extends TileSet {
-    def short = "pung"
     override def toString: String = x match {
-      case t: Tile.Number => s"(${t.number}${t.number}${t.number},${t.suit})"
-      case t => s"(${t}_${t}_$t)"
+      case t: Tile.Number => s"${t.number}${t.number}${t.number}${t.suit}"
+      case t => s"${t}_${t}_$t"
     }
   }
   case class Chow(x: Tile.Number, y: Tile.Number, z: Tile.Number) extends TileSet {
-    def short = "chow"
-    override def toString: String = s"(${x.number}${y.number}${z.number}${x.suit})"
+    override def toString: String = s"${x.number}${y.number}${z.number}${x.suit}"
   }
 
   def getSet(x: Tile, y: Tile): Option[TileSet] = {
@@ -46,16 +41,16 @@ object TileSet {
   }
 
   def isPair(x: Tile, y: Tile) = {
-    isSameNonNumber(x, y) || (isSameNumber(x, y) && isSameSuit(x, y))
+    x.repr == y.repr
   }
 
   def isPung(x: Tile, y: Tile, z: Tile) = {
-    isSameNonNumber(x, y, z) || (isSameSuit(x, y, z) && isSameNumber(x, y, z))
+    x.repr == y.repr && y.repr == z.repr
   }
 
-  def isChow(x: Tile.Number, y:  Tile.Number, z:  Tile.Number) = {
+  def isChow(x: Tile.Number, y:  Tile.Number, z: Tile.Number) = {
     val sorted = List(x, y, z).sortBy(_.order)
-    isSameSuit(x, y, z) && isInRow(sorted(0), sorted(1), sorted(2))
+    (x.suit == y.suit && y.suit == z.suit) && isInRow(sorted(0), sorted(1), sorted(2))
   }
 
   def isSameNonNumber(x: Tile, y: Tile) = (x, y) match {

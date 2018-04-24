@@ -41,7 +41,7 @@ class TileSetsHelperTest extends WordSpec with Matchers with TileHelper {
       case ((tile, tiles), expected) =>
         val resultList = TileSetsHelper.findSetsForTiles(tile, tiles).map {
           case (set, rem) =>
-            (set.short, rem.map(_.repr))
+            (set.toString, rem.map(_.repr))
         }
         val resultMap = resultList.toMap
         resultList.size should be(resultMap.size)
@@ -74,7 +74,6 @@ class TileSetsHelperTest extends WordSpec with Matchers with TileHelper {
       case (tiles, expectedTiles) => (tiles.map(_.riichiTile), expectedTiles)
     }.foreach {
       case (tiles, expectedTiles) =>
-        println(s"Here we go with $tiles\n\n")
         val combs = TileSetsHelper.tenpai(tiles)
         combs.foreach(println)
 
