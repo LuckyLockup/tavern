@@ -30,12 +30,12 @@ class TileSetsHelperTest extends WordSpec with Matchers with TileHelper {
 
   "Find sets for tiles" in {
     val testData = Map(
-      ("1_pin", List("2_pin", "3_pin", "4_pin")) -> Map("chow" -> List("4_pin")),
-      ("2_pin", List("2_pin", "2_pin", "4_pin")) -> Map("pair" -> List("2_pin", "4_pin"), "pung" -> List("4_pin")),
-      ("2_pin", List("2_pin", "3_pin", "4_pin")) -> Map("pair" -> List("3_pin", "4_pin"), "chow" -> List("2_pin")),
+      ("1_pin", List("2_pin", "3_pin", "4_pin")) -> Map("123pin" -> List("4_pin")),
+      ("2_pin", List("2_pin", "2_pin", "4_pin")) -> Map("22pin" -> List("2_pin", "4_pin"), "222pin" -> List("4_pin")),
+      ("2_pin", List("2_pin", "3_pin", "4_pin")) -> Map("22pin" -> List("3_pin", "4_pin"), "234pin" -> List("2_pin")),
       ("east", List()) -> Map.empty[String, List[String]],
-      ("east", List("east", "west")) -> Map("pair" -> List("west")),
-      ("west", List("west", "west")) -> Map("pair" -> List("west"), "pung" -> Nil)
+      ("east", List("east", "west")) -> Map("east_east" -> List("west")),
+      ("west", List("west", "west")) -> Map("west_west" -> List("west"), "west_west_west" -> Nil)
     )
     testData.map {
       case ((tile, tiles), result) => ((tile.riichiTile, tiles.map(_.riichiTile)), result)
@@ -96,5 +96,18 @@ class TileSetsHelperTest extends WordSpec with Matchers with TileHelper {
         combs.flatMap(_.waitingOn).distinct should contain theSameElementsAs waiting
     }
     println(testData)
+  }
+
+  "Tenpai for winning hand" in {
+    val testData = List(
+      List("1_pin", "2_pin", "3_pin", "1_wan", "2_wan", "3_wan", "east", "east", "east", "red", "red")
+    )
+    testData.map {
+      case tiles => tiles.map(_.riichiTile)
+    }.foreach {
+      case tiles =>
+        val combs = TileSetsHelper.tenpai(tiles)
+        combs.filter(c => c.notInSets.isEmpty) should not be empty
+    }
   }
 }

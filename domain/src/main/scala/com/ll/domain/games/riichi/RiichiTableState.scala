@@ -46,8 +46,7 @@ case class NoGameOnTable(
       val (southHand, rem2) = rem1.splitAt(13)
       val (westHand, rem3) = rem2.splitAt(13)
       val (northHand, rem4) = rem3.splitAt(13)
-      val (currentTile, rem5) = rem4.splitAt(1)
-      val (uraDoras, remaining) = rem5.splitAt(1)
+      val (uraDoras, remaining) = rem4.splitAt(1)
 
       val east = generatePlayer(RiichiPosition.EastPosition)
       val south = generatePlayer(RiichiPosition.SouthPosition)
@@ -59,7 +58,7 @@ case class NoGameOnTable(
         tableId = tableId,
         gameId = gameId,
         playerStates = List(
-          PlayerState(east, eastHand, currentTile.headOption),
+          PlayerState(east, eastHand),
           PlayerState(south, southHand),
           PlayerState(west, westHand),
           PlayerState(north, northHand)
@@ -69,7 +68,8 @@ case class NoGameOnTable(
         turn = 1,
         config = config
       )
-      (Nil, game)
+      val nextCmd = RiichiGameCmd.GetTileFromWall(tableId, gameId, 1, Some(Right(RiichiPosition.EastPosition)))
+      (List(ScheduledCommand(config.nextTileDelay, nextCmd)), game)
     case _                                          => (Nil, this)
   }
 
@@ -126,17 +126,17 @@ case class GameStarted(
 
     case RiichiGameCmd.DiscardTile(_, _, tile, commandTurn, position) =>
       for {
-        _ <- (commandTurn == turn).asEither("Not correct turn")
+        _ <- (commandTurn == turn).asEither(s"Actual turn $turn, but command turn $commandTurn")
         state <- getPlayerState(position).asEither(s"No player at $position")
         _ <- state.currentTile.nonEmpty.asEither("You can't discard tile")
         tileInHand <- (state.closedHand ::: state.currentTile.toList).find(t => t.repr == tile)
           .asEither(s"Tile $tile is not in hand")
-        cmds = CommandPredictor.predictsCommands(tileInHand, this, state.player.position)
+        cmds = CommandPredictor.predictsCommands(this, tileInHand, state.player.position)
       } yield List(RiichiEvent.TileDiscared(tableId, gameId, tileInHand, turn, state.player.position, cmds))
 
     case RiichiGameCmd.GetTileFromWall(_, _, commandTurn, position) =>
       for {
-        _ <- (commandTurn == turn).asEither("Not correct turn")
+        _ <- (commandTurn == turn).asEither(s"Actual turn $turn, but command turn $commandTurn")
         playerState <- getPlayerState(position).asEither("Player with this position is not found")
         tile <- this.deck.headOption.asEither("Tiles are finished")
       } yield List(RiichiEvent.TileFromTheWallTaken(tableId, gameId, tile, commandTurn, playerState.player.position))

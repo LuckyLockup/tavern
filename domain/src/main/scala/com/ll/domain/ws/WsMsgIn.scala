@@ -5,6 +5,7 @@ import com.ll.domain.games.{GameId, GameType, TableId}
 import com.ll.domain.games.GameType.Riichi
 import com.ll.domain.games.position.PlayerPosition
 import com.ll.domain.games.riichi.RiichiConfig
+import com.ll.domain.games.riichi.result.HandValue
 import com.ll.domain.json.CaseClassCodec
 import io.circe.{Decoder, Encoder}
 import io.circe.syntax._
@@ -147,26 +148,42 @@ object WsMsgIn {
       implicit lazy val GetTileFromWallDecoder: Decoder[GetTileFromWall] = decoder[GetTileFromWall]("GetTileFromWall")
     }
 
-    case class ClaimTile(
+    case class ClaimPung(
       tableId: TableId,
-      userId: UserId,
       gameId: GameId,
-      tile: String,
+      from: PlayerPosition[Riichi],
+      tiles: List[String],
       position: Option[Either[UserId, PlayerPosition[Riichi]]] = None
     ) extends RiichiCmd{
-      def updatePosition(position: Either[UserId, PlayerPosition[Riichi]]): ClaimTile =
+      def updatePosition(position: Either[UserId, PlayerPosition[Riichi]]): ClaimPung =
         this.copy(position = Some(position))
     }
 
-    object ClaimTile extends CaseClassCodec {
-      implicit lazy val ClaimTileEncoder: Encoder[ClaimTile] = encoder[ClaimTile]("ClaimTile")
-      implicit lazy val ClaimTileDecoder: Decoder[ClaimTile] = decoder[ClaimTile]("ClaimTile")
+    object ClaimPung extends CaseClassCodec {
+      implicit lazy val ClaimPungEncoder: Encoder[ClaimPung] = encoder[ClaimPung]("ClaimPung")
+      implicit lazy val ClaimPungDecoder: Decoder[ClaimPung] = decoder[ClaimPung]("ClaimPung")
+    }
+
+    case class ClaimChow(
+      tableId: TableId,
+      gameId: GameId,
+      from: PlayerPosition[Riichi],
+      tiles: List[String],
+      position: Option[Either[UserId, PlayerPosition[Riichi]]] = None
+    ) extends RiichiCmd{
+      def updatePosition(position: Either[UserId, PlayerPosition[Riichi]]): ClaimChow =
+        this.copy(position = Some(position))
+    }
+
+    object ClaimChow extends CaseClassCodec {
+      implicit lazy val ClaimChowEncoder: Encoder[ClaimChow] = encoder[ClaimChow]("ClaimChow")
+      implicit lazy val ClaimChowDecoder: Decoder[ClaimChow] = decoder[ClaimChow]("ClaimChow")
     }
 
     case class DeclareRon(
       tableId: TableId,
-      userId: UserId,
       gameId: GameId,
+      approximateHandValue: HandValue,
       position: Option[Either[UserId, PlayerPosition[Riichi]]] = None
     ) extends RiichiCmd{
       def updatePosition(position: Either[UserId, PlayerPosition[Riichi]]): DeclareRon =
@@ -198,7 +215,8 @@ object WsMsgIn {
       case c: PauseGame => c.asJson
       case c: DiscardTile => c.asJson
       case c: GetTileFromWall => c.asJson
-      case c: ClaimTile => c.asJson
+      case c: ClaimPung => c.asJson
+      case c: ClaimChow => c.asJson
       case c: DeclareRon => c.asJson
       case c: DeclareTsumo => c.asJson
     }
@@ -209,7 +227,8 @@ object WsMsgIn {
       PauseGame.PauseGameDecoder.apply(cur) orElse
       DiscardTile.DiscardTileDecoder.apply(cur) orElse
       GetTileFromWall.GetTileFromWallDecoder.apply(cur) orElse
-      ClaimTile.ClaimTileDecoder.apply(cur) orElse
+      ClaimPung.ClaimPungDecoder.apply(cur) orElse
+      ClaimChow.ClaimChowDecoder.apply(cur) orElse
       DeclareRon.DeclareRonDecoder.apply(cur) orElse
       DeclareTsumo.DeclareTsumoDecoder.apply(cur)
     }

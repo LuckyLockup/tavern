@@ -1,6 +1,7 @@
 package com.ll.domain.games.riichi
 
 import com.ll.domain.games.deck.{Tile, TileCode, TileSet}
+import com.ll.domain.games.riichi.result.HandValue
 
 import scala.annotation.tailrec
 import scala.collection.immutable
@@ -11,10 +12,6 @@ object TileSetsHelper {
     sets: List[TileSet] = Nil,
     waitingTiles: List[Tile] = Nil)
 
-  def groupTiles(tiles: List[Tile], grouped: List[GroupedTiles]): List[GroupedTiles] = tiles match {
-    case Nil => grouped
-
-  }
   /**
     * Compute tenpai for ordered hand
     */
@@ -61,7 +58,7 @@ object TileSetsHelper {
     }
   }
 
-  def findSetsForTiles[T <: Tile : ClassTag](tile: T, unsortedTiles: List[Tile]): List[(TileSet, List[Tile])] = {
+  def findSetsForTiles(tile: Tile, unsortedTiles: List[Tile]): List[(TileSet, List[Tile])] = {
     val tiles = unsortedTiles.sortBy(_.order)
 
     val same = tiles.collect{
@@ -81,20 +78,20 @@ object TileSetsHelper {
     }
 
     val chows = tile match {
-      case givenTile: Tile.Sou => findChow[Tile.Sou](givenTile, tiles)
-      case givenTile: Tile.Wan => findChow[Tile.Wan](givenTile, tiles)
-      case givenTile: Tile.Pin => findChow[Tile.Pin](givenTile, tiles)
+      case givenTile: Tile.Sou => findChow(givenTile, tiles)
+      case givenTile: Tile.Wan => findChow(givenTile, tiles)
+      case givenTile: Tile.Pin => findChow(givenTile, tiles)
       case _                   => Nil
     }
     pairs ::: pungs ::: chows
   }
 
-  private def findChow[T <: Tile.Number : ClassTag](tile: T, tiles: List[Tile]): List[(TileSet.Chow, List[Tile])] = {
+  private def findChow(tile: Tile.Number, tiles: List[Tile]): List[(TileSet.Chow, List[Tile])] = {
     val nextTile = tiles.collectFirst {
-      case t: T if tile.number + 1 == t.number => t
+      case t: Tile.Number if tile.number + 1 == t.number && tile.suit == t.suit=> t
     }
     val afterNextTile = tiles.collectFirst {
-      case t: T if tile.number + 2 == t.number => t
+      case t: Tile.Number if tile.number + 2 == t.number && tile.suit == t.suit => t
     }
     (nextTile, afterNextTile) match {
       case (Some(t1), Some(t2)) if TileSet.isChow(tile, t1, t2) =>
