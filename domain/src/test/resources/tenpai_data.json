@@ -1,0 +1,515 @@
+[
+  {
+    "tiles": [
+      "1_pin",
+      "1_pin",
+      "1_pin",
+      "1_wan",
+      "2_wan",
+      "2_wan",
+      "3_wan",
+      "3_wan",
+      "4_wan",
+      "5_sou",
+      "5_sou",
+      "east",
+      "east"
+    ],
+    "waiting": [
+      "5_sou",
+      "east"
+    ]
+  },
+  {
+    "tiles": [
+      "1_pin",
+      "1_pin",
+      "2_wan",
+      "2_wan",
+      "3_wan",
+      "3_wan",
+      "4_wan",
+      "5_sou",
+      "5_sou",
+      "east",
+      "east",
+      "red",
+      "red"
+    ],
+    "waiting": [
+      "4_wan"
+    ]
+  },
+  {
+    "tiles": [
+      "4_pin",
+      "5_pin",
+      "6_pin",
+      "1_wan",
+      "3_wan",
+      "east",
+      "east",
+      "east",
+      "south",
+      "south",
+      "white",
+      "white",
+      "white"
+    ],
+    "waiting": [
+      "2_wan"
+    ]
+  },
+  {
+    "tiles": [
+      "3_pin",
+      "4_pin",
+      "5_pin",
+      "6_pin",
+      "7_pin",
+      "8_pin",
+      "9_pin",
+      "2_sou",
+      "2_sou",
+      "2_sou",
+      "north",
+      "north",
+      "north"
+    ],
+    "waiting": [
+      "3_pin",
+      "6_pin",
+      "9_pin"
+    ]
+  },
+  {
+    "tiles": [
+      "3_pin",
+      "4_pin",
+      "5_pin",
+      "8_pin",
+      "9_pin",
+      "3_wan",
+      "3_wan",
+      "1_sou",
+      "2_sou",
+      "2_sou",
+      "north",
+      "north",
+      "north"
+    ],
+    "waiting": []
+  },
+  {
+    "tiles": [
+      "7_pin",
+      "8_pin",
+      "9_pin",
+      "5_wan",
+      "6_wan",
+      "7_wan",
+      "1_sou",
+      "2_sou",
+      "2_sou",
+      "2_sou",
+      "3_sou",
+      "west",
+      "west"
+    ],
+    "waiting": [
+      "2_sou",
+      "west"
+    ]
+  },
+  {
+    "tiles": [
+      "1_sou",
+      "2_sou",
+      "3_sou",
+      "4_sou",
+      "6_sou",
+      "7_sou",
+      "8_sou",
+      "9_sou",
+      "west",
+      "west",
+      "south",
+      "south",
+      "south"
+    ],
+    "waiting": [
+      "5_sou"
+    ]
+  },
+  {
+    "tiles": [
+      "1_sou",
+      "1_sou",
+      "1_sou",
+      "2_sou",
+      "2_sou",
+      "3_sou",
+      "4_sou",
+      "5_sou",
+      "5_sou",
+      "6_sou",
+      "7_sou",
+      "8_sou",
+      "9_sou"
+    ],
+    "waiting": [
+      "4_sou",
+      "7_sou"
+    ]
+  },
+  {
+    "tiles": [
+      "1_sou",
+      "1_sou",
+      "2_sou",
+      "2_sou",
+      "3_sou",
+      "3_sou",
+      "4_sou",
+      "5_sou",
+      "5_sou",
+      "6_sou",
+      "7_sou",
+      "8_sou",
+      "9_sou"
+    ],
+    "waiting": [
+      "5_sou"
+    ]
+  },
+  {
+    "tiles": [
+      "2_sou",
+      "3_sou",
+      "3_sou",
+      "4_sou",
+      "5_sou",
+      "5_sou",
+      "5_sou",
+      "6_sou",
+      "7_sou",
+      "8_sou",
+      "9_sou",
+      "9_sou",
+      "9_sou"
+    ],
+    "waiting": [
+      "1_sou",
+      "3_sou",
+      "4_sou"
+    ]
+  },
+  {
+    "tiles": [
+      "3_wan",
+      "3_wan",
+      "3_wan",
+      "4_wan",
+      "4_wan",
+      "4_wan",
+      "5_wan",
+      "6_wan",
+      "7_wan",
+      "8_wan",
+      "8_wan",
+      "8_wan",
+      "9_wan"
+    ],
+    "waiting": [
+      "4_wan",
+      "7_wan",
+      "8_wan",
+      "9_wan"
+    ]
+  },
+  {
+    "tiles": [
+      "3_wan",
+      "3_wan",
+      "4_wan",
+      "4_wan",
+      "4_wan",
+      "5_wan",
+      "6_wan",
+      "7_wan",
+      "8_wan",
+      "8_wan",
+      "8_wan",
+      "8_wan",
+      "9_wan"
+    ],
+    "waiting": [
+      "3_wan",
+      "4_wan",
+      "7_wan"
+    ]
+  },
+  {
+    "tiles": [
+      "2_wan",
+      "3_wan",
+      "3_wan",
+      "4_wan",
+      "4_wan",
+      "4_wan",
+      "5_wan",
+      "6_wan",
+      "7_wan",
+      "8_wan",
+      "8_wan",
+      "8_wan",
+      "9_wan"
+    ],
+    "waiting": [
+      "2_wan",
+      "5_wan"
+    ]
+  },
+  {
+    "tiles": [
+      "1_pin",
+      "1_pin",
+      "1_pin",
+      "2_pin",
+      "3_pin",
+      "3_pin",
+      "4_pin",
+      "5_pin",
+      "5_pin",
+      "5_pin",
+      "6_pin",
+      "7_pin",
+      "8_pin"
+    ],
+    "waiting": [
+      "1_pin",
+      "2_pin",
+      "3_pin",
+      "4_pin",
+      "5_pin"
+    ]
+  },
+  {
+    "tiles": [
+      "1_pin",
+      "1_pin",
+      "1_pin",
+      "2_pin",
+      "3_pin",
+      "3_pin",
+      "4_pin",
+      "5_pin",
+      "6_pin",
+      "7_pin",
+      "8_pin",
+      "south",
+      "south"
+    ],
+    "waiting": [
+      "1_pin",
+      "4_pin",
+      "south"
+    ]
+  },
+  {
+    "tiles": [
+      "1_pin",
+      "1_pin",
+      "1_pin",
+      "2_pin",
+      "3_pin",
+      "3_pin",
+      "4_pin",
+      "5_pin",
+      "6_pin",
+      "7_pin",
+      "8_pin",
+      "8_pin",
+      "8_pin"
+    ],
+    "waiting": [
+      "1_pin",
+      "2_pin",
+      "3_pin",
+      "4_pin",
+      "5_pin",
+      "8_pin"
+    ]
+  },
+  {
+    "tiles": [
+      "1_pin",
+      "1_pin",
+      "1_pin",
+      "2_pin",
+      "3_pin",
+      "4_pin",
+      "5_pin",
+      "6_pin",
+      "7_pin",
+      "8_pin",
+      "9_pin",
+      "9_pin",
+      "9_pin"
+    ],
+    "waiting": [
+      "1_pin",
+      "2_pin",
+      "3_pin",
+      "4_pin",
+      "5_pin",
+      "6_pin",
+      "7_pin",
+      "8_pin",
+      "9_pin"
+    ]
+  },
+  {
+    "tiles": [
+      "2_sou",
+      "2_sou",
+      "3_sou",
+      "3_sou",
+      "4_sou",
+      "4_sou",
+      "5_sou",
+      "5_sou",
+      "6_sou",
+      "7_sou",
+      "7_sou",
+      "8_sou",
+      "8_sou"
+    ],
+    "waiting": [
+      "6_sou",
+      "9_sou"
+    ]
+  },
+  {
+    "tiles": [
+      "1_pin",
+      "2_pin",
+      "3_pin",
+      "5_wan",
+      "5_wan",
+      "6_sou",
+      "7_sou",
+      "8_sou",
+      "9_sou",
+      "west",
+      "west",
+      "red",
+      "red"
+    ],
+    "waiting": []
+  },
+  {
+    "tiles": [
+      "1_pin",
+      "2_pin",
+      "3_pin",
+      "5_wan",
+      "5_wan",
+      "5_wan",
+      "6_wan",
+      "7_wan",
+      "6_sou",
+      "7_sou",
+      "8_sou",
+      "red",
+      "red"
+    ],
+    "waiting": [
+      "5_wan",
+      "8_wan",
+      "red"
+    ]
+  },
+  {
+    "tiles": [
+      "1_pin",
+      "2_pin",
+      "2_pin",
+      "2_pin",
+      "3_pin",
+      "3_wan",
+      "4_wan",
+      "5_wan",
+      "6_sou",
+      "7_sou",
+      "7_sou",
+      "7_sou",
+      "8_sou"
+    ],
+    "waiting": [
+      "2_pin",
+      "7_sou"
+    ]
+  },
+  {
+    "tiles": [
+      "east",
+      "east",
+      "south",
+      "south",
+      "west",
+      "west",
+      "north",
+      "north",
+      "red",
+      "red",
+      "white",
+      "green",
+      "green"
+    ],
+    "waiting": [
+      "white"
+    ]
+  },
+  {
+    "tiles": [
+      "1_pin",
+      "1_pin",
+      "9_pin",
+      "9_pin",
+      "1_wan",
+      "1_wan",
+      "9_wan",
+      "9_wan",
+      "1_sou",
+      "1_sou",
+      "9_sou",
+      "9_sou",
+      "east"
+    ],
+    "waiting": [
+      "east"
+    ]
+  },
+  {
+    "tiles": [
+      "1_pin",
+      "2_pin",
+      "3_pin",
+      "6_wan",
+      "7_wan",
+      "6_sou",
+      "7_sou",
+      "8_sou",
+      "north",
+      "north",
+      "north",
+      "red",
+      "red"
+    ],
+    "waiting": [
+      "5_wan",
+      "8_wan"
+    ]
+  }
+]

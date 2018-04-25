@@ -3,6 +3,8 @@ package com.ll.domain.games.riichi
 import com.ll.domain.TileHelper
 import org.scalatest.{Matchers, WordSpec}
 
+import scala.io.Source
+
 class TileSetsHelperTest extends WordSpec with Matchers with TileHelper {
 
   "Waiting tiles" in {
@@ -64,7 +66,6 @@ class TileSetsHelperTest extends WordSpec with Matchers with TileHelper {
         -> List("3_sou"),
       List("1_pin", "1_pin", "1_wan", "2_wan", "3_wan", "east", "east", "east", "2_sou", "5_sou")
         -> List(),
-      //3334445678889 -> 4789
       List("3_pin", "3_pin", "3_pin",
            "4_pin", "4_pin", "4_pin",
            "5_pin", "6_pin", "7_pin",
@@ -77,7 +78,23 @@ class TileSetsHelperTest extends WordSpec with Matchers with TileHelper {
         val combs = TileSetsHelper.tenpai(tiles)
         combs.foreach(println)
 
-        TileSetsHelper.tenpai(tiles).flatMap(_.waitingOn) should contain theSameElementsAs expectedTiles
+        TileSetsHelper.tenpai(tiles).flatMap(_.waitingOn).distinct should contain theSameElementsAs expectedTiles
     }
+  }
+
+  "Tenpai for prepared data" in {
+    import io.circe._, io.circe.generic.semiauto._, io.circe.parser.decode
+    case class TestData(tiles: List[String], waiting: List[String])
+    implicit val fooDecoder: Decoder[TestData] = deriveDecoder[TestData]
+    val resource = Source.fromResource("tenpai_data.json").getLines.mkString
+    println(resource)
+    val testData = decode[List[TestData]](resource).getOrElse(throw new Exception("Not correct data"))
+    testData.foreach{
+      case TestData(tiles, waiting) =>
+        val combs = TileSetsHelper.tenpai(tiles.map(_.riichiTile))
+        println(s"$tiles -> $combs")
+        combs.flatMap(_.waitingOn).distinct should contain theSameElementsAs waiting
+    }
+    println(testData)
   }
 }
