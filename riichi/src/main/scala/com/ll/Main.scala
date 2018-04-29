@@ -13,7 +13,7 @@ import com.ll.ws.PubSub
 import com.ll.utils.Logging
 
 import scala.util.control.NonFatal
-
+import ch.megard.akka.http.cors.scaladsl.CorsDirectives._
 
 
 object Main extends App with Logging {
@@ -38,9 +38,11 @@ object Main extends App with Logging {
         implicit val mat = materializer
         implicit val executionContext = system.dispatcher
         import akka.http.scaladsl.server.Directives._
-        val route: Route = pathPrefix("api" / "v0.1") {
-           WsEndpoints.endpoints[IO](pubSub, gameService) ~
-           RiichiEndpoints.endpoints[IO](pubSub, gameService, conf)
+        val route: Route = cors() {
+          pathPrefix("api" / "v0.1") {
+            WsEndpoints.endpoints[IO](pubSub, gameService) ~
+              RiichiEndpoints.endpoints[IO](pubSub, gameService, conf)
+          }
         }
 
         Http().bindAndHandle(route, "0.0.0.0", 8080)

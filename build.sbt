@@ -44,6 +44,7 @@ lazy val riichi = project
 
     "com.typesafe.akka" %% "akka-http" % versions.AkkaHttp,
     "com.typesafe.akka" %% "akka-http-testkit" % versions.AkkaHttp,
+    "ch.megard" %% "akka-http-cors" % versions.AkkaCors,
 
     "com.typesafe.akka" %% "akka-remote" % versions.AkkaVersion,
     "com.typesafe.akka" %% "akka-cluster" % versions.AkkaVersion,
@@ -95,6 +96,7 @@ lazy val versions = new {
   val AkkaVersion = "2.5.11"
   val AkkaTypedVersion = "2.5.7"
   val AkkaHttp = "10.1.0"
+  val AkkaCors = "0.3.0"
 
   val CassandraPluginVersion = "0.83"
 
