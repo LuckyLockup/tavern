@@ -102,6 +102,5 @@ class SinglePlayerTest extends Test {
           state
       }
     }
-
   }
 }

@@ -26,4 +26,8 @@ https://www.linode.com/docs/databases/cassandra/deploy-scalable-cassandra/
 systemctl -l status cassandra
 
 cqlsh -u cassandra -p cassandra
+
+describe keyspaces
+drop keyspace akkasnapshot;
+drop keyspace akkajournal;
 ```
