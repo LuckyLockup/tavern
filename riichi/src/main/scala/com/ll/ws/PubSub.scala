@@ -45,6 +45,7 @@ class PubSub()(implicit system: ActorSystem, mat: Materializer) extends Logging 
           log.info(s"$id <<< $msg")
           WsMsgCodec.decodeWsMsg(msg).fold(err => {
             log.info(s"Unknown message $msg. Parsing error: $err")
+            actorRef ! WsMsgOut.ValidationError(s"Error parsing json message: $err")
             Nil
           }, msg => List(msg))
         case _                       =>

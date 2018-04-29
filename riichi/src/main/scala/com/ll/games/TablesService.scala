@@ -6,13 +6,13 @@ import com.ll.domain.auth.{User, UserId}
 import com.ll.domain.games.TableId
 import com.ll.utils.Logging
 import com.ll.ws.PubSub
-import com.ll.domain.persistence._
 import akka.pattern.{Backoff, BackoffSupervisor}
 import akka.util.Timeout
 import com.ll.config.ServerConfig
 import com.ll.domain.games.GameType.Riichi
 import com.ll.domain.games.riichi.{NoGameOnTable, RiichiTableState}
-import com.ll.domain.ws.WsMsgIn.{TableCmd, UserCmd}
+import com.ll.domain.ws.WsMsgIn.{GameCmd, TableCmd, UserCmd}
+import com.ll.domain.ws.WsMsgOut
 
 import scala.concurrent.duration._
 
@@ -60,6 +60,15 @@ class TablesService(pubSub: PubSub, config: ServerConfig)(implicit system: Actor
   def sendToGame(cmd: TableCmd): Unit = {
     if (tables.get(cmd.tableId).isEmpty) {
       log.warn(s"Message is sent to non existing tabled: $cmd")
+      val userIdOpt = cmd match {
+        case cmd: UserCmd => Some(cmd.userId)
+        case cmd: GameCmd[_] => cmd.position.flatMap{
+          case Left(userId) => Some(userId)
+          case Right(_) => None
+        }
+        case _ => None
+      }
+      userIdOpt.foreach(userId => pubSub.sendToUser(userId, WsMsgOut.ValidationError(s"${cmd.tableId} doesn't exist")))
     }
     tables.get(cmd.tableId).foreach(ar => ar ! cmd)
 
