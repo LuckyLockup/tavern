@@ -34,7 +34,7 @@ class RiichiEndpoints[F[_] : Effect](config: ServerConfig)(implicit system: Acto
           decodeRequest {
             entity(as[CreateTable]) { req =>
               riichi.getOrCreate(req.tableId, req.userId)
-              complete(HttpEntity(ContentTypes.`application/json`, "Table creation is started"))
+              complete(HttpEntity(ContentTypes.`application/json`, """{"msg": "Table creation is started."}"""))
             }
           }
         )

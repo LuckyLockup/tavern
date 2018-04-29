@@ -13,8 +13,17 @@ If state is not found in Redis events are replayed from db to get the state.
 # Cassandra connection:
 /usr/local/Cellar/cassandra/3.11.2_1/bin/cqlsh 127.0.0.1 9042 -u cassandra -p cassandra
 
+
 # CQLSH tutorial
 
 ```
 DESCRIBE keyspaces;
+```
+
+# Cassandra server installation
+https://www.linode.com/docs/databases/cassandra/deploy-scalable-cassandra/
+```
+systemctl -l status cassandra
+
+cqlsh -u cassandra -p cassandra
 ```
