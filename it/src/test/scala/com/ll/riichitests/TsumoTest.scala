@@ -3,12 +3,13 @@ package com.ll.riichitests
 import com.ll.domain.auth.UserId
 import com.ll.domain.games.position.PlayerPosition.RiichiPosition
 import com.ll.domain.games.riichi.RiichiConfig
+import com.ll.domain.games.riichi.result.HandValue
 import com.ll.domain.ws.WsMsgIn.{RiichiGameCmd, UserCmd}
 import com.ll.domain.ws.WsMsgOut
 import com.ll.utils.{CommonData, Test}
 
-class RiichiRonTest extends Test {
-  "Declaring riichi with ron" in new CommonData {
+class TsumoTest extends Test {
+  "Declaring tsumo" in new CommonData {
     val player1 = createNewPlayer(UserId(101))
 
     player1.createTable(tableId)
@@ -17,7 +18,7 @@ class RiichiRonTest extends Test {
     player1.ws ! UserCmd.JoinAsPlayer(tableId, player1.user)
     player1.ws.expectWsMsgT[WsMsgOut.Riichi.PlayerJoinedTable]()
     val eastHand = List(
-      "2_pin", "3_pin", "red", "4_pin", "1_sou", "2_sou", "3_sou", "1_sou", "2_sou", "3_sou", "1_sou", "2_sou", "3_sou"
+      "2_pin", "3_pin", "3_pin", "4_pin", "1_sou", "2_sou", "3_sou", "1_sou", "2_sou", "3_sou", "1_sou", "2_sou", "3_sou"
     )
     val southHand = List(
       "1_wan", "2_wan", "3_wan", "4_wan", "5_wan", "6_wan", "7_wan", "8_wan", "9_wan", "5_sou", "6_sou", "7_sou", "8_sou"
@@ -48,7 +49,20 @@ class RiichiRonTest extends Test {
       case fromTheWall: WsMsgOut.Riichi.TileFromWallTaken =>
         fromTheWall.position should be (RiichiPosition.EastPosition)
         fromTheWall.tile should be (wallTiles.head)
+        fromTheWall.commands.head should be (RiichiGameCmd.DeclareTsumo(tableId, gameId, Some(HandValue(1, 1))))
         fromTheWall
+    }
+    player1.ws ! tileFromTheWall.commands.head.asInstanceOf[RiichiGameCmd.DeclareTsumo].copy(approxHandValue = None)
+
+    player1.ws.expectWsMsg {
+      case tsumo: WsMsgOut.Riichi.TsumoDeclared =>
+        tsumo.position should be (RiichiPosition.EastPosition)
+        tsumo.turn should be (2)
+        tsumo
+    }
+    player1.ws.expectWsMsg {
+      case score: WsMsgOut.Riichi.GameScored =>
+        score
     }
   }
 }

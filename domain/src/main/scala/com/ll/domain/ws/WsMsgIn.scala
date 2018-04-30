@@ -197,8 +197,8 @@ object WsMsgIn {
 
     case class DeclareTsumo(
       tableId: TableId,
-      userId: UserId,
       gameId: GameId,
+      approxHandValue: Option[HandValue],
       position: Option[Either[UserId, PlayerPosition[Riichi]]] = None
     ) extends RiichiCmd{
       def updatePosition(position: Either[UserId, PlayerPosition[Riichi]]): DeclareTsumo =
@@ -206,8 +206,22 @@ object WsMsgIn {
     }
 
     object DeclareTsumo extends CaseClassCodec {
-      implicit lazy val DeclareTsumoEncoder: Encoder[DeclareTsumo] = encoder[DeclareTsumo]("")
-      implicit lazy val DeclareTsumoDecoder: Decoder[DeclareTsumo] = decoder[DeclareTsumo]("")
+      implicit lazy val DeclareTsumoEncoder: Encoder[DeclareTsumo] = encoder[DeclareTsumo]("DeclareTsumo")
+      implicit lazy val DeclareTsumoDecoder: Decoder[DeclareTsumo] = decoder[DeclareTsumo]("DeclareTsumo")
+    }
+
+    case class ScoreGame(
+      tableId: TableId,
+      gameId: GameId,
+      position: Option[Either[UserId, PlayerPosition[Riichi]]] = None
+    ) extends RiichiCmd {
+      def updatePosition(position: Either[UserId, PlayerPosition[Riichi]]): ScoreGame =
+        this.copy(position = Some(position))
+    }
+
+    object ScoreGame extends CaseClassCodec {
+      implicit lazy val ScoreGameEncoder: Encoder[ScoreGame] = encoder[ScoreGame]("ScoreGame")
+      implicit lazy val ScoreGameDecoder: Decoder[ScoreGame] = decoder[ScoreGame]("ScoreGame")
     }
 
     implicit lazy val RiichiGameCmdEncoder: Encoder[RiichiCmd] = Encoder.instance {
@@ -219,6 +233,7 @@ object WsMsgIn {
       case c: ClaimChow => c.asJson
       case c: DeclareRon => c.asJson
       case c: DeclareTsumo => c.asJson
+      case c: ScoreGame => c.asJson
     }
 
     implicit lazy val RiichiGameCmdDecoder: Decoder[RiichiCmd] = Decoder.instance { cur =>
@@ -230,7 +245,8 @@ object WsMsgIn {
       ClaimPung.ClaimPungDecoder.apply(cur) orElse
       ClaimChow.ClaimChowDecoder.apply(cur) orElse
       DeclareRon.DeclareRonDecoder.apply(cur) orElse
-      DeclareTsumo.DeclareTsumoDecoder.apply(cur)
+      DeclareTsumo.DeclareTsumoDecoder.apply(cur) orElse
+      ScoreGame.ScoreGameDecoder.apply(cur)
     }
   }
 

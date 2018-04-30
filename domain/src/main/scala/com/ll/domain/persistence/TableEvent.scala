@@ -6,6 +6,7 @@ import com.ll.domain.games.Player.HumanPlayer
 import com.ll.domain.games.deck.Tile
 import com.ll.domain.games.position.PlayerPosition
 import com.ll.domain.games.riichi.RiichiConfig
+import com.ll.domain.games.riichi.result.GameScore
 import com.ll.domain.games.{GameId, GameType, TableId}
 import com.ll.domain.ws.WsMsgIn.RiichiGameCmd.RiichiCmd
 
@@ -22,7 +23,15 @@ object RiichiEvent {
   case class GamePaused(tableId: TableId, gameId: GameId, turn: Int) extends TableEvent[Riichi]
   case class PlayerJoined(tableId: TableId, player: HumanPlayer[Riichi]) extends TableEvent[Riichi]
   case class PlayerLeft(tableId: TableId, player: HumanPlayer[Riichi]) extends TableEvent[Riichi]
+  case class GameScored(
+    tableId: TableId,
+    gameId: GameId,
+    turn: Int,
+    score: GameScore
+  ) extends TableEvent[Riichi]
 
+
+  sealed trait RiichiGameEvent extends GameEvent[Riichi]
   case class TileDiscared(
     tableId: TableId,
     gameId: GameId,
@@ -30,15 +39,30 @@ object RiichiEvent {
     turn: Int,
     position: PlayerPosition[Riichi],
     commands: Map[PlayerPosition[Riichi], List[RiichiCmd]]
-  ) extends GameEvent[Riichi]
+  ) extends RiichiGameEvent
 
   case class TileFromTheWallTaken(
     tableId: TableId,
     gameId: GameId,
     tile: Tile,
     turn: Int,
+    position: PlayerPosition[Riichi],
+    commands: List[RiichiCmd]
+  ) extends RiichiGameEvent
+
+  case class TsumoDeclared(
+    tableId: TableId,
+    gameId: GameId,
+    turn: Int,
     position: PlayerPosition[Riichi]
-  ) extends GameEvent[Riichi]
+  ) extends RiichiGameEvent
+
+  case class RonDeclared(
+    tableId: TableId,
+    gameId: GameId,
+    turn: Int,
+    position: PlayerPosition[Riichi]
+  ) extends RiichiGameEvent
 
   case class TileClaimed(
     tableId: TableId,
@@ -46,7 +70,7 @@ object RiichiEvent {
     tile: Tile,
     turn: Int,
     position: PlayerPosition[Riichi]
-  ) extends GameEvent[Riichi]
+  ) extends RiichiGameEvent
 
   case class GameFinished(
     tableId: TableId,
@@ -54,6 +78,6 @@ object RiichiEvent {
     winner: UserId,
     turn: Int,
     position: PlayerPosition[Riichi]
-  ) extends GameEvent[Riichi]
+  ) extends RiichiGameEvent
 }
 

@@ -11,7 +11,7 @@ import com.ll.domain.ops.EitherOps._
 
 object CommandPredictor {
 
-  def predictsCommands(table: GameStarted, discardedTile: Tile, discardedPosition: PlayerPosition[Riichi]):
+  def predictsCommandsOnDiscard(table: GameStarted, discardedTile: Tile, discardedPosition: PlayerPosition[Riichi]):
   Map[PlayerPosition[Riichi], List[RiichiCmd]] = {
     table.playerStates
       //commands are predicted on player discard. The player who discarded can't take tile.
@@ -31,7 +31,7 @@ object CommandPredictor {
             discardedPosition,
             List(chow.x.repr, chow.y.repr, chow.z.repr))
           )
-        val declareRon = HandValue.computeRon(discardedTile, st).map(handValue =>
+        val declareRon = HandValue.computeRonOnTile(discardedTile, st).map(handValue =>
           RiichiGameCmd.DeclareRon(
             table.tableId,
             table.gameId,
@@ -43,9 +43,11 @@ object CommandPredictor {
       .toMap
   }
 
-  def predictCommands(discardedTile: Tile, playerState: PlayerState): List[GameCmd[Riichi]] = {
-
-    ???
+  def predictCommandsOnTileFromTheWall(table: GameStarted, tile: Tile, playerState: PlayerState): List[RiichiCmd] = {
+    val tsumo = HandValue.computeTsumoOnTile(tile, playerState)
+      .toList
+      .map(v => RiichiGameCmd.DeclareTsumo(table.tableId, table.gameId, Some(v)))
+    tsumo
   }
 
   def predictTsumo(tile: Tile, playerState: PlayerState, tableState: RiichiTableState): Option[HandValue] = {

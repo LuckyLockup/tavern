@@ -28,12 +28,18 @@ class SinglePlayerTest extends Test {
         state
     }
 
+    player1.ws.expectWsMsg {
+      case taken: WsMsgOut.Riichi.TileFromWallTaken =>
+        taken.position should be (RiichiPosition.EastPosition)
+        taken
+    }
+
     val tileToDiscard = state1.states.head.closedHand.head
-    player1.ws ! RiichiGameCmd.DiscardTile(tableId, gameId, tileToDiscard, 1)
+    player1.ws ! RiichiGameCmd.DiscardTile(tableId, gameId, tileToDiscard, 2)
     player1.ws.expectWsMsg {
       case discarded: WsMsgOut.Riichi.TileDiscarded =>
         discarded.tile should be(tileToDiscard)
-        discarded.turn should be(1)
+        discarded.turn should be(2)
         discarded
     }
 
@@ -42,7 +48,7 @@ class SinglePlayerTest extends Test {
       case state: WsMsgOut.Riichi.RiichiState =>
         state.states.size should be(4)
         val east = state.states.head
-        state.turn should be(2)
+        state.turn should be(3)
         east.closedHand.size should be(13)
         east.currentTile should be(None)
         east.discard should be(List(tileToDiscard))

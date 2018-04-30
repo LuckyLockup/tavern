@@ -7,6 +7,7 @@ import com.ll.domain.games.Player.{AIPlayer, HumanPlayer}
 import com.ll.domain.games.deck.Tile
 import com.ll.domain.games.position.{PlayerPosition, PositionUtility}
 import com.ll.domain.games.position.PlayerPosition.RiichiPosition
+import com.ll.domain.games.riichi.result.{GameScore, HandValue, Points}
 import com.ll.domain.games.{GameId, Player, ScheduledCommand, TableId}
 import com.ll.domain.persistence._
 import com.ll.domain.ops.EitherOps._
@@ -14,6 +15,8 @@ import com.ll.domain.ws.WsMsgIn.{GameCmd, RiichiGameCmd, UserCmd}
 import com.ll.domain.ws.WsMsgOut
 import com.ll.domain.ws.WsMsgOut.ValidationError
 import com.ll.domain.ws.WsRiichi.RiichiPlayerState
+
+import scala.concurrent.duration._
 
 
 sealed trait RiichiTableState extends TableState[Riichi, RiichiTableState]
@@ -101,7 +104,7 @@ case class GameStarted(
         _ <- state.currentTile.nonEmpty.asEither("You can't discard tile")
         tileInHand <- (state.closedHand ::: state.currentTile.toList).find(t => t.repr == tile)
           .asEither(s"Tile $tile is not in hand")
-        cmds = CommandPredictor.predictsCommands(this, tileInHand, state.player.position)
+        cmds = CommandPredictor.predictsCommandsOnDiscard(this, tileInHand, state.player.position)
       } yield List(RiichiEvent.TileDiscared(tableId, gameId, tileInHand, turn, state.player.position, cmds))
 
     case RiichiGameCmd.GetTileFromWall(_, _, commandTurn, position) =>
@@ -109,43 +112,80 @@ case class GameStarted(
         _ <- (commandTurn == turn).asEither(s"Actual turn $turn, but command turn $commandTurn")
         playerState <- getPlayerState(position).asEither("Player with this position is not found")
         tile <- this.deck.headOption.asEither("Tiles are finished")
-      } yield List(RiichiEvent.TileFromTheWallTaken(tableId, gameId, tile, commandTurn, playerState.player.position))
+        cmds = CommandPredictor.predictCommandsOnTileFromTheWall(this, tile, playerState)
+      } yield List(RiichiEvent.TileFromTheWallTaken(tableId, gameId, tile, commandTurn, playerState.player.position, cmds))
+
+    case RiichiGameCmd.DeclareTsumo(_, _, _, position) =>
+      for {
+        state <- getPlayerState(position).asEither(s"No player at $position")
+        newTile <- state.currentTile.asEither("You can declare tsumo only on your tile from the wall")
+        handValue <- HandValue.computeTsumoOnTile(newTile, state).asEither("Your hand is not winning.")
+      } yield List(RiichiEvent.TsumoDeclared(tableId, gameId, turn, state.player.position))
+
+    case RiichiGameCmd.ScoreGame(_, _, _) =>
+      val winingHand = this.playerStates.flatMap(st => HandValue.computeWin(st)).headOption
+      winingHand match {
+        case Some((winner, value)) =>
+          val score = GameScore(
+            Right(winner.player.position),
+//            this.playerStates
+//              .map{
+//              case `winner` => winner.player.position -> 1000 //Points(value.yakus * 1000)
+//              case state => state.player.position -> 0 //Points(0)
+//            }.toMap
+          )
+          val event = RiichiEvent.GameScored(tableId, gameId, turn, score)
+          Right(List(event))
+        case None => Left(ValidationError("No winniing hand"))
+          //TODO add tempai
+      }
+
   }
 
   def applyEvent(e: TableEvent[Riichi]): (List[ScheduledCommand], RiichiTableState) = e match {
-    case RiichiEvent.TileDiscared(_, _, tile, _, position, _) =>
-      val updatedStates = this.playerStates.map {
-        case st if st.player.position != position => st
-        case st if st.player.position == position =>
-          val newClosedHand = ((st.currentTile.toList ::: st.closedHand).toSet - tile).toList
-          val newDiscard = tile :: st.discard
-          st.copy(
-            closedHand = newClosedHand.sortBy(_.order),
-            discard = newDiscard,
-            currentTile = None
-          )
-      }
-      val nextTurn = this.turn + 1
-      val updatedState = this.copy(
-        playerStates = updatedStates,
-        turn = nextTurn
-      )
-      val nextCmd = RiichiGameCmd.GetTileFromWall(tableId, gameId, nextTurn, Some(Right(position.nextPosition)))
-      (List(ScheduledCommand(config.nextTileDelay, nextCmd)), updatedState)
+      case RiichiEvent.TileDiscared(_, _, tile, _, position, _) =>
+        val updatedStates = this.playerStates.map {
+          case st if st.player.position != position => st
+          case st if st.player.position == position =>
+            val newClosedHand = ((st.currentTile.toList ::: st.closedHand).toSet - tile).toList
+            val newDiscard = tile :: st.discard
+            st.copy(
+              closedHand = newClosedHand.sortBy(_.order),
+              discard = newDiscard,
+              currentTile = None
+            )
+        }
+        val nextTurn = this.turn + 1
+        val updatedState = this.copy(
+          playerStates = updatedStates,
+          turn = nextTurn
+        )
+        val nextCmd = RiichiGameCmd.GetTileFromWall(tableId, gameId, nextTurn, Some(Right(position.nextPosition)))
+        (List(ScheduledCommand(config.nextTileDelay, nextCmd)), updatedState)
 
-    case RiichiEvent.TileFromTheWallTaken(_, _, tile, commandTurn, position) =>
-      val updatedStates = this.playerStates.map {
-        case st if st.player.position != position => st
-        case st if st.player.position == position => st.copy(currentTile = Some(tile))
-      }
-      val nextTurn = this.turn + 1
-      val updatedState = this.copy(
-        playerStates = updatedStates,
-        turn = nextTurn,
-        deck = deck.drop(1)
-      )
-      (List(), updatedState)
-  }
+      case RiichiEvent.TileFromTheWallTaken(_, _, tile, _, position, _) =>
+        val updatedStates = this.playerStates.map {
+          case st if st.player.position != position => st
+          case st if st.player.position == position => st.copy(currentTile = Some(tile))
+        }
+        val nextTurn = this.turn + 1
+        val updatedState = this.copy(
+          playerStates = updatedStates,
+          turn = nextTurn,
+          deck = deck.drop(1)
+        )
+        (List(), updatedState)
+      case RiichiEvent.TsumoDeclared(_, _, _, position) =>
+        //open doras
+        val scoreGame = RiichiGameCmd.ScoreGame(tableId, gameId)
+        (List(ScheduledCommand(0 seconds, scoreGame)), this)
+      case RiichiEvent.GameScored(_, _, _, score) =>
+        (Nil, NoGameOnTable(
+          this.admin,
+          this.tableId,
+          this.players)
+        )
+    }
 
   def projection(position: Option[Either[UserId, PlayerPosition[Riichi]]]): WsMsgOut.Riichi.RiichiState =
     WsMsgOut.Riichi.RiichiState(

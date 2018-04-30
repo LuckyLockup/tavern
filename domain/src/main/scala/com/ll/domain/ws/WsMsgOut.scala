@@ -5,6 +5,7 @@ import com.ll.domain.games.GameType.Riichi
 import com.ll.domain.games.Player.HumanPlayer
 import com.ll.domain.games.{GameId, GameType, TableId}
 import com.ll.domain.games.position.PlayerPosition
+import com.ll.domain.games.riichi.result.GameScore
 import com.ll.domain.json.CaseClassCodec
 import com.ll.domain.ws.WsMsgIn.RiichiGameCmd.RiichiCmd
 import com.ll.domain.ws.WsRiichi.RiichiPlayerState
@@ -118,7 +119,8 @@ object WsMsgOut {
       gameId: GameId,
       tile: String,
       turn: Int,
-      position: PlayerPosition[Riichi]
+      position: PlayerPosition[Riichi],
+      commands: List[RiichiCmd]
     ) extends RiichiGameEvent
 
     object TileFromWallTaken extends CaseClassCodec {
@@ -142,6 +144,30 @@ object WsMsgOut {
       implicit lazy val TileDiscardedDecoder: Decoder[TileDiscarded] = decoder[TileDiscarded]("TileDiscarded")
     }
 
+    case class TsumoDeclared(
+      tableId: TableId,
+      gameId: GameId,
+      turn: Int,
+      position: PlayerPosition[Riichi]
+    ) extends RiichiGameEvent
+
+    object TsumoDeclared extends CaseClassCodec {
+      implicit lazy val TsumoDeclaredEncoder: Encoder[TsumoDeclared] = encoder[TsumoDeclared]("TsumoDeclared")
+      implicit lazy val TsumoDeclaredDecoder: Decoder[TsumoDeclared] = decoder[TsumoDeclared]("TsumoDeclared")
+    }
+
+    case class GameScored(
+      tableId: TableId,
+      gameId: GameId,
+      turn: Int,
+      score: GameScore,
+    ) extends RiichiGameEvent
+
+    object GameScored extends CaseClassCodec {
+      implicit lazy val GameScoredEncoder: Encoder[GameScored] = encoder[GameScored]("GameScored")
+      implicit lazy val GameScoredDecoder: Decoder[GameScored] = decoder[GameScored]("GameScored")
+    }
+
     implicit lazy val RiichiGameEventEncoder: Encoder[RiichiGameEvent] = Encoder.instance {
       case c: GameStarted => c.asJson
       case c: GamePaused => c.asJson
@@ -149,6 +175,8 @@ object WsMsgOut {
       case c: PlayerLeftTable => c.asJson
       case c: TileFromWallTaken => c.asJson
       case c: TileDiscarded => c.asJson
+      case c: TsumoDeclared => c.asJson
+      case c: GameScored => c.asJson
     }
 
     implicit lazy val RiichiGameEventDecoder: Decoder[RiichiGameEvent] = Decoder.instance { cur =>
@@ -158,7 +186,9 @@ object WsMsgOut {
         PlayerJoinedTable.PlayerJoinedTableDecoder.apply(cur) orElse
         PlayerLeftTable.PlayerLeftTableDecoder.apply(cur) orElse
         TileFromWallTaken.TileFromWallTakenDecoder.apply(cur) orElse
-        TileDiscarded.TileDiscardedDecoder.apply(cur)
+        TileDiscarded.TileDiscardedDecoder.apply(cur) orElse
+        TsumoDeclared.TsumoDeclaredDecoder.apply(cur) orElse
+        GameScored.GameScoredDecoder.apply(cur)
     }
   }
 

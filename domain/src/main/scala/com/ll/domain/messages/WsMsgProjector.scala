@@ -30,9 +30,17 @@ object WsMsgProjector {
       case RiichiEvent.TileDiscared(tableId, gameId, tile, turn, pos, cmds) =>
         val cmdsToPlayer: List[RiichiCmd] = position.flatMap(p => cmds.get(p)).toList.flatten
         WsMsgOut.Riichi.TileDiscarded(tableId, gameId, tile.repr, turn, pos, cmdsToPlayer)
-      case RiichiEvent.TileFromTheWallTaken(tableId, gameId, tile, turn, playerPosition) =>
-        val tileRepr = position.filter(p => p == playerPosition).map(_ => tile.repr).getOrElse(Const.ClosedTile)
-        WsMsgOut.Riichi.TileFromWallTaken(tableId, gameId, tileRepr, turn, playerPosition)
+      case RiichiEvent.TileFromTheWallTaken(tableId, gameId, tile, turn, playerPosition, cmds) =>
+        if (position.contains(playerPosition)) {
+          WsMsgOut.Riichi.TileFromWallTaken(tableId, gameId, tile.repr, turn, playerPosition, cmds)
+        } else {
+          WsMsgOut.Riichi.TileFromWallTaken(tableId, gameId, Const.ClosedTile, turn, playerPosition, Nil)
+        }
+      case RiichiEvent.TsumoDeclared(tableId, gameId, turn, position) =>
+        WsMsgOut.Riichi.TsumoDeclared(tableId, gameId, turn, position)
+      case RiichiEvent.GameScored(tableId, gameId, turn, gameScore) =>
+        WsMsgOut.Riichi.GameScored(tableId, gameId, turn, gameScore)
+
     }
   }
 }
