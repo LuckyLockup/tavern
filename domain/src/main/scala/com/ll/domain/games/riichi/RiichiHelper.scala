@@ -1,21 +1,14 @@
 package com.ll.domain.games.riichi
 
-import com.ll.domain.auth.User
 import com.ll.domain.games.{GameId, TableId}
 import com.ll.domain.games.GameType.Riichi
 import com.ll.domain.games.Player.{AIPlayer, HumanPlayer}
 import com.ll.domain.games.position.PlayerPosition
 import com.ll.domain.games.position.PlayerPosition.RiichiPosition
 
-
 object RiichiHelper {
-  def initializeHands(
-    tableId: TableId,
-    gameId: GameId,
-    admin: User,
-    config: RiichiConfig,
-    humanPlayers: Set[HumanPlayer[Riichi]]) = {
-    def generatePlayer(position: PlayerPosition[Riichi]) = humanPlayers.find(_.position == position)
+  def initializeHands(table: NoGameOnTable, config: RiichiConfig, gameId: GameId) = {
+    def generatePlayer(position: PlayerPosition[Riichi]) = table.humanPlayers.find(_.position == position)
       .getOrElse(AIPlayer(config.defaultEastAi, position))
 
     val allTiles = TestHelper.prepareTiles(config.testingTiles)
@@ -31,8 +24,8 @@ object RiichiHelper {
     val north = generatePlayer(RiichiPosition.NorthPosition)
 
     val game = GameStarted(
-      admin = admin,
-      tableId = tableId,
+      admin = table.admin,
+      tableId = table.tableId,
       gameId = gameId,
       playerStates = List(
         PlayerState(east, eastHand),
@@ -43,7 +36,8 @@ object RiichiHelper {
       uraDoras = uraDoras,
       deck = remaining,
       turn = 1,
-      config = config
+      config = config,
+      table.points
     )
     game
   }

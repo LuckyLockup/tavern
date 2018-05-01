@@ -7,7 +7,7 @@ import com.ll.domain.games.Player.{AIPlayer, HumanPlayer}
 import com.ll.domain.games.deck.Tile
 import com.ll.domain.games.position.{PlayerPosition, PositionUtility}
 import com.ll.domain.games.position.PlayerPosition.RiichiPosition
-import com.ll.domain.games.riichi.result.{GameScore, HandValue, Points}
+import com.ll.domain.games.riichi.result.{GameScore, HandValue, Points, TablePoints}
 import com.ll.domain.games.{GameId, Player, ScheduledCommand, TableId}
 import com.ll.domain.persistence._
 import com.ll.domain.ops.EitherOps._
@@ -24,7 +24,8 @@ sealed trait RiichiTableState extends TableState[Riichi, RiichiTableState]
 case class NoGameOnTable(
   admin: User,
   tableId: TableId,
-  players: Set[Player[Riichi]] = Set.empty
+  players: Set[Player[Riichi]] = Set.empty,
+  points: TablePoints = TablePoints.initialPoints
 ) extends RiichiTableState {
 
   def validateCmd(cmd: GameCmd[Riichi]): Either[ValidationError, List[TableEvent[Riichi]]] = cmd match {
@@ -40,7 +41,7 @@ case class NoGameOnTable(
 
   def applyEvent(e: TableEvent[Riichi]): (List[ScheduledCommand], RiichiTableState) = e match {
     case RiichiEvent.GameStarted(_, gameId, config) =>
-      val game: GameStarted = RiichiHelper.initializeHands(tableId, gameId, admin, config, humanPlayers)
+      val game: GameStarted = RiichiHelper.initializeHands(this, config, gameId)
       val nextCmd = RiichiGameCmd.GetTileFromWall(tableId, gameId, 1, Some(Right(RiichiPosition.EastPosition)))
       (List(ScheduledCommand(config.nextTileDelay, nextCmd)), game)
     case _                                          => (Nil, this)
@@ -53,7 +54,8 @@ case class NoGameOnTable(
       states = humanPlayers.toList.map(p => RiichiPlayerState(p, Nil)),
       uraDoras = Nil,
       deck = 0,
-      turn = 0
+      turn = 0,
+      points = this.points
     )
 
   def getPlayer(position: PlayerPosition[Riichi]): Option[Player[Riichi]] = humanPlayers.find(p => p.position == position)
@@ -91,7 +93,8 @@ case class GameStarted(
   uraDoras: List[Tile],
   deck: List[Tile],
   turn: Int = 1,
-  config: RiichiConfig
+  config: RiichiConfig,
+  points: TablePoints
 ) extends RiichiTableState {
 
   def validateCmd(cmd: GameCmd[Riichi]): Either[ValidationError, List[TableEvent[Riichi]]] = cmd match {
@@ -183,7 +186,8 @@ case class GameStarted(
         (Nil, NoGameOnTable(
           this.admin,
           this.tableId,
-          this.players)
+          this.players,
+          this.points.addGameScore(score))
         )
     }
 
@@ -212,7 +216,8 @@ case class GameStarted(
       },
       uraDoras = uraDoras.map(_.repr),
       deck = deck.size,
-      turn = turn
+      turn = turn,
+      points = this.points
     )
 
   def players: Set[Player[Riichi]] = playerStates.map(_.player).toSet

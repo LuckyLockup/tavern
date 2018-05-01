@@ -1,9 +1,10 @@
 package com.ll.riichitests
 
 import com.ll.domain.auth.UserId
+import com.ll.domain.games.position.PlayerPosition
 import com.ll.domain.games.position.PlayerPosition.RiichiPosition
 import com.ll.domain.games.riichi.RiichiConfig
-import com.ll.domain.games.riichi.result.HandValue
+import com.ll.domain.games.riichi.result.{HandValue, Points}
 import com.ll.domain.ws.WsMsgIn.{RiichiGameCmd, UserCmd}
 import com.ll.domain.ws.WsMsgOut
 import com.ll.utils.{CommonData, Test}
@@ -45,24 +46,32 @@ class TsumoTest extends Test {
         state.states.head.closedHand should contain theSameElementsAs eastHand
         state
     }
-    val tileFromTheWall =  player1.ws.expectWsMsg {
+    val tileFromTheWall = player1.ws.expectWsMsg {
       case fromTheWall: WsMsgOut.Riichi.TileFromWallTaken =>
-        fromTheWall.position should be (RiichiPosition.EastPosition)
-        fromTheWall.tile should be (wallTiles.head)
-        fromTheWall.commands.head should be (RiichiGameCmd.DeclareTsumo(tableId, gameId, Some(HandValue(1, 1))))
+        fromTheWall.position should be(RiichiPosition.EastPosition)
+        fromTheWall.tile should be(wallTiles.head)
+        fromTheWall.commands.head should be(RiichiGameCmd.DeclareTsumo(tableId, gameId, Some(HandValue(1, 1))))
         fromTheWall
     }
     player1.ws ! tileFromTheWall.commands.head.asInstanceOf[RiichiGameCmd.DeclareTsumo].copy(approxHandValue = None)
 
     player1.ws.expectWsMsg {
       case tsumo: WsMsgOut.Riichi.TsumoDeclared =>
-        tsumo.position should be (RiichiPosition.EastPosition)
-        tsumo.turn should be (2)
+        tsumo.position should be(RiichiPosition.EastPosition)
+        tsumo.turn should be(2)
         tsumo
     }
-    player1.ws.expectWsMsg {
+    val score = player1.ws.expectWsMsg {
       case score: WsMsgOut.Riichi.GameScored =>
         score
+    }
+
+    player1.ws ! UserCmd.GetState(tableId, player1.userId)
+    player1.ws.expectWsMsg {
+      case state: WsMsgOut.Riichi.RiichiState =>
+        state.turn should be(0)
+        state.points.points(PlayerPosition.RiichiPosition.EastPosition) should be (Points(26000))
+        state
     }
   }
 }

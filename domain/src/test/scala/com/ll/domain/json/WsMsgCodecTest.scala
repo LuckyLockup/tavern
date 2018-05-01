@@ -4,6 +4,7 @@ import com.ll.domain.auth.{User, UserId}
 import com.ll.domain.games.Player.HumanPlayer
 import com.ll.domain.games.position.PlayerPosition.RiichiPosition
 import com.ll.domain.games.riichi.RiichiConfig
+import com.ll.domain.games.riichi.result.TablePoints
 import com.ll.domain.games.{GameId, TableId}
 import com.ll.domain.ws.WsMsgCodec.{Test, decodeWsMsg, encodeWsMsg}
 import com.ll.domain.ws.{WsMsgIn, WsMsgOut}
@@ -87,7 +88,8 @@ class WsMsgCodecTest extends WordSpec with Matchers {
         states = Nil,
         uraDoras = Nil,
         deck = 0,
-        turn = 0
+        turn = 0,
+        points = TablePoints.initialPoints
       ),
         """
           |{
