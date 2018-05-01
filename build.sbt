@@ -124,7 +124,7 @@ lazy val versions = new {
 lazy val commonSettings =
   Seq(
     version := "0.1-SNAPSHOT",
-    scalaVersion := "2.12.4",
+    scalaVersion := "2.12.6",
     organization := "luckylockup.com",
     organizationName := "Lucky Lockup",
     startYear := Some(2018),
