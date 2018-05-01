@@ -14,7 +14,6 @@ case class PlayerState(
   discard: List[Tile] = Nil,
   online: Boolean = true,
 ) {
-
   def pungOn(tile: Tile): Option[TileSet.Pung] = {
     TileSetsHelper.findSetsForTiles(tile, closedHand)
       .map(_._1)

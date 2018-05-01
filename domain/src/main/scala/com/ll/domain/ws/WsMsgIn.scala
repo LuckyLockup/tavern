@@ -152,6 +152,7 @@ object WsMsgIn {
       tableId: TableId,
       gameId: GameId,
       from: PlayerPosition[Riichi],
+      turn: Int,
       tiles: List[String],
       position: Option[Either[UserId, PlayerPosition[Riichi]]] = None
     ) extends RiichiCmd{

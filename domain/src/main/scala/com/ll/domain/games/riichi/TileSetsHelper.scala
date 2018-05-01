@@ -1,11 +1,6 @@
 package com.ll.domain.games.riichi
 
 import com.ll.domain.games.deck.{Tile, TileCode, TileSet}
-import com.ll.domain.games.riichi.result.HandValue
-
-import scala.annotation.tailrec
-import scala.collection.immutable
-import scala.reflect.ClassTag
 
 object TileSetsHelper {
   case class GroupedTiles(
@@ -78,9 +73,7 @@ object TileSetsHelper {
     }
 
     val chows = tile match {
-      case givenTile: Tile.Sou => findChow(givenTile, tiles)
-      case givenTile: Tile.Wan => findChow(givenTile, tiles)
-      case givenTile: Tile.Pin => findChow(givenTile, tiles)
+      case givenTile: Tile.Number => findChow(givenTile, tiles)
       case _                   => Nil
     }
     pairs ::: pungs ::: chows

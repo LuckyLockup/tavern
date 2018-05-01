@@ -22,6 +22,7 @@ object CommandPredictor {
             table.tableId,
             table.gameId,
             discardedPosition,
+            table.turn + 1,
             List(pung.x.repr, pung.y.repr, pung.z.repr))
           )
         val declareChow = st.chowsOn(discardedTile, discardedPosition)
@@ -29,6 +30,7 @@ object CommandPredictor {
             table.tableId,
             table.gameId,
             discardedPosition,
+            table.turn + 1,
             List(chow.x.repr, chow.y.repr, chow.z.repr))
           )
         val declareRon = HandValue.computeRonOnTile(discardedTile, st).map(handValue =>
@@ -47,6 +49,8 @@ object CommandPredictor {
     val tsumo = HandValue.computeTsumoOnTile(tile, playerState)
       .toList
       .map(v => RiichiGameCmd.DeclareTsumo(table.tableId, table.gameId, Some(v)))
+    //TODO open kong
+    //TODO declare riichi
     tsumo
   }
 

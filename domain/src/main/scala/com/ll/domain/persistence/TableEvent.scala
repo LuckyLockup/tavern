@@ -3,7 +3,7 @@ package com.ll.domain.persistence
 import com.ll.domain.auth.UserId
 import com.ll.domain.games.GameType.Riichi
 import com.ll.domain.games.Player.HumanPlayer
-import com.ll.domain.games.deck.Tile
+import com.ll.domain.games.deck.{DeclaredSet, Tile}
 import com.ll.domain.games.position.PlayerPosition
 import com.ll.domain.games.riichi.RiichiConfig
 import com.ll.domain.games.riichi.result.GameScore
@@ -29,7 +29,6 @@ object RiichiEvent {
     turn: Int,
     score: GameScore
   ) extends TableEvent[Riichi]
-
 
   sealed trait RiichiGameEvent extends GameEvent[Riichi]
   case class TileDiscared(
@@ -67,10 +66,11 @@ object RiichiEvent {
   case class TileClaimed(
     tableId: TableId,
     gameId: GameId,
-    tile: Tile,
-    turn: Int,
+    set: DeclaredSet[Riichi],
     position: PlayerPosition[Riichi]
-  ) extends RiichiGameEvent
+  ) extends RiichiGameEvent {
+    def turn = set.turn
+  }
 
   case class GameFinished(
     tableId: TableId,

@@ -36,11 +36,20 @@ object WsMsgProjector {
         } else {
           WsMsgOut.Riichi.TileFromWallTaken(tableId, gameId, Const.ClosedTile, turn, playerPosition, Nil)
         }
-      case RiichiEvent.TsumoDeclared(tableId, gameId, turn, position) =>
-        WsMsgOut.Riichi.TsumoDeclared(tableId, gameId, turn, position)
+      case RiichiEvent.TsumoDeclared(tableId, gameId, turn, pos) =>
+        WsMsgOut.Riichi.TsumoDeclared(tableId, gameId, turn, pos)
       case RiichiEvent.GameScored(tableId, gameId, turn, gameScore) =>
         WsMsgOut.Riichi.GameScored(tableId, gameId, turn, gameScore)
-
+      case RiichiEvent.TileClaimed(tableId, gameId, set, pos) =>
+        WsMsgOut.Riichi.TileClaimed(
+          tableId = tableId,
+          gameId = gameId,
+          set = set.set.repr,
+          tiles = set.set.tiles,
+          from = set.from,
+          turn = set.turn,
+          position = pos
+        )
     }
   }
 }

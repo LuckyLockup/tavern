@@ -1,5 +1,9 @@
 package com.ll.domain.games.deck
 
+import io.circe.{Decoder, DecodingFailure, Encoder, HCursor}
+import io.circe._
+import io.circe.syntax._
+
 sealed trait Tile {
   def repr: String
   def order: Int
@@ -253,4 +257,34 @@ object Tile {
     Tile.Dragon.Green_1, Tile.Dragon.Green_2, Tile.Dragon.Green_3, Tile.Dragon.Green_4,
     Tile.Dragon.Red_1, Tile.Dragon.Red_2, Tile.Dragon.Red_3, Tile.Dragon.Red_4,
   )
+
+  val tilesMap = allTiles.map(t => t.order -> t).toMap
+
+  implicit lazy val TileEncoder: Encoder[Tile] = {
+    case t: Tile => Json.obj(
+      "repr" -> t.repr.asJson,
+      "order" -> t.order.asJson
+    )
+  }
+
+  implicit lazy val TileDecoder: Decoder[Tile] = (c: HCursor) => {
+    c.downField("order").as[Int] match {
+      case Right(order) => tilesMap.get(order) match {
+        case Some(t) => Right(t)
+        case None => Left(DecodingFailure(s"$order tile doesn't exist", Nil))
+      }
+      case Left(failure) => Left(failure)
+    }
+  }
+
+  implicit lazy val TileNumberEncoder: Encoder[Tile.Number] = TileEncoder.contramap(identity)
+  implicit lazy val TileNumberDecoder: Decoder[Tile.Number] = (c: HCursor) => {
+    c.downField("order").as[Int] match {
+      case Right(order) => tilesMap.get(order) match {
+        case Some(t: Tile.Number) => Right(t)
+        case _ => Left(DecodingFailure(s"$order tile isn't number", Nil))
+      }
+      case Left(failure) => Left(failure)
+    }
+  }
 }
