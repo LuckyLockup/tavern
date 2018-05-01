@@ -28,7 +28,7 @@ case class AIService() {
     outEvent: WsMsgOut,
     state: WsMsgOut.TableState[Riichi]): Future[List[GameCmd[Riichi]]] = {
     outEvent match {
-      case WsMsgOut.Riichi.TileFromWallTaken(tableId, gameId, tile, turn, aiPlayer.position) =>
+      case WsMsgOut.Riichi.TileFromWallTaken(tableId, gameId, tile, turn, aiPlayer.position, _) =>
         Future.successful {
           Thread.sleep(1000)
           List(RiichiGameCmd.DiscardTile(tableId, gameId, tile, turn + 1, Some(Right(aiPlayer.position))))

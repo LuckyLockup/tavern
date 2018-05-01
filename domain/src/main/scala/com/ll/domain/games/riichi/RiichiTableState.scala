@@ -128,11 +128,11 @@ case class GameStarted(
         case Some((winner, value)) =>
           val score = GameScore(
             Right(winner.player.position),
-//            this.playerStates
-//              .map{
-//              case `winner` => winner.player.position -> 1000 //Points(value.yakus * 1000)
-//              case state => state.player.position -> 0 //Points(0)
-//            }.toMap
+            this.playerStates
+              .map{
+              case `winner` => winner.player.position -> Points(value.yakus * 1000)
+              case state => state.player.position -> Points(0)
+            }.toMap
           )
           val event = RiichiEvent.GameScored(tableId, gameId, turn, score)
           Right(List(event))
