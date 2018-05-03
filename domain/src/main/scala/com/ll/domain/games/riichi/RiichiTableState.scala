@@ -11,7 +11,7 @@ import com.ll.domain.games.riichi.result.{GameScore, HandValue, Points, TablePoi
 import com.ll.domain.games.{GameId, Player, ScheduledCommand, TableId}
 import com.ll.domain.persistence._
 import com.ll.domain.ops.EitherOps._
-import com.ll.domain.ws.WsMsgIn.{GameCmd, RiichiGameCmd, UserCmd}
+import com.ll.domain.ws.WsMsgIn.{CommonCmd, GameCmd, RiichiGameCmd}
 import com.ll.domain.ws.WsMsgOut
 import com.ll.domain.ws.WsMsgOut.ValidationError
 import com.ll.domain.ws.WsRiichi.RiichiPlayerState
@@ -38,10 +38,10 @@ case class NoGameOnTable(
       Left(ValidationError(s"Game is not started, ${cmd.getClass.getSimpleName} is not supported."))
   }
 
-  def applyEvent(e: TableEvent[Riichi]): (List[ScheduledCommand], RiichiTableState) = e match {
+  def applyEvent(e: TableEvent[Riichi]): (List[ScheduledCommand[Riichi]], RiichiTableState) = e match {
     case RiichiEvent.GameStarted(_, gameId, config) =>
       val game: GameStarted = RiichiHelper.initializeHands(this, config, gameId)
-      val nextCmd = RiichiGameCmd.GetTileFromWall(tableId, gameId, 1, Some(Right(RiichiPosition.EastPosition)))
+      val nextCmd = RiichiGameCmd.GetTileFromWall(tableId, gameId, 1)
       (List(ScheduledCommand(config.nextTileDelay, nextCmd)), game)
     case _                                          => (Nil, this)
   }
@@ -59,11 +59,11 @@ case class NoGameOnTable(
 
   def getPlayer(position: PlayerPosition[Riichi]): Option[Player[Riichi]] = humanPlayers.find(p => p.position == position)
 
-  def joinGame(cmd: UserCmd.JoinAsPlayer): Either[ValidationError, (RiichiEvent.PlayerJoined, NoGameOnTable)] = {
-    if (humanPlayers.exists(_.user.id == cmd.userId)) {
+  def joinGame(cmd: CommonCmd.JoinAsPlayer, user: User): Either[ValidationError, (RiichiEvent.PlayerJoined, NoGameOnTable)] = {
+    if (humanPlayers.exists(_.user.id == user.id)) {
       Left(ValidationError("You already joined the table"))
     } else if (players.size < 4) {
-      val (newPlayers, newPlayer) = PositionUtility.addUser(players, cmd.user)
+      val (newPlayers, newPlayer) = PositionUtility.addUser(players, user)
       val event = RiichiEvent.PlayerJoined(tableId, newPlayer)
       val newState = this.copy(players = newPlayers)
       Right(event, newState)
@@ -72,8 +72,8 @@ case class NoGameOnTable(
     }
   }
 
-  def leftGame(cmd: UserCmd.LeftAsPlayer): Either[ValidationError, (RiichiEvent.PlayerLeft, NoGameOnTable)] = {
-    humanPlayers.find(p => p.user.id == cmd.userId) match {
+  def leftGame(cmd: CommonCmd.LeftAsPlayer, userId: UserId): Either[ValidationError, (RiichiEvent.PlayerLeft, NoGameOnTable)] = {
+    humanPlayers.find(p => p.user.id == userId) match {
       case Some(player) =>
         val event = RiichiEvent.PlayerLeft(tableId, player)
         val newState = this.copy(players = players - player)
@@ -99,7 +99,7 @@ case class GameStarted(
   def validateCmd(cmd: GameCmd[Riichi]): Either[ValidationError, List[TableEvent[Riichi]]] = cmd match {
     case _: RiichiGameCmd.StartGame => Left(ValidationError("Game already started"))
 
-    case RiichiGameCmd.DiscardTile(_, _, tile, commandTurn, position) =>
+    case RiichiGameCmd.DiscardTile(_, _, tile, commandTurn) =>
       for {
         _ <- (commandTurn == turn).asEither(s"Actual turn $turn, but command turn $commandTurn")
         state <- getPlayerState(position).asEither(s"No player at $position")

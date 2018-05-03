@@ -2,20 +2,26 @@ package com.ll.games
 
 import akka.persistence.PersistentActor
 import com.ll.ai.AIService
+import com.ll.domain.ai.ServiceId
 import com.ll.domain.auth.{User, UserId}
-import com.ll.domain.games.{GameType, ScheduledCommand}
+import com.ll.domain.games.{CommandEnvelop, GameType, ScheduledCommand}
+import com.ll.domain.messages.WsMsgProjector
 import com.ll.domain.persistence._
-import com.ll.domain.ws.WsMsgIn.{GameCmd, UserCmd}
+import com.ll.domain.ws.WsMsgIn.{CommonCmd, GameCmd}
 import com.ll.domain.ws.WsMsgOut
+import com.ll.domain.ws.WsMsgOut.ValidationError
 import com.ll.utils.Logging
 import com.ll.ws.PubSub
 
 import scala.reflect.ClassTag
 
 class TableActor[
-  GT <: GameType,
-  S <: TableState[GT, S] : ClassTag
-  ](table: TableState[GT, S], pubSub: PubSub)
+GT <: GameType,
+S <: TableState[GT, S] : ClassTag
+](
+  table: TableState[GT, S],
+  pubSub: PubSub,
+  aiService: AIService)
   extends PersistentActor with Logging {
 
   def tableId = table.tableId
@@ -23,12 +29,6 @@ class TableActor[
   override def persistenceId = s"solo_${table.tableId.id.toString}"
 
   implicit val ec = context.dispatcher
-
-  object services {
-    implicit val ec = context.dispatcher
-    val aiService = AIService()
-    val dispatcher = new Dispatcher[GT, S](pubSub, aiService, self)
-  }
 
   var _table = table
   var spectaculars: Set[User] = Set.empty[User]
@@ -38,54 +38,73 @@ class TableActor[
   }
 
   val receiveCommand: Receive = {
-    case message => {
+    case env@CommandEnvelop(cmd, user) => {
       try {
-        log.info(s"${table.tableId} Processing $message")
-        message match {
-          case cmd: UserCmd.GetState              =>
-            val state = _table.projection(Some(Left(cmd.userId)))
-            pubSub.sendToUser(cmd.userId, state)
-          case UserCmd.JoinAsSpectacular(_, user) =>
-            spectaculars += user
-            pubSub.sendToUsers(allUsers, WsMsgOut.SpectacularJoinedTable(user, tableId))
-          case UserCmd.LeftAsSpectacular(_, user) =>
-            spectaculars -= user
-            pubSub.sendToUsers(allUsers, WsMsgOut.SpectacularJoinedTable(user, tableId))
+        log.info(s"${table.tableId} Processing $cmd from $sender")
+        cmd match {
+          case cmd: CommonCmd.GetState =>
+            val state = _table.projection(Some(env.sender))
+            pubSub.send(env.sender, state)
 
-          case cmd@UserCmd.JoinAsPlayer(_, user) =>
-            _table.joinGame(cmd) match {
-              case Left(error) => pubSub.sendToUser(user.id, error)
-              case Right((event, newState)) =>
-                persist(event) {e =>
-                  _table = newState
-                  services.dispatcher.dispatchEvent(_table, spectaculars, event)
+          case CommonCmd.JoinAsSpectacular(_) =>
+            user match {
+              case Right(humanUser) =>
+                spectaculars += humanUser
+                pubSub.sendToUsers(allUsers, WsMsgOut.SpectacularJoinedTable(humanUser, tableId))
+              case Left(_)          => ???
+            }
+
+          case CommonCmd.LeftAsSpectacular(_) =>
+            user match {
+              case Right(humanUser) =>
+                spectaculars -= humanUser
+                pubSub.sendToUsers(allUsers, WsMsgOut.SpectacularLeftTable(humanUser, tableId))
+              case Left(_)          => ???
+            }
+
+          case cmd@CommonCmd.JoinAsPlayer(_) =>
+            user match {
+              case Right(humanUser) =>
+                _table.joinGame(cmd, humanUser) match {
+                  case Left(error)              => pubSub.send(env.sender, error)
+                  case Right((event, newState)) =>
+                    persist(event) { e =>
+                      _table = newState
+                      Eff.dispatch(event)
+                    }
+                }
+              case Left(_)          => ???
+            }
+
+          case cmd@CommonCmd.LeftAsPlayer(_) =>
+            user match {
+              case Right(humanUser) =>
+                _table.leftGame(cmd, humanUser.id) match {
+                  case Left(error)              => pubSub.send(env.sender, error)
+                  case Right((event, newState)) =>
+                    persist(event) { e =>
+                      _table = newState
+                      Eff.dispatch(event)
+                    }
                 }
             }
-          case cmd@UserCmd.LeftAsPlayer(_, user) =>
-            _table.leftGame(cmd) match {
-              case Left(error) => pubSub.sendToUser(user.id, error)
-              case Right((event, newState)) =>
-                persist(event) {e =>
-                  _table = newState
-                  services.dispatcher.dispatchEvent(_table, spectaculars, event)
-                }
-            }
+
           case cmd: GameCmd[GT] =>
             _table.validateCmd(cmd) match {
-              case Left(error) => services.dispatcher.dispatchError(_table, error, cmd.position)
+              case Left(error)   => pubSub.send(env.sender, error)
               case Right(events) => persistAll(events) { e =>
-                events.foreach{ event =>
+                events.foreach { event =>
                   val (cmds, newState) = _table.applyEvent(e)
                   _table = newState
-                  cmds.foreach{
-                    case ScheduledCommand(duration, cmd) =>
-                      context.system.scheduler.scheduleOnce(duration, self, cmd)
+                  cmds.foreach {
+                    case ScheduledCommand(duration, sccmd) =>
+                      context.system.scheduler.scheduleOnce(duration, self, sccmd)
                   }
-                  services.dispatcher.dispatchEvent(_table, spectaculars, event)
+                  Eff.dispatch(event)
                 }
               }
             }
-          case cmd    => log.error(s"Unknown command $cmd")
+          case cmd              => log.error(s"Unknown command $cmd")
         }
       } catch {
         case ex: Exception =>
@@ -96,9 +115,49 @@ class TableActor[
     }
   }
 
-
   val receiveRecover: Receive = {
     case st =>
       log.info(s"Recovery event is received: $st")
+  }
+
+  object Eff {
+    import WsMsgProjector._
+
+    def dispatch(event: TableEvent[GT]) = {
+      dispatchToHumans(event)
+      dispatchToAi(event)
+    }
+
+    def dispatchToHumans(ev: TableEvent[GT]) = {
+      val spectacularEvents = spectaculars
+        .map(user => (user.id, ev.projection()))
+
+      val playerEvents = table.humanPlayers
+        .map(player => (player.user.id, ev.projection(Some(player.position))))
+
+      (spectacularEvents ++ playerEvents)
+        .groupBy(_._2)
+        .map {
+          case (event, set) => (event, set.map(_._1))
+        }
+        .foreach {
+          case (event, ids) if ids.size == 1 => pubSub.sendToUser(ids.head, event)
+          case (event, userIds)              => pubSub.sendToUsers(userIds, event)
+        }
+    }
+
+    private def dispatchToAi(ev: TableEvent[GT]) = {
+      table.aiPlayers.foreach { ai =>
+        aiService.processEvent(
+          ai,
+          ev.projection(Some(ai.position)),
+          table.projection(Some(Left(ai.serviceId)))
+        ).map { cmds =>
+          cmds.foreach { cmd =>
+            self ! cmd
+          }
+        }
+      }
+    }
   }
 }

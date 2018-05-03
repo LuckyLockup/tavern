@@ -20,6 +20,8 @@ object Player extends CaseClassCodec {
 
   case class AIPlayer[GT <: GameType](ai: AIType[GT], position: PlayerPosition[GT]) extends Player[GT] {
     def nickName = ai.getClass.getName
+    def serviceId = ai.serviceId
+
   }
 
   implicit lazy val HumanPlayerEncoder: Encoder[HumanPlayer[Riichi]] = encoder[HumanPlayer[Riichi]]("HumanPlayer")

@@ -3,7 +3,7 @@ package com.ll.games
 import akka.actor.{ActorRef, ActorSystem, OneForOneStrategy, PoisonPill, Props, SupervisorStrategy}
 import cats.Monad
 import com.ll.domain.auth.{User, UserId}
-import com.ll.domain.games.TableId
+import com.ll.domain.games.{CommandEnvelop, TableId}
 import com.ll.utils.Logging
 import com.ll.ws.PubSub
 import akka.pattern.{Backoff, BackoffSupervisor}
@@ -11,7 +11,7 @@ import akka.util.Timeout
 import com.ll.config.ServerConfig
 import com.ll.domain.games.GameType.Riichi
 import com.ll.domain.games.riichi.{NoGameOnTable, RiichiTableState}
-import com.ll.domain.ws.WsMsgIn.{GameCmd, TableCmd, UserCmd}
+import com.ll.domain.ws.WsMsgIn.{GameCmd, CommonCmd}
 import com.ll.domain.ws.WsMsgOut
 
 import scala.concurrent.duration._
@@ -22,14 +22,14 @@ class TablesService(pubSub: PubSub, config: ServerConfig)(implicit system: Actor
 
   private var tables: Map[TableId, ActorRef] = Map.empty[TableId, ActorRef]
 
-  def getOrCreate(tableId: TableId, userId: UserId): Unit = {
+  def getOrCreate(tableId: TableId, user: User): Unit = {
     tables.get(tableId) match {
       case Some(ar) =>
         log.info("Table is already created")
-        ar ! UserCmd.GetState(tableId, userId)
+        ar ! CommandEnvelop(CommonCmd.GetState(tableId), Right(user))
       case None =>
         log.info(s"Creating table for $tableId")
-        val table: RiichiTableState = NoGameOnTable(User(userId, "God"), tableId)
+        val table: RiichiTableState = NoGameOnTable(user, tableId)
         val props: Props = Props(new TableActor[Riichi, RiichiTableState](table, pubSub))
         val supervisor = BackoffSupervisor.props(
           Backoff.onStop(
@@ -53,25 +53,17 @@ class TablesService(pubSub: PubSub, config: ServerConfig)(implicit system: Actor
           actorRef ! PoisonPill
           tables -= tableId
         }
-        actorRef ! UserCmd.GetState(tableId, userId)
+        actorRef ! CommandEnvelop(CommonCmd.GetState(tableId), Right(user))
     }
   }
 
-  def sendToGame(cmd: TableCmd): Unit = {
-    if (tables.get(cmd.tableId).isEmpty) {
-      log.warn(s"Message is sent to non existing tabled: $cmd")
-      val userIdOpt = cmd match {
-        case cmd: UserCmd => Some(cmd.userId)
-        case cmd: GameCmd[_] => cmd.position.flatMap{
-          case Left(userId) => Some(userId)
-          case Right(_) => None
-        }
-        case _ => None
-      }
-      userIdOpt.foreach(userId => pubSub.sendToUser(userId, WsMsgOut.ValidationError(s"${cmd.tableId} doesn't exist")))
+  def sendToGame(env: CommandEnvelop): Unit = {
+    if (tables.get(env.tableId).isEmpty) {
+      log.warn(s"Message is sent to non existing tabled: ${env.tableId}")
+      val error = WsMsgOut.ValidationError(s"${env.cmd.tableId} doesn't exist")
+      pubSub.send(env.sender, error)
     }
-    tables.get(cmd.tableId).foreach(ar => ar ! cmd)
-
+    tables.get(env.tableId).foreach(ar => ar ! env)
   }
 
   def gamesCount: Int = tables.size

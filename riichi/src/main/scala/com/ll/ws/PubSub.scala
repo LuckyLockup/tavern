@@ -12,8 +12,10 @@ import akka.stream.OverflowStrategy
 import akka.stream.scaladsl._
 import org.reactivestreams.Publisher
 import akka.stream.scaladsl.Sink
+import com.ll.domain.ai.ServiceId
+import com.ll.domain.games.CommandEnvelop
 import com.ll.domain.ws.{WsMsgCodec, WsMsgIn, WsMsgOut}
-import com.ll.domain.ws.WsMsgIn.{GameCmd, TableCmd}
+import com.ll.domain.ws.WsMsgIn.{CommonCmd, GameCmd}
 import com.ll.games.TablesService
 
 import scala.concurrent.Future
@@ -39,7 +41,8 @@ class PubSub()(implicit system: ActorSystem, mat: Materializer) extends Logging 
       .watchTermination()((_, ft) => ft.foreach { _ => {
         log.info(s"Closing WS connection from client for $id")
         wsConnections -= id
-      } })
+      }
+      })
       .mapConcat {
         case TextMessage.Strict(msg) =>
           log.info(s"$id <<< $msg")
@@ -55,11 +58,8 @@ class PubSub()(implicit system: ActorSystem, mat: Materializer) extends Logging 
         case WsMsgIn.Ping(n) =>
           actorRef ! WsMsgOut.Pong(n)
           Future.successful("Pong!")
-        case msg: GameCmd[_]    =>
-          tables.sendToGame(msg.updatePosition(Left(id)))
-          Future.successful {"Done"}
-        case msg: TableCmd    =>
-          tables.sendToGame(msg)
+        case msg: CommonCmd  =>
+          tables.sendToGame(CommandEnvelop(msg, Right(id)))
           Future.successful {"Done"}
       }
       .to(Sink.ignore)
@@ -67,6 +67,11 @@ class PubSub()(implicit system: ActorSystem, mat: Materializer) extends Logging 
     log.info(s"Opening WS connection for $id")
     wsConnections += id -> actorRef
     Flow.fromSinkAndSource(sink, Source.fromPublisher(publisher))
+  }
+
+  def send(id: Either[ServiceId, UserId], msg: WsMsgOut) = id match {
+    case Left(serviceId) => sendToService(serviceId, msg)
+    case Right(userId)   => sendToUser(userId, msg)
   }
 
   def sendToUser(id: UserId, msg: WsMsgOut): Unit = wsConnections.get(id).foreach { ar =>
@@ -80,6 +85,14 @@ class PubSub()(implicit system: ActorSystem, mat: Materializer) extends Logging 
     validUsers.foreach { id =>
       wsConnections.get(id).foreach(ar => ar ! msg)
     }
+  }
+
+  def sendToService(id: ServiceId, msg: WsMsgOut): Unit = {
+    log.info(s"Sending to service id $id $msg")
+  }
+
+  def sendToService(ids: Set[ServiceId], msg: WsMsgOut): Unit = {
+    log.info(s"Sending to service id $ids $msg")
   }
 }
 

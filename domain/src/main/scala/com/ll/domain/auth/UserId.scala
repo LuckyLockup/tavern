@@ -11,5 +11,5 @@ case class UserId(id: Long) extends AnyVal {
 object UserId extends CommonTypesCodec {
   implicit lazy val UserIdEncoder: Encoder[UserId] = (userId: UserId) => userId.id.asJson
   implicit lazy val UserIdDecoder: Decoder[UserId] = (c: HCursor) => c.focus.flatMap(_.asNumber).flatMap(_.toInt)
-    .map(i => Right(UserId(i))).getOrElse(Left(DecodingFailure("Can't decode position from", Nil)))
+    .map(i => Right(UserId(i))).getOrElse(Left(DecodingFailure("Can't decode UserId from", Nil)))
 }
