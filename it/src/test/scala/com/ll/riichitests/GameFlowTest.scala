@@ -3,7 +3,7 @@ package com.ll.riichitests
 import com.ll.domain.auth.UserId
 import com.ll.domain.games.riichi.RiichiConfig
 import com.ll.domain.ws.{WsMsgIn, WsMsgOut}
-import com.ll.domain.ws.WsMsgIn.{RiichiGameCmd, UserCmd}
+import com.ll.domain.ws.WsMsgIn.{RiichiWsCmd, UserCmd}
 import com.ll.utils.{CommonData, Test}
 
 class GameFlowTest extends Test{
@@ -32,7 +32,7 @@ class GameFlowTest extends Test{
     player4.ws ! UserCmd.JoinAsPlayer(tableId, player4.user)
     player1.ws.expectWsMsgT[WsMsgOut.Riichi.PlayerJoinedTable]()
 
-    player1.ws ! RiichiGameCmd.StartGame(tableId, gameId, RiichiConfig())
+    player1.ws ! RiichiWsCmd.StartGame(tableId, gameId, RiichiConfig())
     player1.ws.expectWsMsgT[WsMsgOut.Riichi.GameStarted]()
 
     player1.ws ! UserCmd.GetState(tableId, player1.userId)

@@ -2,13 +2,12 @@ package com.ll.domain.persistence
 
 import com.ll.domain.auth.UserId
 import com.ll.domain.games.GameType.Riichi
-import com.ll.domain.games.Player.HumanPlayer
 import com.ll.domain.games.deck.{DeclaredSet, Tile}
 import com.ll.domain.games.position.PlayerPosition
 import com.ll.domain.games.riichi.RiichiConfig
 import com.ll.domain.games.riichi.result.GameScore
-import com.ll.domain.games.{GameId, GameType, TableId}
-import com.ll.domain.ws.WsMsgIn.RiichiGameCmd.RiichiCmd
+import com.ll.domain.games.{GameId, GameType, Player, TableId}
+import com.ll.domain.ws.WsMsgIn.RiichiPlayerCmd
 
 sealed trait TableEvent[GT <: GameType] {def tableId: TableId}
 sealed trait GameEvent[GT <: GameType] extends TableEvent[GT] {
@@ -21,8 +20,6 @@ sealed trait GameEvent[GT <: GameType] extends TableEvent[GT] {
 object RiichiEvent {
   case class GameStarted(tableId: TableId, gameId: GameId, config: RiichiConfig) extends TableEvent[Riichi]
   case class GamePaused(tableId: TableId, gameId: GameId, turn: Int) extends TableEvent[Riichi]
-  case class PlayerJoined(tableId: TableId, player: HumanPlayer[Riichi]) extends TableEvent[Riichi]
-  case class PlayerLeft(tableId: TableId, player: HumanPlayer[Riichi]) extends TableEvent[Riichi]
   case class GameScored(
     tableId: TableId,
     gameId: GameId,
@@ -37,7 +34,7 @@ object RiichiEvent {
     tile: Tile,
     turn: Int,
     position: PlayerPosition[Riichi],
-    commands: Map[PlayerPosition[Riichi], List[RiichiCmd]]
+    commands: Map[PlayerPosition[Riichi], List[RiichiPlayerCmd]]
   ) extends RiichiGameEvent
 
   case class TileFromTheWallTaken(
@@ -46,7 +43,7 @@ object RiichiEvent {
     tile: Tile,
     turn: Int,
     position: PlayerPosition[Riichi],
-    commands: List[RiichiCmd]
+    commands: List[RiichiPlayerCmd]
   ) extends RiichiGameEvent
 
   case class TsumoDeclared(

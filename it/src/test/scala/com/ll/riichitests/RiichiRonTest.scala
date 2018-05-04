@@ -3,7 +3,7 @@ package com.ll.riichitests
 import com.ll.domain.auth.UserId
 import com.ll.domain.games.position.PlayerPosition.RiichiPosition
 import com.ll.domain.games.riichi.RiichiConfig
-import com.ll.domain.ws.WsMsgIn.{RiichiGameCmd, UserCmd}
+import com.ll.domain.ws.WsMsgIn.{RiichiWsCmd, UserCmd}
 import com.ll.domain.ws.WsMsgOut
 import com.ll.utils.{CommonData, Test}
 
@@ -31,7 +31,7 @@ class RiichiRonTest extends Test {
     val uraDoras = List("2_sou")
     val wallTiles = List("3_pin")
 
-    player1.ws ! RiichiGameCmd.StartGame(tableId, gameId, RiichiConfig().copy(testingTiles =
+    player1.ws ! RiichiWsCmd.StartGame(tableId, gameId, RiichiConfig().copy(testingTiles =
       eastHand ::: southHand ::: westHand ::: northHand ::: uraDoras ::: wallTiles
     ))
     player1.ws.expectWsMsgT[WsMsgOut.Riichi.GameStarted]()

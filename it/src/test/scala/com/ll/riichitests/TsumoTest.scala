@@ -5,7 +5,7 @@ import com.ll.domain.games.position.PlayerPosition
 import com.ll.domain.games.position.PlayerPosition.RiichiPosition
 import com.ll.domain.games.riichi.RiichiConfig
 import com.ll.domain.games.riichi.result.{HandValue, Points}
-import com.ll.domain.ws.WsMsgIn.{RiichiGameCmd, UserCmd}
+import com.ll.domain.ws.WsMsgIn.{RiichiWsCmd, UserCmd}
 import com.ll.domain.ws.WsMsgOut
 import com.ll.utils.{CommonData, Test}
 
@@ -33,7 +33,7 @@ class TsumoTest extends Test {
     val uraDoras = List("2_sou")
     val wallTiles = List("3_pin")
 
-    player1.ws ! RiichiGameCmd.StartGame(tableId, gameId, RiichiConfig().copy(testingTiles =
+    player1.ws ! RiichiWsCmd.StartGame(tableId, gameId, RiichiConfig().copy(testingTiles =
       eastHand ::: southHand ::: westHand ::: northHand ::: uraDoras ::: wallTiles
     ))
     player1.ws.expectWsMsgT[WsMsgOut.Riichi.GameStarted]()
@@ -50,10 +50,10 @@ class TsumoTest extends Test {
       case fromTheWall: WsMsgOut.Riichi.TileFromWallTaken =>
         fromTheWall.position should be(RiichiPosition.EastPosition)
         fromTheWall.tile should be(wallTiles.head)
-        fromTheWall.commands.head should be(RiichiGameCmd.DeclareTsumo(tableId, gameId, Some(HandValue(1, 1))))
+        fromTheWall.commands.head should be(RiichiWsCmd.DeclareTsumo(tableId, gameId, Some(HandValue(1, 1))))
         fromTheWall
     }
-    player1.ws ! tileFromTheWall.commands.head.asInstanceOf[RiichiGameCmd.DeclareTsumo].copy(approxHandValue = None)
+    player1.ws ! tileFromTheWall.commands.head.asInstanceOf[RiichiWsCmd.DeclareTsumo].copy(approxHandValue = None)
 
     player1.ws.expectWsMsg {
       case tsumo: WsMsgOut.Riichi.TsumoDeclared =>

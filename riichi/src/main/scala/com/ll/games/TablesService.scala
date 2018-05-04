@@ -11,7 +11,7 @@ import akka.util.Timeout
 import com.ll.config.ServerConfig
 import com.ll.domain.games.GameType.Riichi
 import com.ll.domain.games.riichi.{NoGameOnTable, RiichiTableState}
-import com.ll.domain.ws.WsMsgIn.{GameCmd, CommonCmd}
+import com.ll.domain.ws.WsMsgIn.{PlayerCmd, JoinLeftCmd}
 import com.ll.domain.ws.WsMsgOut
 
 import scala.concurrent.duration._
@@ -26,7 +26,7 @@ class TablesService(pubSub: PubSub, config: ServerConfig)(implicit system: Actor
     tables.get(tableId) match {
       case Some(ar) =>
         log.info("Table is already created")
-        ar ! CommandEnvelop(CommonCmd.GetState(tableId), Right(user))
+        ar ! CommandEnvelop(JoinLeftCmd.GetState(tableId), Right(user))
       case None =>
         log.info(s"Creating table for $tableId")
         val table: RiichiTableState = NoGameOnTable(user, tableId)
@@ -53,7 +53,7 @@ class TablesService(pubSub: PubSub, config: ServerConfig)(implicit system: Actor
           actorRef ! PoisonPill
           tables -= tableId
         }
-        actorRef ! CommandEnvelop(CommonCmd.GetState(tableId), Right(user))
+        actorRef ! CommandEnvelop(JoinLeftCmd.GetState(tableId), Right(user))
     }
   }
 
@@ -61,7 +61,7 @@ class TablesService(pubSub: PubSub, config: ServerConfig)(implicit system: Actor
     if (tables.get(env.tableId).isEmpty) {
       log.warn(s"Message is sent to non existing tabled: ${env.tableId}")
       val error = WsMsgOut.ValidationError(s"${env.cmd.tableId} doesn't exist")
-      pubSub.send(env.sender, error)
+      pubSub.send(env.senderId, error)
     }
     tables.get(env.tableId).foreach(ar => ar ! env)
   }

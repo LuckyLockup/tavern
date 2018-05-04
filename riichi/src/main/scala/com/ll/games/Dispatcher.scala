@@ -8,7 +8,7 @@ import com.ll.domain.games.Player.{AIPlayer, HumanPlayer}
 import com.ll.domain.games.position.PlayerPosition
 import com.ll.domain.messages.WsMsgProjector
 import com.ll.domain.persistence.{TableEvent, TableState}
-import com.ll.domain.ws.WsMsgIn.GameCmd
+import com.ll.domain.ws.WsMsgIn.PlayerCmd
 import com.ll.domain.ws.WsMsgOut.ValidationError
 import com.ll.utils.Logging
 import com.ll.ws.PubSub
@@ -44,8 +44,8 @@ class Dispatcher[GT <: GameType, S <: TableState[GT, S] : ClassTag](
         case ai: AIPlayer[GT]        => aiService.processEvent(ai, error, table.projection(position))
           .map { cmds =>
             cmds.map {
-              case gameCmd: GameCmd[GT] => gameCmd.updatePosition(Right(ai.position))
-              case cmd                  => cmd
+              case gameCmd: PlayerCmd[GT] => gameCmd.updatePosition(Right(ai.position))
+              case cmd                    => cmd
             }.foreach { cmd =>
               tableActorRef ! cmd
             }
@@ -62,8 +62,8 @@ class Dispatcher[GT <: GameType, S <: TableState[GT, S] : ClassTag](
         table.projection(Some(Right(ai.position)))
       ).map { cmds =>
         cmds.map {
-          case gameCmd: GameCmd[GT] => gameCmd.updatePosition(Right(ai.position))
-          case cmd                  => cmd
+          case gameCmd: PlayerCmd[GT] => gameCmd.updatePosition(Right(ai.position))
+          case cmd                    => cmd
         }.foreach { cmd =>
           tableActorRef ! cmd
         }

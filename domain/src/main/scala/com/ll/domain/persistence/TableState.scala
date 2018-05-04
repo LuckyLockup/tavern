@@ -2,35 +2,36 @@ package com.ll.domain.persistence
 
 import com.ll.domain.ai.ServiceId
 import com.ll.domain.auth.{User, UserId}
-import com.ll.domain.games.Player.{AIPlayer, HumanPlayer}
 import com.ll.domain.games.position.PlayerPosition
 import com.ll.domain.games.{GameType, Player, ScheduledCommand, TableId}
-import com.ll.domain.ws.WsMsgIn.{CommonCmd, GameCmd}
+import com.ll.domain.ws.WsMsgIn.{GameCmd, JoinLeftCmd, PlayerCmd}
 import com.ll.domain.ws.WsMsgOut
 import com.ll.domain.ws.WsMsgOut.ValidationError
 
 trait TableState[GT <: GameType, S <: TableState[GT, S]] {
+  import com.ll.domain.ops.EitherOps._
+
   def admin: User
 
   def tableId: TableId
 
-  def joinGame(cmd: CommonCmd.JoinAsPlayer, user: User): Either[ValidationError, (TableEvent[GT], S)]
+  def joinLeftCmd(cmd: JoinLeftCmd, user: Either[ServiceId, User]): Either[ValidationError, (WsMsgOut, S)]
 
-  def leftGame(cmd: CommonCmd.LeftAsPlayer, userId: UserId): Either[ValidationError, (TableEvent[GT], S)]
+  def playerCmd(cmd: PlayerCmd[GT], position: PlayerPosition[GT]): Either[ValidationError, List[TableEvent[GT]]]
 
-  def validateCmd(cmd: GameCmd[GT]): Either[ValidationError, List[TableEvent[GT]]]
+  def gameCmd(cmd: GameCmd[GT]): Either[ValidationError, List[TableEvent[GT]]]
 
   def applyEvent(e: TableEvent[GT]): (List[ScheduledCommand[GT]], S)
 
-  def projection(position: Option[Either[ServiceId, UserId]]): WsMsgOut.TableState[GT]
+  def projection(position: Option[PlayerPosition[GT]]): WsMsgOut.TableState[GT]
 
   def players: Set[Player[GT]]
 
-  def humanPlayers: Set[HumanPlayer[GT]] = players.collect { case p: HumanPlayer[GT] => p }
+  def getPlayer(position: PlayerPosition[GT]): Either[ValidationError, Player[GT]] =
+    players.find(p => p.position == position).asEither(s"No player at $position")
 
-  def aiPlayers: Set[AIPlayer[GT]] = players.collect { case p: AIPlayer[GT] => p }
-
-  def playerIds: Set[UserId] = humanPlayers.map(_.user.id)
-
-  def getPlayer(position: PlayerPosition[GT]): Option[Player[GT]]
+  def getPosition(senderId: Either[ServiceId, UserId]): Either[ValidationError, PlayerPosition[GT]] = players
+    .find(p => p.senderId == senderId)
+    .map(p => p.position)
+    .asEither(s"No player with $senderId")
 }

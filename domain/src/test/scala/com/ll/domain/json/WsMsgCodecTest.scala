@@ -9,7 +9,7 @@ import com.ll.domain.games.{GameId, TableId}
 import com.ll.domain.ws.WsMsgCodec.{Test, decodeWsMsg, encodeWsMsg}
 import com.ll.domain.ws.{WsMsgIn, WsMsgOut}
 import com.ll.domain.ws.WsMsgIn.Ping
-import com.ll.domain.ws.WsMsgIn.RiichiGameCmd.StartGame
+import com.ll.domain.ws.WsMsgIn.RiichiWsCmd.StartGame
 import com.ll.domain.ws.WsMsgOut.Riichi._
 import com.ll.domain.ws.WsMsgOut.{Message, Pong, SpectacularJoinedTable, SpectacularLeftTable}
 import org.scalatest.{Matchers, WordSpec}

@@ -4,21 +4,20 @@ import com.ll.domain.games.GameType.Riichi
 import com.ll.domain.games.deck.Tile
 import com.ll.domain.games.position.PlayerPosition
 import com.ll.domain.games.riichi.result.{HandValue, Tenpai}
-import com.ll.domain.ws.WsMsgIn.{GameCmd, RiichiGameCmd}
-import com.ll.domain.ws.WsMsgIn.RiichiGameCmd.RiichiCmd
+import com.ll.domain.ws.WsMsgIn.{PlayerCmd, RiichiPlayerCmd, RiichiWsCmd}
 import com.ll.domain.ws.WsMsgOut.ValidationError
 import com.ll.domain.ops.EitherOps._
 
 object CommandPredictor {
 
   def predictsCommandsOnDiscard(table: GameStarted, discardedTile: Tile, discardedPosition: PlayerPosition[Riichi]):
-  Map[PlayerPosition[Riichi], List[RiichiCmd]] = {
+  Map[PlayerPosition[Riichi], List[RiichiPlayerCmd]] = {
     table.playerStates
       //commands are predicted on player discard. The player who discarded can't take tile.
       .filter(st => st.player.position != discardedPosition)
       .map { st =>
-        val declarePungs: Option[RiichiGameCmd.ClaimPung] = st.pungOn(discardedTile)
-          .map(pung => RiichiGameCmd.ClaimPung(
+        val declarePungs: Option[RiichiWsCmd.ClaimPung] = st.pungOn(discardedTile)
+          .map(pung => RiichiWsCmd.ClaimPung(
             table.tableId,
             table.gameId,
             discardedPosition,
@@ -26,7 +25,7 @@ object CommandPredictor {
             List(pung.x.repr, pung.y.repr, pung.z.repr))
           )
         val declareChow = st.chowsOn(discardedTile, discardedPosition)
-          .map(chow => RiichiGameCmd.ClaimPung(
+          .map(chow => RiichiWsCmd.ClaimPung(
             table.tableId,
             table.gameId,
             discardedPosition,
@@ -34,7 +33,7 @@ object CommandPredictor {
             List(chow.x.repr, chow.y.repr, chow.z.repr))
           )
         val declareRon = HandValue.computeRonOnTile(discardedTile, st).map(handValue =>
-          RiichiGameCmd.DeclareRon(
+          RiichiWsCmd.DeclareRon(
             table.tableId,
             table.gameId,
             handValue
@@ -45,10 +44,10 @@ object CommandPredictor {
       .toMap
   }
 
-  def predictCommandsOnTileFromTheWall(table: GameStarted, tile: Tile, playerState: PlayerState): List[RiichiCmd] = {
+  def predictCommandsOnTileFromTheWall(table: GameStarted, tile: Tile, playerState: PlayerState): List[RiichiPlayerCmd] = {
     val tsumo = HandValue.computeTsumoOnTile(tile, playerState)
       .toList
-      .map(v => RiichiGameCmd.DeclareTsumo(table.tableId, table.gameId, Some(v)))
+      .map(v => RiichiWsCmd.DeclareTsumo(table.tableId, table.gameId, Some(v)))
     //TODO open kong
     //TODO declare riichi
     tsumo

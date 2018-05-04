@@ -15,7 +15,7 @@ import akka.stream.scaladsl.Sink
 import com.ll.domain.ai.ServiceId
 import com.ll.domain.games.CommandEnvelop
 import com.ll.domain.ws.{WsMsgCodec, WsMsgIn, WsMsgOut}
-import com.ll.domain.ws.WsMsgIn.{CommonCmd, GameCmd}
+import com.ll.domain.ws.WsMsgIn.{JoinLeftCmd, PlayerCmd}
 import com.ll.games.TablesService
 
 import scala.concurrent.Future
@@ -55,10 +55,10 @@ class PubSub()(implicit system: ActorSystem, mat: Materializer) extends Logging 
           Nil
       }
       .mapAsync(4) {
-        case WsMsgIn.Ping(n) =>
+        case WsMsgIn.Ping(n)  =>
           actorRef ! WsMsgOut.Pong(n)
           Future.successful("Pong!")
-        case msg: CommonCmd  =>
+        case msg: JoinLeftCmd =>
           tables.sendToGame(CommandEnvelop(msg, Right(id)))
           Future.successful {"Done"}
       }
