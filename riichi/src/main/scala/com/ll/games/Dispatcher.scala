@@ -6,10 +6,10 @@ import com.ll.domain.auth.{User, UserId}
 import com.ll.domain.games.GameType
 import com.ll.domain.games.Player.{AIPlayer, HumanPlayer}
 import com.ll.domain.games.position.PlayerPosition
-import com.ll.domain.messages.WsMsgProjector
 import com.ll.domain.persistence.{TableEvent, TableState}
 import com.ll.domain.ws.WsMsgIn.PlayerCmd
 import com.ll.domain.ws.WsMsgOut.ValidationError
+import com.ll.domain.ws.WsMsgOutProjector
 import com.ll.utils.Logging
 import com.ll.ws.PubSub
 
@@ -21,7 +21,7 @@ class Dispatcher[GT <: GameType, S <: TableState[GT, S] : ClassTag](
   aiService: AIService,
   tableActorRef: ActorRef
 )(implicit ec: ExecutionContext) extends Logging {
-  import WsMsgProjector._
+  import WsMsgOutProjector._
 
   def dispatchEvent(
     table: TableState[GT, S],

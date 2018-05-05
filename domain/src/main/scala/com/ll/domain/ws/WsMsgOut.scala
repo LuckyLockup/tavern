@@ -7,7 +7,7 @@ import com.ll.domain.games.{GameId, GameType, TableId}
 import com.ll.domain.games.position.PlayerPosition
 import com.ll.domain.games.riichi.result.{GameScore, TablePoints}
 import com.ll.domain.json.CaseClassCodec
-import com.ll.domain.ws.WsMsgIn.RiichiWsCmd.RiichiCmd
+import com.ll.domain.ws.WsMsgIn.RiichiWsCmdWs.RiichiCmd
 import com.ll.domain.ws.WsRiichi.RiichiPlayerState
 import io.circe.{Decoder, Encoder}
 import io.circe.syntax._

@@ -5,24 +5,21 @@ import com.ll.domain.games.GameType.Riichi
 import com.ll.domain.games.Player
 import com.ll.domain.games.Player.HumanPlayer
 import com.ll.domain.games.position.PlayerPosition.RiichiPosition
+import com.ll.domain.ws.WsMsgOut.ValidationError
 
 object PositionUtility {
-  def addUser(humans: Set[Player[Riichi]], user: User): (Set[Player[Riichi]], HumanPlayer[Riichi]) = {
+  def addUser(humans: Set[Player[Riichi]], user: User): Either[ValidationError, Player[Riichi]] = {
     humans.map(_.position) match {
       case positions if !positions.contains(RiichiPosition.EastPosition)  =>
-        val player = HumanPlayer(user, RiichiPosition.EastPosition)
-        (humans + player, player)
+        Right(HumanPlayer(user, RiichiPosition.EastPosition))
       case positions if !positions.contains(RiichiPosition.SouthPosition) =>
-        val player = HumanPlayer(user, RiichiPosition.SouthPosition)
-        (humans + player, player)
+        Right(HumanPlayer(user, RiichiPosition.SouthPosition))
       case positions if !positions.contains(RiichiPosition.WestPosition)  =>
-        val player = HumanPlayer(user, RiichiPosition.WestPosition)
-        (humans + player, player)
+        Right(HumanPlayer(user, RiichiPosition.WestPosition))
       case positions if !positions.contains(RiichiPosition.NorthPosition) =>
-        val player = HumanPlayer(user, RiichiPosition.NorthPosition)
-        (humans + player, player)
-      case positions                                                      =>
-        (humans, HumanPlayer(user, RiichiPosition.EastPosition))
+        Right(HumanPlayer(user, RiichiPosition.NorthPosition))
+      case _                                                      =>
+       Left(ValidationError("Table is full"))
     }
   }
 }

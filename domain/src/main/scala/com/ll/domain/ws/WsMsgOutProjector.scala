@@ -1,23 +1,21 @@
-package com.ll.domain.messages
+package com.ll.domain.ws
 
 import com.ll.domain.Const
 import com.ll.domain.games.GameType
 import com.ll.domain.games.GameType.Riichi
 import com.ll.domain.games.position.PlayerPosition
 import com.ll.domain.persistence.{RiichiEvent, TableEvent}
-import com.ll.domain.ws.WsMsgIn.RiichiWsCmd.RiichiCmd
-import com.ll.domain.ws.WsMsgOut
 
-object WsMsgProjector {
+object WsMsgOutProjector {
   implicit class TableProjector[GT <: GameType](event: TableEvent[GT]){
-    def projection(position: Option[PlayerPosition[GT]] = None) = {
+    def projection(position: Option[PlayerPosition[GT]]): WsMsgOut = {
       (event, position) match {
         case (ev: TableEvent[Riichi], p: Option[PlayerPosition[Riichi]]) => riichiProjection(ev, p)
       }
     }
   }
 
-  def riichiProjection(event: TableEvent[Riichi], position: Option[PlayerPosition[Riichi]] = None): WsMsgOut = {
+  private def riichiProjection(event: TableEvent[Riichi], position: Option[PlayerPosition[Riichi]] = None): WsMsgOut = {
     event match {
       case RiichiEvent.GameStarted(tableId, gameId, config) =>
         WsMsgOut.Riichi.GameStarted(tableId, gameId, 1)

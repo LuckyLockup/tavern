@@ -2,21 +2,22 @@ package com.ll.games
 
 import akka.actor.{ActorRef, ActorSystem, OneForOneStrategy, PoisonPill, Props, SupervisorStrategy}
 import cats.Monad
-import com.ll.domain.auth.{User, UserId}
+import com.ll.domain.auth.User
 import com.ll.domain.games.{CommandEnvelop, TableId}
 import com.ll.utils.Logging
 import com.ll.ws.PubSub
 import akka.pattern.{Backoff, BackoffSupervisor}
 import akka.util.Timeout
+import com.ll.ai.AIService
 import com.ll.config.ServerConfig
 import com.ll.domain.games.GameType.Riichi
 import com.ll.domain.games.riichi.{NoGameOnTable, RiichiTableState}
-import com.ll.domain.ws.WsMsgIn.{PlayerCmd, JoinLeftCmd}
+import com.ll.domain.ws.WsMsgIn.WsRiichiCmd
 import com.ll.domain.ws.WsMsgOut
 
 import scala.concurrent.duration._
 
-class TablesService(pubSub: PubSub, config: ServerConfig)(implicit system: ActorSystem) extends Logging {
+class TablesService(pubSub: PubSub, config: ServerConfig, aIService: AIService)(implicit system: ActorSystem) extends Logging {
   implicit val ec = system.dispatcher
   implicit val timeout = Timeout(config.defaultTimeout)
 
@@ -26,11 +27,11 @@ class TablesService(pubSub: PubSub, config: ServerConfig)(implicit system: Actor
     tables.get(tableId) match {
       case Some(ar) =>
         log.info("Table is already created")
-        ar ! CommandEnvelop(JoinLeftCmd.GetState(tableId), Right(user))
+        ar ! CommandEnvelop(WsRiichiCmd.GetState(tableId), Right(user))
       case None =>
         log.info(s"Creating table for $tableId")
         val table: RiichiTableState = NoGameOnTable(user, tableId)
-        val props: Props = Props(new TableActor[Riichi, RiichiTableState](table, pubSub))
+        val props: Props = Props(new TableActor[Riichi, RiichiTableState](table, pubSub, aIService))
         val supervisor = BackoffSupervisor.props(
           Backoff.onStop(
             props,
@@ -53,7 +54,7 @@ class TablesService(pubSub: PubSub, config: ServerConfig)(implicit system: Actor
           actorRef ! PoisonPill
           tables -= tableId
         }
-        actorRef ! CommandEnvelop(JoinLeftCmd.GetState(tableId), Right(user))
+        actorRef ! CommandEnvelop(WsRiichiCmd.GetState(tableId), Right(user))
     }
   }
 
@@ -70,6 +71,6 @@ class TablesService(pubSub: PubSub, config: ServerConfig)(implicit system: Actor
 }
 
 object TablesService {
-  def apply[F[_] : Monad](system: ActorSystem, pubSub: PubSub, config: ServerConfig) =
-    new TablesService(pubSub, config)(system)
+  def apply[F[_] : Monad](system: ActorSystem, pubSub: PubSub, config: ServerConfig, aIService: AIService) =
+    new TablesService(pubSub, config, aIService)(system)
 }

@@ -3,7 +3,7 @@ package com.ll.riichitests
 import com.ll.domain.auth.UserId
 import com.ll.domain.games.position.PlayerPosition.RiichiPosition
 import com.ll.domain.games.riichi.RiichiConfig
-import com.ll.domain.ws.WsMsgIn.{RiichiWsCmd, UserCmd}
+import com.ll.domain.ws.WsMsgIn.{WsRiichiCmd, UserCmd}
 import com.ll.domain.ws.WsMsgOut
 import com.ll.utils.{CommonData, Test}
 
@@ -17,7 +17,7 @@ class SinglePlayerTest extends Test {
     player1.ws ! UserCmd.JoinAsPlayer(tableId, player1.user)
     player1.ws.expectWsMsgT[WsMsgOut.Riichi.PlayerJoinedTable]()
 
-    player1.ws ! RiichiWsCmd.StartGame(tableId, gameId, RiichiConfig())
+    player1.ws ! RiichiWsCmdWs.StartGame(tableId, gameId, RiichiConfig())
     player1.ws.expectWsMsgT[WsMsgOut.Riichi.GameStarted]()
 
     player1.ws ! UserCmd.GetState(tableId, player1.userId)
@@ -35,7 +35,7 @@ class SinglePlayerTest extends Test {
     }
 
     val tileToDiscard = state1.states.head.closedHand.head
-    player1.ws ! RiichiWsCmd.DiscardTile(tableId, gameId, tileToDiscard, 2)
+    player1.ws ! RiichiWsCmdWs.DiscardTile(tableId, gameId, tileToDiscard, 2)
     player1.ws.expectWsMsg {
       case discarded: WsMsgOut.Riichi.TileDiscarded =>
         discarded.tile should be(tileToDiscard)
@@ -65,7 +65,7 @@ class SinglePlayerTest extends Test {
     player1.ws ! UserCmd.JoinAsPlayer(tableId, player1.user)
     player1.ws.expectWsMsgT[WsMsgOut.Riichi.PlayerJoinedTable]()
 
-    player1.ws ! RiichiWsCmd.StartGame(tableId, gameId, RiichiConfig())
+    player1.ws ! RiichiWsCmdWs.StartGame(tableId, gameId, RiichiConfig())
     player1.ws.expectWsMsgT[WsMsgOut.Riichi.GameStarted]()
 
     player1.ws ! UserCmd.GetState(tableId, player1.userId)
@@ -81,7 +81,7 @@ class SinglePlayerTest extends Test {
           taken.position should be (RiichiPosition.EastPosition)
           taken
       }
-      player1.ws ! RiichiWsCmd.DiscardTile(tableId, gameId, tileToDiscard.tile, 2 + 8 *round)
+      player1.ws ! RiichiWsCmdWs.DiscardTile(tableId, gameId, tileToDiscard.tile, 2 + 8 *round)
       player1.ws.expectWsMsg {
         case discarded: WsMsgOut.Riichi.TileDiscarded =>
           discarded.tile should be(tileToDiscard.tile)

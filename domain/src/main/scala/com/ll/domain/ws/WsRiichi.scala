@@ -16,6 +16,5 @@ object WsRiichi {
   object RiichiPlayerState extends CaseClassCodec {
     implicit lazy val RiichiPlayerStateEncoder = encoder[RiichiPlayerState]("RiichiPlayerState")
     implicit lazy val RiichiPlayerStateDecoder = decoder[RiichiPlayerState]("RiichiPlayerState")
-
   }
 }

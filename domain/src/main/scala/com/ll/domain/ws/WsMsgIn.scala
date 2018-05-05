@@ -18,8 +18,7 @@ sealed trait WsMsgIn
   *  - GetState message which has common logic for all games
   *  - JoinLeftCmd also generalizes joining and leaving game by players
   *  - SpectacularCmd is used inside TableActor but doesn't affect internal game state
-  *  - GameCmd - are general game commands like Start, Stop game which are not related to any given player
-  *  - PlayerCmd - commands related to particular player (like discarding or taking tile).
+  *  - WsGameCmd - are general game commands like Start, Stop game which are not related to any given player
   */
 object WsMsgIn {
   case class Ping(id: Int) extends WsMsgIn
@@ -28,99 +27,82 @@ object WsMsgIn {
     implicit lazy val PingDecoder: Decoder[Ping] = decoder[Ping]("Ping")
   }
 
-  case class GetState(tableId: TableId) extends WsMsgIn
+  sealed trait WsTableCmd extends WsMsgIn {def tableId: TableId}
 
-  object GetState extends CaseClassCodec {
-    implicit lazy val GetStateEncoder: Encoder[GetState] = encoder[GetState]("GetState")
-    implicit lazy val GetStateDecoder: Decoder[GetState] = decoder[GetState]("GetState")
-  }
+  sealed trait SpectacularCmd extends WsTableCmd
 
-  sealed trait JoinLeftCmd extends WsMsgIn {def tableId: TableId}
-
-  sealed trait SpectacularCmd extends WsMsgIn {def tableId: TableId}
-
-  sealed trait GameCmd[GT <: GameType] extends WsMsgIn {
-    def tableId: TableId
-    def gameId: GameId
-  }
+  sealed trait WsGameCmd[GT <: GameType] extends WsTableCmd
 
   //intermediate trait to overcome type erasure
-  sealed trait RiichiWsCmd extends GameCmd[Riichi]
-
-  object JoinLeftCmd {
-    case class JoinAsPlayer(tableId: TableId) extends JoinLeftCmd
-
-    object JoinAsPlayer extends CaseClassCodec {
-      implicit lazy val JoinAsPlayerEncoder: Encoder[JoinAsPlayer] = encoder[JoinAsPlayer]("JoinAsPlayer")
-      implicit lazy val JoinAsPlayerDecoder: Decoder[JoinAsPlayer] = decoder[JoinAsPlayer]("JoinAsPlayer")
-    }
-
-    case class LeftAsPlayer(tableId: TableId) extends JoinLeftCmd
-
-    object LeftAsPlayer extends CaseClassCodec {
-      implicit lazy val LeftAsPlayerEncoder: Encoder[LeftAsPlayer] = encoder[LeftAsPlayer]("LeftAsPlayer")
-      implicit lazy val LeftAsPlayerDecoder: Decoder[LeftAsPlayer] = decoder[LeftAsPlayer]("LeftAsPlayer")
-    }
-
-    implicit lazy val TableCmdEncoder: Encoder[JoinLeftCmd] = Encoder.instance {
-      case c: JoinAsPlayer => c.asJson
-      case c: LeftAsPlayer => c.asJson
-    }
-
-    implicit lazy val TableCmdDecoder: Decoder[JoinLeftCmd] = Decoder.instance { cur =>
-      import cats.syntax.either._
-      JoinAsPlayer.JoinAsPlayerDecoder.apply(cur) orElse
-        LeftAsPlayer.LeftAsPlayerDecoder.apply(cur)
-    }
-  }
+  sealed trait WsRiichiCmd extends WsGameCmd[Riichi]
 
   object SpectacularCmd {
-    case class JoinAsSpectacular(tableId: TableId) extends JoinLeftCmd
+    case class JoinAsSpectacular(tableId: TableId) extends SpectacularCmd
 
     object JoinAsSpectacular extends CaseClassCodec {
       implicit lazy val JoinAsSpectacularEncoder: Encoder[JoinAsSpectacular] = encoder[JoinAsSpectacular]("JoinAsSpectacular")
       implicit lazy val JoinAsSpectacularDecoder: Decoder[JoinAsSpectacular] = decoder[JoinAsSpectacular]("JoinAsSpectacular")
     }
 
-    case class LeftAsSpectacular(tableId: TableId) extends JoinLeftCmd
+    case class LeftAsSpectacular(tableId: TableId) extends SpectacularCmd
 
     object LeftAsSpectacular extends CaseClassCodec {
       implicit lazy val LeftAsSpectacularEncoder: Encoder[LeftAsSpectacular] = encoder[LeftAsSpectacular]("LeftAsSpectacular")
       implicit lazy val LeftAsSpectacularDecoder: Decoder[LeftAsSpectacular] = decoder[LeftAsSpectacular]("LeftAsSpectacular")
     }
-    implicit lazy val SpectacularCmdEncoder: Encoder[JoinLeftCmd] = Encoder.instance {
+    implicit lazy val SpectacularCmdEncoder: Encoder[SpectacularCmd] = Encoder.instance {
       case c: JoinAsSpectacular => c.asJson
       case c: LeftAsSpectacular => c.asJson
     }
 
-    implicit lazy val SpectacularCmdDecoder: Decoder[JoinLeftCmd] = Decoder.instance { cur =>
+    implicit lazy val SpectacularCmdDecoder: Decoder[SpectacularCmd] = Decoder.instance { cur =>
       import cats.syntax.either._
       JoinAsSpectacular.JoinAsSpectacularDecoder.apply(cur) orElse
         LeftAsSpectacular.LeftAsSpectacularDecoder.apply(cur)
     }
   }
 
+  object WsRiichiCmd {
+    case class GetState(tableId: TableId) extends WsRiichiCmd
 
-  object RiichiWsCmd {
-    case class StartGame(tableId: TableId, gameId: GameId, config: Option[RiichiConfig]) extends RiichiWsCmd
-
-    object StartGame extends CaseClassCodec {
-      implicit lazy val StartGameEncoder: Encoder[StartGame] = encoder[StartGame]("StartGame")
-      implicit lazy val StartGameDecoder: Decoder[StartGame] = decoder[StartGame]("StartGame")
+    object GetState extends CaseClassCodec {
+      implicit lazy val GetStateEncoder: Encoder[GetState] = encoder[GetState]("GetState")
+      implicit lazy val GetStateDecoder: Decoder[GetState] = decoder[GetState]("GetState")
     }
 
-    case class PauseGame(tableId: TableId, gameId: GameId) extends RiichiWsCmd
+    case class JoinAsPlayer(tableId: TableId) extends WsRiichiCmd
 
-    object PauseGame extends CaseClassCodec {
-      implicit lazy val PauseGameEncoder: Encoder[PauseGame] = encoder[PauseGame]("PauseGame")
-      implicit lazy val PauseGameDecoder: Decoder[PauseGame] = decoder[PauseGame]("PauseGame")
+    object JoinAsPlayer extends CaseClassCodec {
+      implicit lazy val JoinAsPlayerEncoder: Encoder[JoinAsPlayer] = encoder[JoinAsPlayer]("JoinAsPlayer")
+      implicit lazy val JoinAsPlayerDecoder: Decoder[JoinAsPlayer] = decoder[JoinAsPlayer]("JoinAsPlayer")
+    }
+
+    case class LeftAsPlayer(tableId: TableId) extends WsRiichiCmd
+
+    object LeftAsPlayer extends CaseClassCodec {
+      implicit lazy val LeftAsPlayerEncoder: Encoder[LeftAsPlayer] = encoder[LeftAsPlayer]("LeftAsPlayer")
+      implicit lazy val LeftAsPlayerDecoder: Decoder[LeftAsPlayer] = decoder[LeftAsPlayer]("LeftAsPlayer")
+    }
+
+    case class StartWsGame(tableId: TableId, gameId: GameId, config: Option[RiichiConfig]) extends WsRiichiCmd
+
+    object StartWsGame extends CaseClassCodec {
+      implicit lazy val StartGameEncoder: Encoder[StartWsGame] = encoder[StartWsGame]("StartGame")
+      implicit lazy val StartGameDecoder: Decoder[StartWsGame] = decoder[StartWsGame]("StartGame")
+    }
+
+    case class PauseWsGame(tableId: TableId, gameId: GameId) extends WsRiichiCmd
+
+    object PauseWsGame extends CaseClassCodec {
+      implicit lazy val PauseGameEncoder: Encoder[PauseWsGame] = encoder[PauseWsGame]("PauseGame")
+      implicit lazy val PauseGameDecoder: Decoder[PauseWsGame] = decoder[PauseWsGame]("PauseGame")
     }
 
     case class DiscardTile(
       tableId: TableId,
       gameId: GameId,
       tile: String,
-      turn: Int) extends RiichiWsCmd
+      turn: Int) extends WsRiichiCmd
 
     object DiscardTile extends CaseClassCodec {
       implicit lazy val DiscardTileEncoder: Encoder[DiscardTile] = encoder[DiscardTile]("DiscardTile")
@@ -131,7 +113,7 @@ object WsMsgIn {
       tableId: TableId,
       gameId: GameId,
       turn: Int
-    ) extends RiichiWsCmd
+    ) extends WsRiichiCmd
 
     object GetTileFromWall extends CaseClassCodec {
       implicit lazy val GetTileFromWallEncoder: Encoder[GetTileFromWall] = encoder[GetTileFromWall]("GetTileFromWall")
@@ -143,7 +125,7 @@ object WsMsgIn {
       gameId: GameId,
       from: PlayerPosition[Riichi],
       turn: Int,
-      tiles: List[String]) extends RiichiWsCmd
+      tiles: List[String]) extends WsRiichiCmd
 
     object ClaimPung extends CaseClassCodec {
       implicit lazy val ClaimPungEncoder: Encoder[ClaimPung] = encoder[ClaimPung]("ClaimPung")
@@ -155,7 +137,7 @@ object WsMsgIn {
       gameId: GameId,
       from: PlayerPosition[Riichi],
       tiles: List[String]
-    ) extends RiichiWsCmd
+    ) extends WsRiichiCmd
 
     object ClaimChow extends CaseClassCodec {
       implicit lazy val ClaimChowEncoder: Encoder[ClaimChow] = encoder[ClaimChow]("ClaimChow")
@@ -166,7 +148,7 @@ object WsMsgIn {
       tableId: TableId,
       gameId: GameId,
       approximateHandValue: HandValue
-    ) extends RiichiWsCmd
+    ) extends WsRiichiCmd
 
     object DeclareRon extends CaseClassCodec {
       implicit lazy val DeclareRonEncoder: Encoder[DeclareRon] = encoder[DeclareRon]("DeclareRon")
@@ -177,52 +159,53 @@ object WsMsgIn {
       tableId: TableId,
       gameId: GameId,
       approxHandValue: Option[HandValue]
-    ) extends RiichiWsCmd
+    ) extends WsRiichiCmd
 
     object DeclareTsumo extends CaseClassCodec {
       implicit lazy val DeclareTsumoEncoder: Encoder[DeclareTsumo] = encoder[DeclareTsumo]("DeclareTsumo")
       implicit lazy val DeclareTsumoDecoder: Decoder[DeclareTsumo] = decoder[DeclareTsumo]("DeclareTsumo")
     }
 
-
-    implicit lazy val RiichiGameCmdEncoder: Encoder[RiichiWsCmd] = Encoder.instance {
+    implicit lazy val WsRiichiCmdEncoder: Encoder[WsRiichiCmd] = Encoder.instance {
       case c: DiscardTile     => c.asJson
       case c: GetTileFromWall => c.asJson
       case c: ClaimPung       => c.asJson
       case c: ClaimChow       => c.asJson
       case c: DeclareRon      => c.asJson
       case c: DeclareTsumo    => c.asJson
-      case c: StartGame       => c.asJson
-      case c: PauseGame       => c.asJson
+      case c: StartWsGame     => c.asJson
+      case c: PauseWsGame     => c.asJson
+      case c: JoinAsPlayer    => c.asJson
+      case c: LeftAsPlayer    => c.asJson
+      case c: GetState        => c.asJson
     }
 
-    implicit lazy val RiichiGameCmdDecoder: Decoder[RiichiWsCmd] = Decoder.instance { cur =>
+    implicit lazy val WsRiichiCmdDecoder: Decoder[WsRiichiCmd] = Decoder.instance { cur =>
       import cats.syntax.either._
-        DiscardTile.DiscardTileDecoder.apply(cur) orElse
-        GetTileFromWall.GetTileFromWallDecoder.apply(cur) orElse
-        ClaimPung.ClaimPungDecoder.apply(cur) orElse
-        ClaimChow.ClaimChowDecoder.apply(cur) orElse
-        DeclareRon.DeclareRonDecoder.apply(cur) orElse
-        DeclareTsumo.DeclareTsumoDecoder.apply(cur) orElse
-        StartGame.StartGameDecoder.apply(cur) orElse
-        PauseGame.PauseGameDecoder.apply(cur)
+      JoinAsPlayer.JoinAsPlayerDecoder.apply(cur) orElse
+      LeftAsPlayer.LeftAsPlayerDecoder.apply(cur) orElse
+      GetState.GetStateDecoder.apply(cur) orElse
+      DiscardTile.DiscardTileDecoder.apply(cur) orElse
+      GetTileFromWall.GetTileFromWallDecoder.apply(cur) orElse
+      ClaimPung.ClaimPungDecoder.apply(cur) orElse
+      ClaimChow.ClaimChowDecoder.apply(cur) orElse
+      DeclareRon.DeclareRonDecoder.apply(cur) orElse
+      DeclareTsumo.DeclareTsumoDecoder.apply(cur) orElse
+      StartWsGame.StartGameDecoder.apply(cur) orElse
+      PauseWsGame.PauseGameDecoder.apply(cur)
     }
   }
 
   implicit lazy val WsMsgInEncoder: Encoder[WsMsgIn] = Encoder.instance {
     case c: Ping           => c.asJson
-    case c: GetState       => c.asJson
-    case c: RiichiWsCmd    => c.asJson
-    case c: JoinLeftCmd    => c.asJson
+    case c: WsRiichiCmd    => c.asJson
     case c: SpectacularCmd => c.asJson
   }
 
   implicit lazy val WsMsgInDecoder: Decoder[WsMsgIn] = Decoder.instance { cur =>
     import cats.syntax.either._
     Ping.PingDecoder.apply(cur) orElse
-    GetState.GetStateDecoder.apply(cur) orElse
-    RiichiWsCmd.RiichiGameCmdDecoder.apply(cur) orElse
-    JoinLeftCmd.TableCmdDecoder.apply(cur) orElse
-    SpectacularCmd.SpectacularCmdDecoder.apply(cur)
+      WsRiichiCmd.WsRiichiCmdDecoder.apply(cur) orElse
+      SpectacularCmd.SpectacularCmdDecoder.apply(cur)
   }
 }

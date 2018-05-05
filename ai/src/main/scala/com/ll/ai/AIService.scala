@@ -3,7 +3,7 @@ package com.ll.ai
 import com.ll.domain.games.GameType
 import com.ll.domain.games.GameType.Riichi
 import com.ll.domain.games.Player.AIPlayer
-import com.ll.domain.ws.WsMsgIn.{PlayerCmd, RiichiWsCmd}
+import com.ll.domain.ws.WsMsgIn.{PlayerCmd, WsRiichiCmd}
 import com.ll.domain.ws.WsMsgOut
 import org.slf4j.LoggerFactory
 
@@ -31,7 +31,7 @@ case class AIService() {
       case WsMsgOut.Riichi.TileFromWallTaken(tableId, gameId, tile, turn, aiPlayer.position, _) =>
         Future.successful {
           Thread.sleep(1000)
-          List(RiichiWsCmd.DiscardTile(tableId, gameId, tile, turn + 1, Some(Right(aiPlayer.position))))
+          List(RiichiWsCmdWs.DiscardTile(tableId, gameId, tile, turn + 1, Some(Right(aiPlayer.position))))
         }
       case _                                                                            => Future.successful(Nil)
     }

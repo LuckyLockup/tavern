@@ -5,7 +5,7 @@ import akka.actor.{ActorRef, ActorSystem, Status}
 import akka.stream.Materializer
 import akka.stream.scaladsl.{Flow, Source}
 import cats.Monad
-import com.ll.domain.auth.UserId
+import com.ll.domain.auth.{User, UserId}
 import com.ll.utils.Logging
 import akka.http.scaladsl.model.ws.{Message, TextMessage}
 import akka.stream.OverflowStrategy
@@ -15,7 +15,6 @@ import akka.stream.scaladsl.Sink
 import com.ll.domain.ai.ServiceId
 import com.ll.domain.games.CommandEnvelop
 import com.ll.domain.ws.{WsMsgCodec, WsMsgIn, WsMsgOut}
-import com.ll.domain.ws.WsMsgIn.{JoinLeftCmd, PlayerCmd}
 import com.ll.games.TablesService
 
 import scala.concurrent.Future
@@ -27,9 +26,9 @@ class PubSub()(implicit system: ActorSystem, mat: Materializer) extends Logging 
 
   def getConnections = wsConnections.size
 
-  def openNewConnection(id: UserId, tables: TablesService): Flow[Message, Message, NotUsed] = {
-    wsConnections.get(id).foreach { ar =>
-      log.info(s"Closing previous WS connection for $id")
+  def openNewConnection(user: User, tables: TablesService): Flow[Message, Message, NotUsed] = {
+    wsConnections.get(user.id).foreach { ar =>
+      log.info(s"Closing previous WS connection for ${user.id}")
       ar ! Status.Success("Done")
     }
 
@@ -39,13 +38,13 @@ class PubSub()(implicit system: ActorSystem, mat: Materializer) extends Logging 
 
     val sink: Sink[Message, Unit] = Flow[Message]
       .watchTermination()((_, ft) => ft.foreach { _ => {
-        log.info(s"Closing WS connection from client for $id")
-        wsConnections -= id
+        log.info(s"Closing WS connection from client for ${user.id}")
+        wsConnections -= user.id
       }
       })
       .mapConcat {
         case TextMessage.Strict(msg) =>
-          log.info(s"$id <<< $msg")
+          log.info(s"${user.id} <<< $msg")
           WsMsgCodec.decodeWsMsg(msg).fold(err => {
             log.info(s"Unknown message $msg. Parsing error: $err")
             actorRef ! WsMsgOut.ValidationError(s"Error parsing json message: $err")
@@ -58,20 +57,20 @@ class PubSub()(implicit system: ActorSystem, mat: Materializer) extends Logging 
         case WsMsgIn.Ping(n)  =>
           actorRef ! WsMsgOut.Pong(n)
           Future.successful("Pong!")
-        case msg: JoinLeftCmd =>
-          tables.sendToGame(CommandEnvelop(msg, Right(id)))
+        case msg: WsMsgIn.WsTableCmd =>
+          tables.sendToGame(CommandEnvelop(msg, Right(user)))
           Future.successful {"Done"}
       }
       .to(Sink.ignore)
 
-    log.info(s"Opening WS connection for $id")
-    wsConnections += id -> actorRef
+    log.info(s"Opening WS connection for ${user.id}")
+    wsConnections += user.id -> actorRef
     Flow.fromSinkAndSource(sink, Source.fromPublisher(publisher))
   }
 
-  def send(id: Either[ServiceId, UserId], msg: WsMsgOut) = id match {
+  def send(sender: Option[Either[ServiceId, User]], msg: WsMsgOut) = sender.foreach{
     case Left(serviceId) => sendToService(serviceId, msg)
-    case Right(userId)   => sendToUser(userId, msg)
+    case Right(user)   => sendToUser(user.id, msg)
   }
 
   def sendToUser(id: UserId, msg: WsMsgOut): Unit = wsConnections.get(id).foreach { ar =>

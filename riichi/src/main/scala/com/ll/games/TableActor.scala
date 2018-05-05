@@ -7,10 +7,9 @@ import com.ll.domain.ai.ServiceId
 import com.ll.domain.auth.{User, UserId}
 import com.ll.domain.games.Player.{AIPlayer, HumanPlayer}
 import com.ll.domain.games.{CommandEnvelop, GameType, ScheduledCommand}
-import com.ll.domain.messages.WsMsgProjector
 import com.ll.domain.persistence._
-import com.ll.domain.ws.WsMsgIn.{GameCmd, GetState, JoinLeftCmd, PlayerCmd, SpectacularCmd}
-import com.ll.domain.ws.WsMsgOut
+import com.ll.domain.ws.WsMsgIn.{SpectacularCmd, WsGameCmd}
+import com.ll.domain.ws.{WsMsgInProjector, WsMsgOut, WsMsgOutProjector}
 import com.ll.utils.Logging
 import com.ll.ws.PubSub
 
@@ -37,52 +36,65 @@ class TableActor[GT <: GameType, S <: TableState[GT, S] : ClassTag](
   }
 
   val receiveCommand: Receive = {
-    case env@CommandEnvelop(cmd, user) => {
-      try {
-        log.info(s"${table.tableId} Processing $cmd from $sender")
-        cmd match {
-          case cmd: GetState =>
-            val position = _table.getPosition(env.senderId).toOption
-            val state = _table.projection(position)
-            pubSub.send(env.senderId, state)
+    case env@CommandEnvelop(wsCmd, user) =>
+      import WsMsgInProjector._
+      //all commands in websocket must come from the player, so position must be always presented
+      val cmdV: Either[WsMsgOut.ValidationError, TableCmd[GT]] = for {
+        position <- _table.getPosition(user)
+      } yield wsCmd.projection(position)
+      cmdV match {
+        case Right(cmd)  => processCmd(cmd, user)
+        case Left(error) => pubSub.send(Some(user), error)
+      }
+    case cmd: TableCmd[GT]               => processCmd(cmd, None)
+  }
 
-          case SpectacularCmd.JoinAsSpectacular(_) =>
-            user.foreach { humanUser =>
+  def processCmd(cmd: TableCmd[GT], senderId: Option[Either[ServiceId, User]]) = {
+    try {
+      log.info(s"${table.tableId} Processing $cmd from $senderId")
+      cmd match {
+        case cmd: TableCmd.GetState[GT] =>
+          val state = _table.projection(cmd.position)
+          pubSub.send(senderId, state)
+
+        case SpectacularCmd.JoinAsSpectacular(_) =>
+          senderId.foreach {
+            case Right(humanUser) =>
               spectaculars += humanUser
               pubSub.sendToUsers(allUsers, WsMsgOut.SpectacularJoinedTable(humanUser, tableId))
-            }
+            case Left(serviceId)  => ???
+          }
 
-          case SpectacularCmd.LeftAsSpectacular(_) =>
-            user.foreach { humanUser =>
+        case SpectacularCmd.LeftAsSpectacular(_) =>
+          senderId.foreach {
+            case Right(humanUser) =>
               spectaculars -= humanUser
               pubSub.sendToUsers(allUsers, WsMsgOut.SpectacularLeftTable(humanUser, tableId))
+            case Left(serviceId)  => ???
+          }
+        case cmd: WsGameCmd[GT]                  =>
+          _table.validateCmd(cmd) match {
+            case Left(error)   => pubSub.send(senderId, error)
+            case Right(events) => persistAll(events) { e =>
+              events.foreach { event =>
+                val (cmds, newState) = _table.applyEvent(e)
+                _table = newState
+                cmds.foreach {
+                  case ScheduledCommand(duration, sccmd) =>
+                    val nextCmd = context.system.scheduler.scheduleOnce(duration, self, sccmd)
+                    scheduledCommand.foreach(_.cancel())
+                    scheduledCommand = Some(nextCmd)
+                }
+                Eff.dispatch(event)
+              }
             }
-
-          case cmd: JoinLeftCmd =>
-            _table.joinLeftCmd(cmd, user) match {
-              case Right((msg, st)) =>
-                _table = st
-                pubSub.sendToUsers(allUsers, msg)
-              case Left(error)      =>
-                pubSub.send(env.senderId, error)
-            }
-
-          case cmd: GameCmd[GT]   =>
-            val eventsV = _table.gameCmd(cmd)
-            Eff.applyEvents(eventsV, env.senderId)
-          case cmd: PlayerCmd[GT] =>
-            val eventsV = for {
-              position <- _table.getPosition(env.senderId)
-              events <- _table.playerCmd(cmd, position)
-            } yield events
-            Eff.applyEvents(eventsV, env.senderId)
-        }
-      } catch {
-        case ex: Exception =>
-          log.error("W")
-          sender ! akka.actor.Status.Failure(ex)
-          throw ex
+          }
       }
+    } catch {
+      case ex: Exception =>
+        log.error("W")
+        sender ! akka.actor.Status.Failure(ex)
+        throw ex
     }
   }
 
@@ -92,29 +104,7 @@ class TableActor[GT <: GameType, S <: TableState[GT, S] : ClassTag](
   }
 
   object Eff {
-    import WsMsgProjector._
-
-    def applyEvents(
-      eventsV: Either[WsMsgOut.ValidationError, List[TableEvent[GT]]],
-      senderId: Either[ServiceId, UserId]) = {
-
-      eventsV match {
-        case Left(error)   => pubSub.send(senderId, error)
-        case Right(events) => persistAll(events) { e =>
-          events.foreach { event =>
-            val (cmds, newState) = _table.applyEvent(e)
-            _table = newState
-            cmds.foreach {
-              case ScheduledCommand(duration, sccmd) =>
-                val nextCmd = context.system.scheduler.scheduleOnce(duration, self, sccmd)
-                scheduledCommand.foreach(_.cancel())
-                scheduledCommand = Some(nextCmd)
-            }
-            dispatch(event)
-          }
-        }
-      }
-    }
+    import WsMsgOutProjector._
 
     def dispatch(event: TableEvent[GT]) = {
       dispatchToHumans(event)
@@ -123,7 +113,7 @@ class TableActor[GT <: GameType, S <: TableState[GT, S] : ClassTag](
 
     def dispatchToHumans(ev: TableEvent[GT]) = {
       val spectacularEvents = spectaculars
-        .map(user => (user.id, ev.projection()))
+        .map(user => (user.id, ev.projection(None)))
 
       val playerEvents = table.players.collect { case p: HumanPlayer[GT] => p }
         .map(player => (player.user.id, ev.projection(Some(player.position))))

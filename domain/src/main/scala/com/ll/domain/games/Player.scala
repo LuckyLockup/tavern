@@ -11,13 +11,13 @@ import io.circe.syntax._
 sealed trait Player[GT <: GameType] {
   def nickName: String
   def position: PlayerPosition[GT]
-  def senderId: Either[ServiceId, UserId]
+  def senderId: Either[ServiceId, User]
 }
 
 object Player extends CaseClassCodec {
   case class HumanPlayer[GT <: GameType](user: User, position: PlayerPosition[GT]) extends Player[GT] {
     def nickName = user.nickname
-    def senderId = Right(user.id)
+    def senderId = Right(user)
   }
 
   case class AIPlayer[GT <: GameType](ai: AIType[GT], position: PlayerPosition[GT]) extends Player[GT] {

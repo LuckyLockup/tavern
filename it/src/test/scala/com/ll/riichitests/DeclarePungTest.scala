@@ -4,7 +4,7 @@ import com.ll.domain.auth.UserId
 import com.ll.domain.games.position.PlayerPosition
 import com.ll.domain.games.position.PlayerPosition.RiichiPosition
 import com.ll.domain.games.riichi.RiichiConfig
-import com.ll.domain.ws.WsMsgIn.{RiichiWsCmd, UserCmd}
+import com.ll.domain.ws.WsMsgIn.{WsRiichiCmd, UserCmd}
 import com.ll.domain.ws.WsMsgOut
 import com.ll.utils.{CommonData, Test}
 
@@ -37,7 +37,7 @@ class DeclarePungTest extends Test {
     val uraDoras = List("2_sou")
     val wallTiles = List("red", "3_pin")
 
-    player1.ws ! RiichiWsCmd.StartGame(tableId, gameId, RiichiConfig().copy(testingTiles =
+    player1.ws ! RiichiWsCmdWs.StartGame(tableId, gameId, RiichiConfig().copy(testingTiles =
       eastHand ::: southHand ::: westHand ::: northHand ::: uraDoras ::: wallTiles
     ))
     player1.ws.expectWsMsgT[WsMsgOut.Riichi.GameStarted]()
@@ -49,7 +49,7 @@ class DeclarePungTest extends Test {
         fromTheWall
     }
 
-    player1.ws ! RiichiWsCmd.DiscardTile(tableId, gameId, wallTiles.head, 2)
+    player1.ws ! RiichiWsCmdWs.DiscardTile(tableId, gameId, wallTiles.head, 2)
     player2.ws.expectWsMsg {
       case discard: WsMsgOut.Riichi.TileDiscarded =>
         discard.position should be(PlayerPosition.RiichiPosition.EastPosition)
@@ -63,14 +63,14 @@ class DeclarePungTest extends Test {
         fromTheWall.tile should be(wallTiles(1))
         fromTheWall
     }
-    player2.ws ! RiichiWsCmd.DiscardTile(tableId, gameId, wallTiles(1), 4)
+    player2.ws ! RiichiWsCmdWs.DiscardTile(tableId, gameId, wallTiles(1), 4)
     val discard = player1.ws.expectWsMsg {
       case discard: WsMsgOut.Riichi.TileDiscarded if discard.tile == wallTiles(1) =>
         discard.position should be(PlayerPosition.RiichiPosition.SouthPosition)
         discard
     }
 
-    val declarePungOpt = discard.commands.collectFirst{case c: RiichiWsCmd.ClaimPung => c}
+    val declarePungOpt = discard.commands.collectFirst{case c: RiichiWsCmdWs.ClaimPung => c}
     declarePungOpt should not be empty
     declarePungOpt.get.tiles should contain theSameElementsAs List("3_pin",  "3_pin",  "3_pin")
 
