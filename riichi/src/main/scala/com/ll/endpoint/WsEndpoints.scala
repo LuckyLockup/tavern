@@ -7,7 +7,7 @@ import akka.http.scaladsl.model._
 import akka.http.scaladsl.server.Directives._
 import akka.http.scaladsl.server.Route
 import akka.stream.Materializer
-import com.ll.domain.auth.UserId
+import com.ll.domain.auth.{User, UserId}
 import com.ll.domain.ws.WsMsgOut
 import com.ll.games.TablesService
 import com.ll.ws.PubSub
@@ -44,7 +44,8 @@ class WsEndpoints[F[_] : Effect] extends Logging {
         case req@HttpRequest(HttpMethods.GET, _, _, _, _) =>
           req.header[UpgradeToWebSocket] match {
             case Some(upgrade) =>
-              ctx.complete(upgrade.handleMessages(pubSub.openNewConnection(UserId(id), riichi)))
+              val user = User(UserId(id), "Akagi")
+              ctx.complete(upgrade.handleMessages(pubSub.openNewConnection(user, riichi)))
             case None          =>
               ctx.complete(HttpResponse(400, entity = "Not a valid websocket request!"))
           }

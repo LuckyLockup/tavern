@@ -8,7 +8,7 @@ import akka.http.scaladsl.server.Directives.{entity, _}
 import akka.http.scaladsl.server.Route
 import akka.stream.Materializer
 import com.ll.config.ServerConfig
-import com.ll.domain.auth.UserId
+import com.ll.domain.auth.{User, UserId}
 import com.ll.domain.games.{GameId, TableId}
 import com.ll.domain.messages.HttpMessage.Riichi.CreateTable
 import com.ll.domain.ws.WsMsgCodec
@@ -33,7 +33,8 @@ class RiichiEndpoints[F[_] : Effect](config: ServerConfig)(implicit system: Acto
         post(
           decodeRequest {
             entity(as[CreateTable]) { req =>
-              riichi.getOrCreate(req.tableId, req.userId)
+              val user = User(req.userId, "Akagi")
+              riichi.getOrCreate(req.tableId, user)
               complete(HttpEntity(ContentTypes.`application/json`, """{"msg": "Table creation is started."}"""))
             }
           }

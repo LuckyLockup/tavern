@@ -3,11 +3,11 @@ package com.ll.domain.ws
 import com.ll.domain.auth.User
 import com.ll.domain.games.GameType.Riichi
 import com.ll.domain.games.Player.HumanPlayer
-import com.ll.domain.games.{GameId, GameType, TableId}
+import com.ll.domain.games.{GameId, GameType, Player, TableId}
 import com.ll.domain.games.position.PlayerPosition
 import com.ll.domain.games.riichi.result.{GameScore, TablePoints}
 import com.ll.domain.json.CaseClassCodec
-import com.ll.domain.ws.WsMsgIn.RiichiWsCmdWs.RiichiCmd
+import com.ll.domain.ws.WsMsgIn.WsRiichiCmd
 import com.ll.domain.ws.WsRiichi.RiichiPlayerState
 import io.circe.{Decoder, Encoder}
 import io.circe.syntax._
@@ -95,7 +95,7 @@ object WsMsgOut {
       implicit lazy val GamePausedDecoder: Decoder[GamePaused] = decoder[GamePaused]("GamePaused")
     }
 
-    case class PlayerJoinedTable(tableId: TableId, user: HumanPlayer[Riichi]) extends RiichiGameEvent {
+    case class PlayerJoinedTable(tableId: TableId, user: Player[Riichi]) extends RiichiGameEvent {
       def turn = 0
     }
 
@@ -121,7 +121,7 @@ object WsMsgOut {
       tile: String,
       turn: Int,
       position: PlayerPosition[Riichi],
-      commands: List[RiichiCmd]
+      commands: List[WsRiichiCmd]
     ) extends RiichiGameEvent
 
     object TileFromWallTaken extends CaseClassCodec {
@@ -137,7 +137,7 @@ object WsMsgOut {
       tile: String,
       turn: Int,
       position: PlayerPosition[Riichi],
-      commands: List[RiichiCmd]
+      commands: List[WsRiichiCmd]
     ) extends RiichiGameEvent
 
     object TileDiscarded extends CaseClassCodec {

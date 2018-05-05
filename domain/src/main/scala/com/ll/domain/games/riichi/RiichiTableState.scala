@@ -6,7 +6,6 @@ import com.ll.domain.games.GameType.Riichi
 import com.ll.domain.games.Player.{AIPlayer, HumanPlayer}
 import com.ll.domain.games.deck.{DeclaredSet, Tile}
 import com.ll.domain.games.position.{PlayerPosition, PositionUtility}
-import com.ll.domain.games.position.PlayerPosition.RiichiPosition
 import com.ll.domain.games.riichi.result.{GameScore, HandValue, Points, TablePoints}
 import com.ll.domain.games.{GameId, Player, ScheduledCommand, TableId}
 import com.ll.domain.persistence._
@@ -28,20 +27,20 @@ case class NoGameOnTable(
 ) extends RiichiTableState {
 
   def validateCmd(cmd: TableCmd[Riichi]): Either[WsMsgOut, List[TableEvent[Riichi]]] = cmd match {
-    case RiichiCmd.GetState(_, position) =>
-      Left(this.projection(position))
-    case RiichiCmd.JoinAsPlayer(_, user) =>
-      players.collectFirst{ case p @ HumanPlayer(`user`, _) => p} match {
-        case None =>
-          PositionUtility.addUser(players, user)
+    case TableCmd.JoinAsPlayer(_, user) =>
+      players.find(p => p.senderId == user) match {
+        case None   if user.isRight =>
+          //TODO refactor for AI
+          PositionUtility
+            .addUser(players, user.right.get)
             .map(player => List(RiichiEvent.PlayerJoined(tableId, player)))
         case Some(_) =>
           Left(ValidationError("You already joined the table"))
       }
 
-    case RiichiCmd.LeftAsPlayer(_, user) =>
-      players.collectFirst{ case p @ HumanPlayer(`user`, _) => p} match {
-        case None =>
+    case TableCmd.LeftAsPlayer(_, user)                =>
+      players.find(p => p.senderId == user) match {
+        case None         =>
           Left(ValidationError("You are not player on this table"))
         case Some(player) =>
           val newState = this.copy(players = players - player)
@@ -53,7 +52,7 @@ case class NoGameOnTable(
       } else {
         Left(ValidationError("No Human players"))
       }
-    case _                                                    =>
+    case _                                              =>
       Left(ValidationError(s"Game is not started, ${cmd.getClass.getSimpleName} is not supported."))
   }
 
@@ -116,14 +115,14 @@ case class GameStarted(
         cmds = CommandPredictor.predictCommandsOnTileFromTheWall(this, tile, playerState)
       } yield List(RiichiEvent.TileFromTheWallTaken(tableId, gameId, tile, commandTurn, playerState.player.position, cmds))
 
-    case RiichiCmd.DeclareTsumo(_, _, _, position) =>
+    case RiichiCmd.DeclareTsumo(_, _, position) =>
       for {
         state <- getPlayerState(position).asEither(s"No player at $position")
         newTile <- state.currentTile.asEither("You can declare tsumo only on your tile from the wall")
         handValue <- HandValue.computeTsumoOnTile(newTile, state).asEither("Your hand is not winning.")
       } yield List(RiichiEvent.TsumoDeclared(tableId, gameId, turn, state.player.position))
 
-    case RiichiCmd.ScoreGame(_, _)                           =>
+    case RiichiCmd.ScoreGame(_, _)                                     =>
       val winingHand = this.playerStates.flatMap(st => HandValue.computeWin(st)).headOption
       winingHand match {
         case Some((winner, value)) =>
@@ -196,7 +195,7 @@ case class GameStarted(
         this.players,
         this.points.addGameScore(score))
       )
-    case RiichiEvent.TileClaimed(_, _, set, position) =>
+    case RiichiEvent.TileClaimed(_, _, set, position)                 =>
       (Nil, this)
   }
 
@@ -206,19 +205,11 @@ case class GameStarted(
       admin = admin,
       states = playerStates.map {
         case state =>
-          val (hand, currentTile) = (state.player, position) match {
-            case (p: HumanPlayer[Riichi], Some(``)) if p.user.id == userId =>
-              (state.closedHand.map(_.repr), state.currentTile.map(_.repr))
-            case (_, Some(`position`))                                        =>
-              (state.closedHand.map(_.repr), state.currentTile.map(_.repr))
-            case _                                                                   =>
-              (state.closedHand.map(_ => Const.ClosedTile), state.currentTile.map(_ => Const.ClosedTile))
-          }
-
+          val hideTiles = (tile: Tile) => if (position.contains(state.player.position)) tile.repr else Const.ClosedTile
           RiichiPlayerState(
             player = state.player,
-            closedHand = hand,
-            currentTile = currentTile,
+            closedHand = state.closedHand.map(hideTiles),
+            currentTile = state.currentTile.map(hideTiles),
             discard = state.discard.map(_.repr),
             online = state.online
           )

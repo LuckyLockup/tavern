@@ -1,8 +1,8 @@
 package com.ll.riichitests
 
 import com.ll.domain.auth.UserId
+import com.ll.domain.ws.WsMsgIn.WsRiichiCmd
 import com.ll.domain.ws.{WsMsgIn, WsMsgOut}
-import com.ll.domain.ws.WsMsgIn.UserCmd
 import com.ll.utils.{CommonData, Test}
 
 class PlayersJoinLeftTableTest extends Test {
@@ -19,19 +19,19 @@ class PlayersJoinLeftTableTest extends Test {
 
     player1.createTable(tableId)
 
-    player1.ws ! UserCmd.JoinAsPlayer(tableId, player1.user)
+    player1.ws ! WsRiichiCmd.JoinAsPlayer(tableId)
     player1.ws.expectWsMsgT[WsMsgOut.Riichi.PlayerJoinedTable]()
 
-    player2.ws ! UserCmd.JoinAsPlayer(tableId, player2.user)
+    player2.ws ! WsRiichiCmd.JoinAsPlayer(tableId)
     player1.ws.expectWsMsgT[WsMsgOut.Riichi.PlayerJoinedTable]()
 
-    player3.ws ! UserCmd.JoinAsPlayer(tableId, player3.user)
+    player3.ws ! WsRiichiCmd.JoinAsPlayer(tableId)
     player1.ws.expectWsMsgT[WsMsgOut.Riichi.PlayerJoinedTable]()
 
-    player4.ws ! UserCmd.JoinAsPlayer(tableId, player4.user)
+    player4.ws ! WsRiichiCmd.JoinAsPlayer(tableId)
     player1.ws.expectWsMsgT[WsMsgOut.Riichi.PlayerJoinedTable]()
 
-    player5.ws ! UserCmd.JoinAsPlayer(tableId, player5.user)
+    player5.ws ! WsRiichiCmd.JoinAsPlayer(tableId)
     player5.ws.expectWsMsgT[WsMsgOut.ValidationError]()
   }
 
@@ -44,36 +44,36 @@ class PlayersJoinLeftTableTest extends Test {
 
     player1.createTable(tableId)
 
-    player1.ws ! UserCmd.GetState(tableId, player1.userId)
+    player1.ws ! WsRiichiCmd.GetState(tableId)
     player1.ws.expectWsMsg{
       case state: WsMsgOut.Riichi.RiichiState =>
         state.states shouldBe empty
         state
     }
 
-    player1.ws ! UserCmd.JoinAsPlayer(tableId, player1.user)
+    player1.ws ! WsRiichiCmd.JoinAsPlayer(tableId)
     player1.ws.expectWsMsgT[WsMsgOut.Riichi.PlayerJoinedTable]()
 
-    player1.ws ! UserCmd.GetState(tableId, player1.userId)
+    player1.ws ! WsRiichiCmd.GetState(tableId)
     player1.ws.expectWsMsg{
       case state: WsMsgOut.Riichi.RiichiState if state.states.size == 1 => state
     }
 
 
-    player2.ws ! UserCmd.JoinAsPlayer(tableId, player2.user)
+    player2.ws ! WsRiichiCmd.JoinAsPlayer(tableId)
     player1.ws.expectWsMsgT[WsMsgOut.Riichi.PlayerJoinedTable]()
 
-    player1.ws ! UserCmd.GetState(tableId, player1.userId)
+    player1.ws ! WsRiichiCmd.GetState(tableId)
     player1.ws.expectWsMsg{
       case state: WsMsgOut.Riichi.RiichiState  =>
         state.states.size should be (2)
         state
     }
 
-    player2.ws ! UserCmd.LeftAsPlayer(tableId, player2.user)
+    player2.ws ! WsRiichiCmd.LeftAsPlayer(tableId)
     player1.ws.expectWsMsgT[WsMsgOut.Riichi.PlayerLeftTable]()
 
-    player1.ws ! UserCmd.GetState(tableId, player1.userId)
+    player1.ws ! WsRiichiCmd.GetState(tableId)
     player1.ws.expectWsMsg{
       case state: WsMsgOut.Riichi.RiichiState  =>
         state.states.size should be (1)

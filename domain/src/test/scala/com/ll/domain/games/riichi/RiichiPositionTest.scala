@@ -17,10 +17,10 @@ class RiichiPositionTest extends WordSpec with Matchers{
     val user3 = User(UserId(3), "Akagi3")
     val user4 = User(UserId(4), "Akagi4")
 
-    players = PositionUtility.addUser(players, user1)._1
-    players = PositionUtility.addUser(players, user2)._1
-    players = PositionUtility.addUser(players, user3)._1
-    players = PositionUtility.addUser(players, user4)._1
+    players = players + PositionUtility.addUser(players, user1).right.get
+    players = players + PositionUtility.addUser(players, user2).right.get
+    players = players + PositionUtility.addUser(players, user3).right.get
+    players = players + PositionUtility.addUser(players, user4).right.get
 
     players should contain (HumanPlayer(user1, RiichiPosition.EastPosition))
     players should contain (HumanPlayer(user2, RiichiPosition.SouthPosition))
@@ -35,12 +35,12 @@ class RiichiPositionTest extends WordSpec with Matchers{
     val user3 = User(UserId(3), "Akagi3")
     val user4 = User(UserId(4), "Akagi4")
 
-    players = PositionUtility.addUser(players, user1)._1
-    players = PositionUtility.addUser(players, user2)._1
-    players = PositionUtility.addUser(players, user3)._1
+    players = players + PositionUtility.addUser(players, user1).right.get
+    players = players + PositionUtility.addUser(players, user2).right.get
+    players = players + PositionUtility.addUser(players, user3).right.get
     players = players - HumanPlayer(user1, RiichiPosition.EastPosition)
-    players = PositionUtility.addUser(players, user4)._1
-    players = PositionUtility.addUser(players, user1)._1
+    players = players + PositionUtility.addUser(players, user4).right.get
+    players = players + PositionUtility.addUser(players, user1).right.get
 
     players should contain (HumanPlayer(user4, RiichiPosition.EastPosition))
     players should contain (HumanPlayer(user2, RiichiPosition.SouthPosition))

@@ -84,7 +84,7 @@ object WsMsgIn {
       implicit lazy val LeftAsPlayerDecoder: Decoder[LeftAsPlayer] = decoder[LeftAsPlayer]("LeftAsPlayer")
     }
 
-    case class StartWsGame(tableId: TableId, gameId: GameId, config: Option[RiichiConfig]) extends WsRiichiCmd
+    case class StartWsGame(tableId: TableId, gameId: GameId, config: Option[RiichiConfig] = None) extends WsRiichiCmd
 
     object StartWsGame extends CaseClassCodec {
       implicit lazy val StartGameEncoder: Encoder[StartWsGame] = encoder[StartWsGame]("StartGame")
@@ -136,6 +136,7 @@ object WsMsgIn {
       tableId: TableId,
       gameId: GameId,
       from: PlayerPosition[Riichi],
+      turn: Int,
       tiles: List[String]
     ) extends WsRiichiCmd
 

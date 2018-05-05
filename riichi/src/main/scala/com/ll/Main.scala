@@ -14,6 +14,7 @@ import com.ll.utils.Logging
 
 import scala.util.control.NonFatal
 import ch.megard.akka.http.cors.scaladsl.CorsDirectives._
+import com.ll.ai.AIService
 
 
 object Main extends App with Logging {
@@ -31,7 +32,8 @@ object Main extends App with Logging {
       strategy       = decider()
       materializer   = ActorMaterializer(ActorMaterializerSettings(system).withSupervisionStrategy(strategy))(system)
       pubSub         = PubSub[IO](system, materializer)
-      gameService    = TablesService[IO](system, pubSub, conf)
+      aiService      = AIService()
+      gameService    = TablesService[IO](system, pubSub, conf, aiService)
       _              <- IO {
         log.info("Starting server...")
         implicit val sys = system

@@ -3,7 +3,7 @@ package com.ll.riichitests
 import com.ll.domain.auth.UserId
 import com.ll.domain.games.position.PlayerPosition.RiichiPosition
 import com.ll.domain.games.riichi.RiichiConfig
-import com.ll.domain.ws.WsMsgIn.{WsRiichiCmd, UserCmd}
+import com.ll.domain.ws.WsMsgIn.WsRiichiCmd
 import com.ll.domain.ws.WsMsgOut
 import com.ll.utils.{CommonData, Test}
 
@@ -14,13 +14,13 @@ class SinglePlayerTest extends Test {
     player1.createTable(tableId)
     player1.ws.expectWsMsgT[WsMsgOut.Riichi.RiichiState]()
 
-    player1.ws ! UserCmd.JoinAsPlayer(tableId, player1.user)
+    player1.ws ! WsRiichiCmd.JoinAsPlayer(tableId)
     player1.ws.expectWsMsgT[WsMsgOut.Riichi.PlayerJoinedTable]()
 
-    player1.ws ! RiichiWsCmdWs.StartGame(tableId, gameId, RiichiConfig())
+    player1.ws ! WsRiichiCmd.StartWsGame(tableId, gameId)
     player1.ws.expectWsMsgT[WsMsgOut.Riichi.GameStarted]()
 
-    player1.ws ! UserCmd.GetState(tableId, player1.userId)
+    player1.ws ! WsRiichiCmd.GetState(tableId)
     val state1: WsMsgOut.Riichi.RiichiState = player1.ws.expectWsMsg {
       case state: WsMsgOut.Riichi.RiichiState =>
         state.states.size should be(4)
@@ -35,7 +35,7 @@ class SinglePlayerTest extends Test {
     }
 
     val tileToDiscard = state1.states.head.closedHand.head
-    player1.ws ! RiichiWsCmdWs.DiscardTile(tableId, gameId, tileToDiscard, 2)
+    player1.ws ! WsRiichiCmd.DiscardTile(tableId, gameId, tileToDiscard, 2)
     player1.ws.expectWsMsg {
       case discarded: WsMsgOut.Riichi.TileDiscarded =>
         discarded.tile should be(tileToDiscard)
@@ -43,7 +43,7 @@ class SinglePlayerTest extends Test {
         discarded
     }
 
-    player1.ws ! UserCmd.GetState(tableId, player1.userId)
+    player1.ws ! WsRiichiCmd.GetState(tableId)
     player1.ws.expectWsMsg {
       case state: WsMsgOut.Riichi.RiichiState =>
         state.states.size should be(4)
@@ -62,13 +62,13 @@ class SinglePlayerTest extends Test {
     player1.createTable(tableId)
     player1.ws.expectWsMsgT[WsMsgOut.Riichi.RiichiState]()
 
-    player1.ws ! UserCmd.JoinAsPlayer(tableId, player1.user)
+    player1.ws ! WsRiichiCmd.JoinAsPlayer(tableId)
     player1.ws.expectWsMsgT[WsMsgOut.Riichi.PlayerJoinedTable]()
 
-    player1.ws ! RiichiWsCmdWs.StartGame(tableId, gameId, RiichiConfig())
+    player1.ws ! WsRiichiCmd.StartWsGame(tableId, gameId)
     player1.ws.expectWsMsgT[WsMsgOut.Riichi.GameStarted]()
 
-    player1.ws ! UserCmd.GetState(tableId, player1.userId)
+    player1.ws ! WsRiichiCmd.GetState(tableId)
     val state1: WsMsgOut.Riichi.RiichiState = player1.ws.expectWsMsg {
       case state: WsMsgOut.Riichi.RiichiState =>
         state.states.size should be(4)
@@ -81,7 +81,7 @@ class SinglePlayerTest extends Test {
           taken.position should be (RiichiPosition.EastPosition)
           taken
       }
-      player1.ws ! RiichiWsCmdWs.DiscardTile(tableId, gameId, tileToDiscard.tile, 2 + 8 *round)
+      player1.ws ! WsRiichiCmd.DiscardTile(tableId, gameId, tileToDiscard.tile, 2 + 8 *round)
       player1.ws.expectWsMsg {
         case discarded: WsMsgOut.Riichi.TileDiscarded =>
           discarded.tile should be(tileToDiscard.tile)
@@ -101,7 +101,7 @@ class SinglePlayerTest extends Test {
             tileDiscarded
         }
       }
-      player1.ws ! UserCmd.GetState(tableId, player1.userId)
+      player1.ws ! WsRiichiCmd.GetState(tableId)
       player1.ws.expectWsMsg {
         case state: WsMsgOut.Riichi.RiichiState =>
           state.states.size should be(4)

@@ -1,5 +1,6 @@
 package com.ll.domain.persistence
 
+import com.ll.domain.ai.ServiceId
 import com.ll.domain.auth.User
 import com.ll.domain.games.GameType.Riichi
 import com.ll.domain.games.position.PlayerPosition
@@ -12,15 +13,15 @@ sealed trait TableCmd[GT <: GameType] {
 }
 
 object TableCmd {
+  case class JoinAsPlayer[GT <: GameType](tableId: TableId, user: Either[ServiceId, User]) extends TableCmd[GT]
+
+  case class LeftAsPlayer[GT <: GameType](tableId: TableId, user: Either[ServiceId, User]) extends TableCmd[GT]
+
+  case class GetState[GT <: GameType](tableId: TableId, position: Option[PlayerPosition[Riichi]]) extends TableCmd[GT]
+
   sealed trait RiichiCmd extends TableCmd[Riichi]
 
   object RiichiCmd {
-    case class GetState[GT <: GameType](tableId: TableId, position: Option[PlayerPosition[Riichi]]) extends RiichiCmd
-
-    case class JoinAsPlayer[GT <: GameType](tableId: TableId, user: User) extends RiichiCmd
-
-    case class LeftAsPlayer[GT <: GameType](tableId: TableId, user: User) extends RiichiCmd
-
     case class StartGame(tableId: TableId, gameId: GameId, config: RiichiConfig) extends RiichiCmd
 
     case class PauseGame(tableId: TableId, gameId: GameId) extends RiichiCmd
@@ -52,6 +53,7 @@ object TableCmd {
       tableId: TableId,
       gameId: GameId,
       from: PlayerPosition[Riichi],
+      turn: Int,
       tiles: List[String],
       position: PlayerPosition[Riichi]
     ) extends RiichiCmd
@@ -59,7 +61,6 @@ object TableCmd {
     case class DeclareRon(
       tableId: TableId,
       gameId: GameId,
-      approximateHandValue: HandValue,
       position: PlayerPosition[Riichi]
     ) extends RiichiCmd
 
@@ -67,7 +68,6 @@ object TableCmd {
     case class DeclareTsumo(
       tableId: TableId,
       gameId: GameId,
-      approxHandValue: Option[HandValue],
       position: PlayerPosition[Riichi]
     ) extends RiichiCmd
 

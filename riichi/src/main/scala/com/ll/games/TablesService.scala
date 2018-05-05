@@ -62,7 +62,7 @@ class TablesService(pubSub: PubSub, config: ServerConfig, aIService: AIService)(
     if (tables.get(env.tableId).isEmpty) {
       log.warn(s"Message is sent to non existing tabled: ${env.tableId}")
       val error = WsMsgOut.ValidationError(s"${env.cmd.tableId} doesn't exist")
-      pubSub.send(env.senderId, error)
+      pubSub.send(Some(env.sender), error)
     }
     tables.get(env.tableId).foreach(ar => ar ! env)
   }
