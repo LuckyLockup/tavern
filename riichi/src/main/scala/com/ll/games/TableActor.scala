@@ -95,7 +95,7 @@ class TableActor[GT <: GameType, S <: TableState[GT, S] : ClassTag](
       }
     } catch {
       case ex: Exception =>
-        log.error("W")
+        log.error("Exception in actor", ex)
         sender ! akka.actor.Status.Failure(ex)
         throw ex
     }
@@ -116,10 +116,10 @@ class TableActor[GT <: GameType, S <: TableState[GT, S] : ClassTag](
 
     def dispatchToHumans(ev: TableEvent[GT]) = {
       val spectacularEvents = spectaculars
-        .map(user => (user.id, ev.projection(None)))
+        .flatMap(user => ev.projection(None).map(event => (user.id, event)))
 
       val playerEvents = _table.players.collect { case p: HumanPlayer[GT] => p }
-        .map(player => (player.user.id, ev.projection(Some(player.position))))
+        .flatMap(player => ev.projection(Some(player.position)).map(event => (player.user.id, event)))
 
       (spectacularEvents ++ playerEvents)
         .groupBy(_._2)
@@ -134,13 +134,15 @@ class TableActor[GT <: GameType, S <: TableState[GT, S] : ClassTag](
     private def dispatchToAi(ev: TableEvent[GT]) = {
       //TODO refactor into one for each.
       _table.players.collect { case p: AIPlayer[GT] => p }.foreach { ai =>
-        aiService.processEvent(
-          ai,
-          ev.projection(Some(ai.position)),
-          table.projection(Some(ai.position))
-        ).map { cmds =>
-          cmds.foreach { cmd =>
-            self ! cmd
+        ev.projection(Some(ai.position)).foreach{ event =>
+          aiService.processEvent(
+            ai,
+            event,
+            table.projection(Some(ai.position))
+          ).map { cmds =>
+            cmds.foreach { cmd =>
+              self ! cmd
+            }
           }
         }
       }

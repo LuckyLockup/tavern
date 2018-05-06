@@ -35,6 +35,13 @@ object RiichiEvent {
   ) extends TableEvent[Riichi]
 
   sealed trait RiichiGameEvent extends GameEvent[Riichi]
+
+  case class ActionSkipped(
+    tableId: TableId,
+    gameId: GameId,
+    position: PlayerPosition[Riichi],
+    turn: Int) extends RiichiGameEvent
+
   case class TileDiscared(
     tableId: TableId,
     gameId: GameId,
@@ -60,6 +67,8 @@ object RiichiEvent {
     position: PlayerPosition[Riichi]
   ) extends RiichiGameEvent
 
+  //TODO RonDoubled
+  //TODO RonTripled
   case class RonDeclared(
     tableId: TableId,
     gameId: GameId,

@@ -98,6 +98,13 @@ object WsMsgIn {
       implicit lazy val PauseGameDecoder: Decoder[PauseWsGame] = decoder[PauseWsGame]("PauseGame")
     }
 
+    case class SkipAction(tableId: TableId, gameId: GameId, turn: Int) extends WsRiichiCmd
+
+    object SkipAction extends CaseClassCodec {
+      implicit lazy val SkipActionEncoder: Encoder[SkipAction] = encoder[SkipAction]("SkipAction")
+      implicit lazy val SkipActionDecoder: Decoder[SkipAction] = decoder[SkipAction]("SkipAction")
+    }
+
     case class DiscardTile(
       tableId: TableId,
       gameId: GameId,
@@ -179,6 +186,7 @@ object WsMsgIn {
       case c: JoinAsPlayer    => c.asJson
       case c: LeftAsPlayer    => c.asJson
       case c: GetState        => c.asJson
+      case c: SkipAction      => c.asJson
     }
 
     implicit lazy val WsRiichiCmdDecoder: Decoder[WsRiichiCmd] = Decoder.instance { cur =>
@@ -193,7 +201,8 @@ object WsMsgIn {
       DeclareRon.DeclareRonDecoder.apply(cur) orElse
       DeclareTsumo.DeclareTsumoDecoder.apply(cur) orElse
       StartWsGame.StartGameDecoder.apply(cur) orElse
-      PauseWsGame.PauseGameDecoder.apply(cur)
+      PauseWsGame.PauseGameDecoder.apply(cur) orElse
+      SkipAction.SkipActionDecoder.apply(cur)
     }
   }
 

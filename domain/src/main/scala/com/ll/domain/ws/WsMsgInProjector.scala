@@ -23,7 +23,7 @@ object WsMsgInProjector {
 
   }
 
-  private def riichiProjection(wsMsg: WsRiichiCmd, position: PlayerPosition[Riichi]): RiichiCmd = {
+  def riichiProjection(wsMsg: WsRiichiCmd, position: PlayerPosition[Riichi]): RiichiCmd = {
     wsMsg match {
       case WsRiichiCmd.StartWsGame(tableId, gameId, configOpt) =>
         RiichiCmd.StartGame(tableId, gameId, configOpt.getOrElse(RiichiConfig()))
@@ -39,6 +39,8 @@ object WsMsgInProjector {
         RiichiCmd.DiscardTile(tableId, gameId, tile, turn, position)
       case WsRiichiCmd.GetTileFromWall(tableId, gameId, turn) =>
         RiichiCmd.GetTileFromWall(tableId, gameId, turn, position)
+      case WsRiichiCmd.SkipAction(tableId, gameId, turn) =>
+        RiichiCmd.SkipAction(tableId, gameId, turn, position)
     }
   }
 }

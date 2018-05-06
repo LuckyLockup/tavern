@@ -34,6 +34,9 @@ case class AIService() {
           Thread.sleep(1000)
           List(RiichiCmd.DiscardTile(tableId, gameId, tile, turn + 1, aiPlayer.position))
         }
+      case WsMsgOut.Riichi.TileDiscarded(tableId, gameId, _, turn, _, head :: tail) =>
+        log.info(s"${aiPlayer.position} skipping action...")
+        Future.successful(List(RiichiCmd.SkipAction(tableId, gameId, turn + 1, aiPlayer.position)))
       case _                                                                            => Future.successful(Nil)
     }
   }

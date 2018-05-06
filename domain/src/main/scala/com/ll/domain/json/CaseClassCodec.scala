@@ -10,7 +10,7 @@ trait CaseClassCodec extends CommonTypesCodec {
   protected def decoder[T: DerivedDecoder](s: String): Decoder[T] = (c: HCursor) => {
     def decode(messageType: String, payload: Json): Decoder.Result[T] = messageType match {
       case _ if messageType == s => payload.as[T](deriveDecoder[T])
-      case _                     => Left(DecodingFailure(s"Message is not $messageType", Nil))
+      case _                     => Left(DecodingFailure(s"Message is not $messageType but $s", Nil))
     }
 
     for {

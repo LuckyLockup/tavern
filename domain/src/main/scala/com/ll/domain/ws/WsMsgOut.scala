@@ -8,6 +8,7 @@ import com.ll.domain.games.position.PlayerPosition
 import com.ll.domain.games.riichi.result.{GameScore, TablePoints}
 import com.ll.domain.json.CaseClassCodec
 import com.ll.domain.ws.WsMsgIn.WsRiichiCmd
+import com.ll.domain.ws.WsMsgOut.Riichi.TileClaimed.{decoder, encoder}
 import com.ll.domain.ws.WsRiichi.RiichiPlayerState
 import io.circe.{Decoder, Encoder}
 import io.circe.syntax._
@@ -182,6 +183,17 @@ object WsMsgOut {
     object TileClaimed extends CaseClassCodec {
       implicit lazy val TileClaimedEncoder: Encoder[TileClaimed] = encoder[TileClaimed]("TileClaimed")
       implicit lazy val TileClaimedDecoder: Decoder[TileClaimed] = decoder[TileClaimed]("TileClaimed")
+    }
+
+    case class ActionSkipped(
+      tableId: TableId,
+      gameId: GameId,
+      turn: Int
+    ) extends RiichiGameEvent
+
+    object ActionSkipped extends CaseClassCodec {
+      implicit lazy val ActionSkippedEncoder: Encoder[ActionSkipped] = encoder[ActionSkipped]("ActionSkipped")
+      implicit lazy val ActionSkippedDecoder: Decoder[ActionSkipped] = decoder[ActionSkipped]("ActionSkipped")
     }
 
     implicit lazy val RiichiGameEventEncoder: Encoder[RiichiGameEvent] = Encoder.instance {

@@ -68,13 +68,6 @@ class SinglePlayerTest extends Test {
     player1.ws ! WsRiichiCmd.StartWsGame(tableId, gameId)
     player1.ws.expectWsMsgT[WsMsgOut.Riichi.GameStarted]()
 
-    player1.ws ! WsRiichiCmd.GetState(tableId)
-    val state1: WsMsgOut.Riichi.RiichiState = player1.ws.expectWsMsg {
-      case state: WsMsgOut.Riichi.RiichiState =>
-        state.states.size should be(4)
-        state
-    }
-
     for {round <- 0 to 10} {
       val tileToDiscard =  player1.ws.expectWsMsg {
         case taken: WsMsgOut.Riichi.TileFromWallTaken =>
@@ -95,17 +88,18 @@ class SinglePlayerTest extends Test {
             tileTaken
         }
 
-        player1.ws.expectWsMsg {
+        val discared = player1.ws.expectWsMsg {
           case tileDiscarded: WsMsgOut.Riichi.TileDiscarded =>
             tileDiscarded.position should be(pos)
             tileDiscarded
         }
-      }
-      player1.ws ! WsRiichiCmd.GetState(tableId)
-      player1.ws.expectWsMsg {
-        case state: WsMsgOut.Riichi.RiichiState =>
-          state.states.size should be(4)
-          state
+        discared.commands.map{
+          case cmd: WsRiichiCmd.ClaimChow => cmd.turn
+          case cmd: WsRiichiCmd.ClaimPung => cmd.turn
+//          case cmd: WsRiichiCmd.DeclareRon => cmd.turn
+        }.foreach {turn =>
+          player1.ws ! WsRiichiCmd.SkipAction(tableId, gameId, turn)
+        }
       }
     }
   }

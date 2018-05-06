@@ -26,6 +26,8 @@ object TableCmd {
 
     case class PauseGame(tableId: TableId, gameId: GameId) extends RiichiCmd
 
+    case class SkipAction(tableId: TableId, gameId: GameId, turn: Int, playerPosition: PlayerPosition[Riichi]) extends RiichiCmd
+
     case class DiscardTile(
       tableId: TableId,
       gameId: GameId,

@@ -40,6 +40,7 @@ object CommandPredictor {
         )
         st.player.position -> (declarePungs.toList ::: declareChow ::: declareRon.toList)
       }
+      .filter{case (_, commands) => commands.nonEmpty}
       .toMap
   }
 
