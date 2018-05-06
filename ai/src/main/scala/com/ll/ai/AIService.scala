@@ -17,7 +17,6 @@ case class AIService() {
     aiPlayer: AIPlayer[GT],
     outEvent: WsMsgOut,
     state: WsMsgOut.TableState[GT]): Future[List[TableCmd[_]]] = {
-    log.info(s"$aiPlayer received: $outEvent")
     (aiPlayer, state) match {
       case (riichiAi: AIPlayer[Riichi], riichiState: WsMsgOut.Riichi.RiichiTableState) =>
         processRiichiEvent(riichiAi, outEvent, riichiState)
@@ -30,8 +29,8 @@ case class AIService() {
     state: WsMsgOut.TableState[Riichi]): Future[List[TableCmd[Riichi]]] = {
     outEvent match {
       case WsMsgOut.Riichi.TileFromWallTaken(tableId, gameId, tile, turn, aiPlayer.position, _) =>
+        log.info(s"$aiPlayer discarding: $tile")
         Future.successful {
-          Thread.sleep(1000)
           List(RiichiCmd.DiscardTile(tableId, gameId, tile, turn + 1, aiPlayer.position))
         }
       case WsMsgOut.Riichi.TileDiscarded(tableId, gameId, _, turn, _, head :: tail) =>

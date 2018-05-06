@@ -206,19 +206,21 @@ object WsMsgOut {
       case c: TsumoDeclared => c.asJson
       case c: GameScored => c.asJson
       case c: TileClaimed => c.asJson
+      case c: ActionSkipped => c.asJson
     }
 
     implicit lazy val RiichiGameEventDecoder: Decoder[RiichiGameEvent] = Decoder.instance { cur =>
       import cats.syntax.either._
       GameStarted.GameStartedDecoder.apply(cur) orElse
-        GamePaused.GamePausedDecoder.apply(cur) orElse
-        PlayerJoinedTable.PlayerJoinedTableDecoder.apply(cur) orElse
-        PlayerLeftTable.PlayerLeftTableDecoder.apply(cur) orElse
-        TileFromWallTaken.TileFromWallTakenDecoder.apply(cur) orElse
-        TileDiscarded.TileDiscardedDecoder.apply(cur) orElse
-        TsumoDeclared.TsumoDeclaredDecoder.apply(cur) orElse
-        GameScored.GameScoredDecoder.apply(cur) orElse
-        TileClaimed.TileClaimedDecoder.apply(cur)
+      GamePaused.GamePausedDecoder.apply(cur) orElse
+      PlayerJoinedTable.PlayerJoinedTableDecoder.apply(cur) orElse
+      PlayerLeftTable.PlayerLeftTableDecoder.apply(cur) orElse
+      TileFromWallTaken.TileFromWallTakenDecoder.apply(cur) orElse
+      TileDiscarded.TileDiscardedDecoder.apply(cur) orElse
+      TsumoDeclared.TsumoDeclaredDecoder.apply(cur) orElse
+      GameScored.GameScoredDecoder.apply(cur) orElse
+      TileClaimed.TileClaimedDecoder.apply(cur) orElse
+      ActionSkipped.ActionSkippedDecoder.apply(cur)
     }
   }
 

@@ -27,7 +27,7 @@ class TablesService(pubSub: PubSub, config: ServerConfig, aIService: AIService)(
     tables.get(tableId) match {
       case Some(ar) =>
         log.info("Table is already created")
-        ar ! CommandEnvelop(WsRiichiCmd.GetState(tableId), Right(user))
+        ar ! CommandEnvelop(WsRiichiCmd.GetState(tableId), user)
       case None =>
         log.info(s"Creating table for $tableId")
         val table: RiichiTableState = NoGameOnTable(user, tableId)
@@ -54,7 +54,7 @@ class TablesService(pubSub: PubSub, config: ServerConfig, aIService: AIService)(
           actorRef ! PoisonPill
           tables -= tableId
         }
-        actorRef ! CommandEnvelop(WsRiichiCmd.GetState(tableId), Right(user))
+        actorRef ! CommandEnvelop(WsRiichiCmd.GetState(tableId), user)
     }
   }
 
@@ -62,7 +62,7 @@ class TablesService(pubSub: PubSub, config: ServerConfig, aIService: AIService)(
     if (tables.get(env.tableId).isEmpty) {
       log.warn(s"Message is sent to non existing tabled: ${env.tableId}")
       val error = WsMsgOut.ValidationError(s"${env.cmd.tableId} doesn't exist")
-      pubSub.send(Some(env.sender), error)
+      pubSub.sendToUser(env.sender.id, error)
     }
     tables.get(env.tableId).foreach(ar => ar ! env)
   }

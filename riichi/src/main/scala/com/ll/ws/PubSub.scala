@@ -58,7 +58,7 @@ class PubSub()(implicit system: ActorSystem, mat: Materializer) extends Logging 
           actorRef ! WsMsgOut.Pong(n)
           Future.successful("Pong!")
         case msg: WsMsgIn.WsTableCmd =>
-          tables.sendToGame(CommandEnvelop(msg, Right(user)))
+          tables.sendToGame(CommandEnvelop(msg, user))
           Future.successful {"Done"}
       }
       .to(Sink.ignore)
@@ -68,11 +68,6 @@ class PubSub()(implicit system: ActorSystem, mat: Materializer) extends Logging 
     Flow.fromSinkAndSource(sink, Source.fromPublisher(publisher))
   }
 
-  def send(sender: Option[Either[ServiceId, User]], msg: WsMsgOut) = sender.foreach{
-    case Left(serviceId) => sendToService(serviceId, msg)
-    case Right(user)   => sendToUser(user.id, msg)
-  }
-
   def sendToUser(id: UserId, msg: WsMsgOut): Unit = wsConnections.get(id).foreach { ar =>
     log.info(s"$id >>> ${WsMsgCodec.encodeWsMsg(msg)}")
     ar ! msg
@@ -80,18 +75,11 @@ class PubSub()(implicit system: ActorSystem, mat: Materializer) extends Logging 
 
   def sendToUsers(ids: Set[UserId], msg: WsMsgOut): Unit = {
     val validUsers = ids.intersect(wsConnections.keySet)
-    log.info(s"[${validUsers.size}] >>> ${WsMsgCodec.encodeWsMsg(msg)}")
+    val to = if (validUsers.size == 1) validUsers.map(_.id).mkString(",") else { validUsers.size.toString}
+    log.info(s"[$to] >>> ${WsMsgCodec.encodeWsMsg(msg)}")
     validUsers.foreach { id =>
       wsConnections.get(id).foreach(ar => ar ! msg)
     }
-  }
-
-  def sendToService(id: ServiceId, msg: WsMsgOut): Unit = {
-    log.info(s"Sending to service id $id $msg")
-  }
-
-  def sendToService(ids: Set[ServiceId], msg: WsMsgOut): Unit = {
-    log.info(s"Sending to service id $ids $msg")
   }
 }
 

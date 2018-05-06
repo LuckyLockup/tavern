@@ -41,45 +41,41 @@ class TableActor[GT <: GameType, S <: TableState[GT, S] : ClassTag](
     case env@CommandEnvelop(wsCmd, user) =>
       wsCmd match {
         case SpectacularCmd.JoinAsSpectacular(_) =>
-          user.foreach { humanUser =>
-            spectaculars += humanUser
-            pubSub.sendToUsers(allUsers, WsMsgOut.SpectacularJoinedTable(humanUser, tableId))
-          }
+            spectaculars += user
+            pubSub.sendToUsers(allUsers, WsMsgOut.SpectacularJoinedTable(user, tableId))
 
         case SpectacularCmd.LeftAsSpectacular(_) =>
-          user.foreach { humanUser =>
-            spectaculars -= humanUser
-            pubSub.sendToUsers(allUsers, WsMsgOut.SpectacularLeftTable(humanUser, tableId))
-          }
+            spectaculars -= user
+            pubSub.sendToUsers(allUsers, WsMsgOut.SpectacularLeftTable(user, tableId))
         case WsRiichiCmd.JoinAsPlayer(tableId)   =>
-          processCmd(TableCmd.JoinAsPlayer(tableId, env.sender), Some(user))
+          processCmd(TableCmd.JoinAsPlayer(tableId, Right(env.sender)), Some(user))
 
         case WsRiichiCmd.LeftAsPlayer(tableId) =>
-          processCmd(TableCmd.LeftAsPlayer(tableId, env.sender), Some(user))
+          processCmd(TableCmd.LeftAsPlayer(tableId, Right(env.sender)), Some(user))
 
         case WsRiichiCmd.GetState(_) =>
-          val position = _table.getPosition(user)
-          pubSub.send(Some(user), _table.projection(position.toOption))
+          val position = _table.getPosition(Right(user))
+           pubSub.sendToUser(user.id, _table.projection(position.toOption))
 
         case gameCmd: WsGameCmd[GT] =>
           //all commands in websocket must come from the player, so position must be always presented
           val cmdV: Either[WsMsgOut.ValidationError, TableCmd[GT]] = for {
-            position <- _table.getPosition(user)
+            position <- _table.getPosition(Right(user))
           } yield WsMsgInProjector.projection(gameCmd, position)
 
           cmdV match {
             case Right(cmd)  => processCmd(cmd, Some(user))
-            case Left(error) => pubSub.send(Some(user), error)
+            case Left(error) => pubSub.sendToUser(user.id, error)
           }
       }
     case cmd: TableCmd[GT]               => processCmd(cmd, None)
   }
 
-  def processCmd(cmd: TableCmd[GT], senderId: Option[Either[ServiceId, User]]) = {
+  def processCmd(cmd: TableCmd[GT], senderId: Option[User]) = {
     try {
       log.info(s"${table.tableId} Processing $cmd from $senderId")
       _table.validateCmd(cmd) match {
-        case Left(error)   => pubSub.send(senderId, error)
+        case Left(error)   => senderId.foreach(user =>  pubSub.sendToUser(user.id, error))
         case Right(events) =>
           persistAll(events) { event =>
             val (cmds, newState) = _table.applyEvent(event)

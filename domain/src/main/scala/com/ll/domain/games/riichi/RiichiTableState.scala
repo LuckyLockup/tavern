@@ -176,7 +176,6 @@ case class GameStarted(
       }
       val nextTurn = this.turn + 1
       val nextAutoCmd = RiichiCmd.GetTileFromWall(tableId, gameId, nextTurn, position.nextPosition)
-      println(s"Actions should be empty $actions and command is immediate")
       if (actions.isEmpty) {
         val updatedState = this.copy(
           playerStates = updatedStates,

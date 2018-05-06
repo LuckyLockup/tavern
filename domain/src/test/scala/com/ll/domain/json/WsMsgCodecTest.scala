@@ -96,7 +96,25 @@ class WsMsgCodecTest extends WordSpec with Matchers {
           |  "type": "RiichiState",
           |  "payload": {
           |    "tableId": "table_22",
-          |    "players": []
+          |    "admin": {
+          |      "id": 42,
+          |      "nickname": "Akagi"
+          |    },
+          |    "states": [],
+          |    "uraDoras": [],
+          |    "deck": 0,
+          |    "turn": 0,
+          |    "points": {
+          |      "type": "TablePoints",
+          |      "payload": {
+          |        "points": {
+          |          "EastPosition": 25000,
+          |          "SouthPosition": 25000,
+          |          "WestPosition": 25000,
+          |          "NorthPosition": 25000
+          |        }
+          |      }
+          |    }
           |  }
           |}
         """.stripMargin),
@@ -123,17 +141,28 @@ class WsMsgCodecTest extends WordSpec with Matchers {
   }
 
   abstract class InMessages extends Common {
-
+    import com.ll.domain.ws.WsMsgIn.WsRiichiCmd._
 
     val testData: List[(WsMsgIn, String)] = List(
       (Ping(42), """{"type":"Ping","payload":{"id":42}}"""),
-      (StartWsGame(tableId, gameId),
+      (StartWsGame(tableId, gameId, None),
         """
           |{
           |  "type": "StartGame",
           |  "payload": {
           |    "tableId": "test_table",
           |    "gameId": 100
+          |  }
+          |}
+        """.stripMargin),
+      (SkipAction(tableId, gameId, 42),
+        """
+          |{
+          |  "type": "SkipAction",
+          |  "payload": {
+          |    "tableId": "test_table",
+          |    "gameId": 100,
+          |    "turn": 42
           |  }
           |}
         """.stripMargin)

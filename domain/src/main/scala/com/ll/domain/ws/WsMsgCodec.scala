@@ -1,10 +1,11 @@
 package com.ll.domain.ws
 
-import io.circe.DecodingFailure
+import io.circe.{DecodingFailure, Printer}
 import io.circe.parser._
 import io.circe.syntax._
 
 object WsMsgCodec {
+  val printer = Printer.noSpaces.copy(dropNullValues = true)
 
   def decodeWsMsg(json: String): Either[DecodingFailure, WsMsgIn] = {
     parse(json)
@@ -16,7 +17,7 @@ object WsMsgCodec {
   }
 
   def encodeWsMsg(msg: WsMsgOut): String = {
-    msg.asJson.noSpaces
+    printer.pretty(msg.asJson)
   }
 
   object Test {
@@ -30,7 +31,7 @@ object WsMsgCodec {
     }
 
     def encodeWsInMsg(msg: WsMsgIn): String = {
-      msg.asJson.noSpaces
+      printer.pretty(msg.asJson)
     }
   }
 }

@@ -1,8 +1,6 @@
 package com.ll.tests.riichitests
 
-import com.ll.domain.auth.UserId
 import com.ll.domain.games.position.PlayerPosition.RiichiPosition
-import com.ll.domain.games.riichi.RiichiConfig
 import com.ll.domain.ws.WsMsgIn.WsRiichiCmd
 import com.ll.domain.ws.WsMsgOut
 import com.ll.utils.{CommonData, Test}
@@ -99,6 +97,11 @@ class SinglePlayerTest extends Test {
 //          case cmd: WsRiichiCmd.DeclareRon => cmd.turn
         }.foreach {turn =>
           player1.ws ! WsRiichiCmd.SkipAction(tableId, gameId, turn)
+          player1.ws.expectWsMsg {
+            case skipped: WsMsgOut.Riichi.ActionSkipped =>
+              skipped.turn should be (turn)
+              skipped
+          }
         }
       }
     }
