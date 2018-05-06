@@ -5,7 +5,6 @@ import com.ll.domain.auth.User
 import com.ll.domain.games.GameType.Riichi
 import com.ll.domain.games.position.PlayerPosition
 import com.ll.domain.games.riichi.RiichiConfig
-import com.ll.domain.games.riichi.result.HandValue
 import com.ll.domain.games.{GameId, GameType, TableId}
 
 sealed trait TableCmd[GT <: GameType] {
@@ -19,7 +18,10 @@ object TableCmd {
 
   case class GetState[GT <: GameType](tableId: TableId, position: Option[PlayerPosition[Riichi]]) extends TableCmd[GT]
 
-  sealed trait RiichiCmd extends TableCmd[Riichi]
+  sealed trait RiichiCmd extends TableCmd[Riichi] {
+    //TODO add position, turn, gameId
+  }
+
 
   object RiichiCmd {
     case class StartGame(tableId: TableId, gameId: GameId, config: RiichiConfig) extends RiichiCmd

@@ -123,9 +123,11 @@ case class GameStarted(
         state <- getPlayerState(position).asEither(s"No player at $position")
         newTile <- state.currentTile.asEither("You can declare tsumo only on your tile from the wall")
         handValue <- HandValue.computeTsumoOnTile(newTile, state).asEither("Your hand is not winning.")
+        //TODO add open doras event and gameScored events
       } yield List(RiichiEvent.TsumoDeclared(tableId, gameId, turn, state.player.position))
 
-    case RiichiCmd.ScoreGame(_, _)                                     =>
+    case RiichiCmd.ScoreGame(_, _) =>
+      //TODO remove command
       val winingHand = this.playerStates.flatMap(st => HandValue.computeWin(st)).headOption
       winingHand match {
         case Some((winner, value)) =>
@@ -140,7 +142,7 @@ case class GameStarted(
           val event = RiichiEvent.GameScored(tableId, gameId, turn, score)
           Right(List(event))
         case None                  => Left(ValidationError("No winniing hand"))
-        //TODO add tempai
+        //TODO add few players in tempai
       }
     case RiichiCmd.ClaimPung(_, _, from, commandTurn, tiles, position) =>
       for {
