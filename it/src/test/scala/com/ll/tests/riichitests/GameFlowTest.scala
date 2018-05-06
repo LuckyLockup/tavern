@@ -1,4 +1,4 @@
-package com.ll.riichitests
+package com.ll.tests.riichitests
 
 import com.ll.domain.auth.UserId
 import com.ll.domain.ws.WsMsgIn.WsRiichiCmd
@@ -7,11 +7,11 @@ import com.ll.utils.{CommonData, Test}
 
 class GameFlowTest extends Test{
   "Start game with 4 players" in new CommonData {
-    val player1 = createNewPlayer(UserId(101))
-    val player2 = createNewPlayer(UserId(102))
-    val player3 = createNewPlayer(UserId(103))
-    val player4 = createNewPlayer(UserId(104))
-    val player5 = createNewPlayer(UserId(105))
+    val player1 = createNewPlayer()
+    val player2 = createNewPlayer()
+    val player3 = createNewPlayer()
+    val player4 = createNewPlayer()
+    val player5 = createNewPlayer()
 
     player1.ws ! WsMsgIn.Ping(23)
     player1.ws.expectWsMsgT[WsMsgOut.Pong]()

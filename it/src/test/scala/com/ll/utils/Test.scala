@@ -8,6 +8,7 @@ import com.ll.domain.auth.UserId
 import org.scalatest._
 import pureconfig._
 
+import scala.util.Random
 import scala.util.control.NonFatal
 
 abstract class Test extends TestKit(ActorSystem("MySpec")) with ImplicitSender
@@ -30,7 +31,9 @@ abstract class Test extends TestKit(ActorSystem("MySpec")) with ImplicitSender
 
   val http: HttpExt = Http()
 
-  def createNewPlayer(userId: UserId) = {
+  def createNewPlayer() = {
+    val id = Stream.continually(Random.nextInt(10000)).find(id => connections.get(UserId(id)).isEmpty).get
+    val userId = UserId(id)
     connections.get(userId).foreach(_.closeConnection())
     val ws = new WsConnection(userId, system, materializer, http, config)
     connections += (userId -> ws)

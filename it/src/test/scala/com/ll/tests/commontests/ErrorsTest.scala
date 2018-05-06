@@ -1,4 +1,4 @@
-package com.ll.commontests
+package com.ll.tests.commontests
 
 import com.ll.domain.games.TableId
 import com.ll.domain.ws.WsMsgIn.WsRiichiCmd
@@ -7,7 +7,7 @@ import com.ll.utils.{CommonData, Test}
 
 class ErrorsTest extends Test {
   "Get state for not existing table" in new CommonData {
-    val player = createNewPlayer(userId)
+    val player = createNewPlayer()
 
     player.ws ! WsMsgIn.Ping(22)
     player.ws.expectWsMsgT[WsMsgOut.Pong]()

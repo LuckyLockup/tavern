@@ -1,4 +1,4 @@
-package com.ll.riichitests
+package com.ll.tests.riichitests
 
 import com.ll.domain.auth.UserId
 import com.ll.domain.games.position.PlayerPosition.RiichiPosition
@@ -9,7 +9,7 @@ import com.ll.utils.{CommonData, Test}
 
 class RiichiRonTest extends Test {
   "Declaring riichi with ron" in new CommonData {
-    val player1 = createNewPlayer(UserId(101))
+    val player1 = createNewPlayer()
 
     player1.createTable(tableId)
     player1.ws.expectWsMsgT[WsMsgOut.Riichi.RiichiState]()

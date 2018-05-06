@@ -133,7 +133,7 @@ class TableActor[GT <: GameType, S <: TableState[GT, S] : ClassTag](
 
     private def dispatchToAi(ev: TableEvent[GT]) = {
       //TODO refactor into one for each.
-      table.players.collect { case p: AIPlayer[GT] => p }.foreach { ai =>
+      _table.players.collect { case p: AIPlayer[GT] => p }.foreach { ai =>
         aiService.processEvent(
           ai,
           ev.projection(Some(ai.position)),
