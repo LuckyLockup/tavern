@@ -20,8 +20,8 @@ object WsMsgOutProjector {
     event match {
       case RiichiEvent.PlayerJoined(tableId, player) =>
         WsMsgOut.Riichi.PlayerJoinedTable(tableId, player).some
-//      case RiichiEvent.PlayerLeft(tableId, player) =>
-//        WsMsgOut.Riichi.PlayerLeft(tableId, player)
+      case RiichiEvent.PlayerLeft(tableId, player) =>
+        WsMsgOut.Riichi.PlayerLeftTable(tableId, player).some
       case RiichiEvent.GameStarted(tableId, gameId, config) =>
         WsMsgOut.Riichi.GameStarted(tableId, gameId, 1).some
       case RiichiEvent.GamePaused(tableId, gameId, turn)          =>

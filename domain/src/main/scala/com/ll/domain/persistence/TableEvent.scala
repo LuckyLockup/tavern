@@ -73,6 +73,7 @@ object RiichiEvent {
     tableId: TableId,
     gameId: GameId,
     turn: Int,
+    from: PlayerPosition[Riichi],
     position: PlayerPosition[Riichi]
   ) extends RiichiGameEvent
 

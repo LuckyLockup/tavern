@@ -107,7 +107,7 @@ object WsMsgOut {
         decoder[PlayerJoinedTable]("PlayerJoinedTable")
     }
 
-    case class PlayerLeftTable(tableId: TableId, user: HumanPlayer[Riichi]) extends RiichiGameEvent {
+    case class PlayerLeftTable(tableId: TableId, user: Player[Riichi]) extends RiichiGameEvent {
       def turn = 0
     }
 

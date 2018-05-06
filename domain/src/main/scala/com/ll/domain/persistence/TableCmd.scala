@@ -65,9 +65,9 @@ object TableCmd {
     case class DeclareRon(
       tableId: TableId,
       gameId: GameId,
+      turn: Int,
       position: PlayerPosition[Riichi]
     ) extends RiichiCmd
-
 
     case class DeclareTsumo(
       tableId: TableId,

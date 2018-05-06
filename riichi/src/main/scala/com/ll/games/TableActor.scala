@@ -37,16 +37,27 @@ class TableActor[GT <: GameType, S <: TableState[GT, S] : ClassTag](
   }
 
   val receiveCommand: Receive = {
+    case msg =>
+      try {
+        receiveMsg(msg)
+      } catch {
+        case ex: Exception =>
+          log.error("Exception in actor", ex)
+          sender ! akka.actor.Status.Failure(ex)
+          throw ex
+      }
+  }
 
+  def receiveMsg: Receive = {
     case env@CommandEnvelop(wsCmd, user) =>
       wsCmd match {
         case SpectacularCmd.JoinAsSpectacular(_) =>
-            spectaculars += user
-            pubSub.sendToUsers(allUsers, WsMsgOut.SpectacularJoinedTable(user, tableId))
+          spectaculars += user
+          pubSub.sendToUsers(allUsers, WsMsgOut.SpectacularJoinedTable(user, tableId))
 
         case SpectacularCmd.LeftAsSpectacular(_) =>
-            spectaculars -= user
-            pubSub.sendToUsers(allUsers, WsMsgOut.SpectacularLeftTable(user, tableId))
+          spectaculars -= user
+          pubSub.sendToUsers(allUsers, WsMsgOut.SpectacularLeftTable(user, tableId))
         case WsRiichiCmd.JoinAsPlayer(tableId)   =>
           processCmd(TableCmd.JoinAsPlayer(tableId, Right(env.sender)), Some(user))
 
@@ -55,7 +66,7 @@ class TableActor[GT <: GameType, S <: TableState[GT, S] : ClassTag](
 
         case WsRiichiCmd.GetState(_) =>
           val position = _table.getPosition(Right(user))
-           pubSub.sendToUser(user.id, _table.projection(position.toOption))
+          pubSub.sendToUser(user.id, _table.projection(position.toOption))
 
         case gameCmd: WsGameCmd[GT] =>
           //all commands in websocket must come from the player, so position must be always presented
@@ -72,28 +83,21 @@ class TableActor[GT <: GameType, S <: TableState[GT, S] : ClassTag](
   }
 
   def processCmd(cmd: TableCmd[GT], senderId: Option[User]) = {
-    try {
-      log.info(s"${table.tableId} Processing $cmd from $senderId")
-      _table.validateCmd(cmd) match {
-        case Left(error)   => senderId.foreach(user =>  pubSub.sendToUser(user.id, error))
-        case Right(events) =>
-          persistAll(events) { event =>
-            val (cmds, newState) = _table.applyEvent(event)
-            _table = newState
-            cmds.foreach {
-              case ScheduledCommand(duration, sccmd) =>
-                val nextCmd = context.system.scheduler.scheduleOnce(duration, self, sccmd)
-                scheduledCommand.foreach(_.cancel())
-                scheduledCommand = Some(nextCmd)
-            }
-            Eff.dispatch(event)
+    log.info(s"${table.tableId} Processing $cmd from $senderId")
+    _table.validateCmd(cmd) match {
+      case Left(error)   => senderId.foreach(user => pubSub.sendToUser(user.id, error))
+      case Right(events) =>
+        persistAll(events) { event =>
+          val (cmds, newState) = _table.applyEvent(event)
+          _table = newState
+          cmds.foreach {
+            case ScheduledCommand(duration, sccmd) =>
+              val nextCmd = context.system.scheduler.scheduleOnce(duration, self, sccmd)
+              scheduledCommand.foreach(_.cancel())
+              scheduledCommand = Some(nextCmd)
+          }
+          Eff.dispatch(event)
         }
-      }
-    } catch {
-      case ex: Exception =>
-        log.error("Exception in actor", ex)
-        sender ! akka.actor.Status.Failure(ex)
-        throw ex
     }
   }
 
@@ -130,7 +134,7 @@ class TableActor[GT <: GameType, S <: TableState[GT, S] : ClassTag](
     private def dispatchToAi(ev: TableEvent[GT]) = {
       //TODO refactor into one for each.
       _table.players.collect { case p: AIPlayer[GT] => p }.foreach { ai =>
-        ev.projection(Some(ai.position)).foreach{ event =>
+        ev.projection(Some(ai.position)).foreach { event =>
           aiService.processEvent(
             ai,
             event,

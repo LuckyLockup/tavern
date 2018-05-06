@@ -155,6 +155,7 @@ object WsMsgIn {
     case class DeclareRon(
       tableId: TableId,
       gameId: GameId,
+      turn: Int,
       approximateHandValue: HandValue
     ) extends WsRiichiCmd
 

@@ -38,6 +38,14 @@ class TsumoTest extends Test {
     )))
     player1.ws.expectWsMsgT[WsMsgOut.Riichi.GameStarted]()
 
+    val tileFromTheWall = player1.ws.expectWsMsg {
+      case fromTheWall: WsMsgOut.Riichi.TileFromWallTaken =>
+        fromTheWall.position should be(RiichiPosition.EastPosition)
+        fromTheWall.tile should be(wallTiles.head)
+        fromTheWall.commands.head should be(WsRiichiCmd.DeclareTsumo(tableId, gameId, Some(HandValue(1, 1))))
+        fromTheWall
+    }
+
     player1.ws ! WsRiichiCmd.GetState(tableId)
     val state1: WsMsgOut.Riichi.RiichiState = player1.ws.expectWsMsg {
       case state: WsMsgOut.Riichi.RiichiState =>
@@ -45,13 +53,6 @@ class TsumoTest extends Test {
         state.uraDoras should contain theSameElementsAs uraDoras
         state.states.head.closedHand should contain theSameElementsAs eastHand
         state
-    }
-    val tileFromTheWall = player1.ws.expectWsMsg {
-      case fromTheWall: WsMsgOut.Riichi.TileFromWallTaken =>
-        fromTheWall.position should be(RiichiPosition.EastPosition)
-        fromTheWall.tile should be(wallTiles.head)
-        fromTheWall.commands.head should be(WsRiichiCmd.DeclareTsumo(tableId, gameId, Some(HandValue(1, 1))))
-        fromTheWall
     }
     player1.ws ! tileFromTheWall.commands.head.asInstanceOf[WsRiichiCmd.DeclareTsumo].copy(approxHandValue = None)
 

@@ -31,8 +31,8 @@ object WsMsgInProjector {
         RiichiCmd.ClaimChow(tableId, gameId, from, turn, tiles, position)
       case WsRiichiCmd.ClaimPung(tableId, gameId, from, turn, tiles) =>
         RiichiCmd.ClaimPung(tableId, gameId, from, turn, tiles,  position)
-      case WsRiichiCmd.DeclareRon(tableId, gameId, _) =>
-        RiichiCmd.DeclareRon(tableId, gameId, position)
+      case WsRiichiCmd.DeclareRon(tableId, gameId, turn, _) =>
+        RiichiCmd.DeclareRon(tableId, gameId, turn, position)
       case WsRiichiCmd.DeclareTsumo(tableId, gameId, _) =>
         RiichiCmd.DeclareTsumo(tableId, gameId, position)
       case WsRiichiCmd.DiscardTile(tableId, gameId, tile, turn) =>

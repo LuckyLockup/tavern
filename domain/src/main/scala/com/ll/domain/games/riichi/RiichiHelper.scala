@@ -23,7 +23,7 @@ object RiichiHelper {
     val west = generatePlayer(RiichiPosition.WestPosition)
     val north = generatePlayer(RiichiPosition.NorthPosition)
 
-    val game = GameStarted(
+    GameStarted(
       admin = table.admin,
       tableId = table.tableId,
       gameId = gameId,
@@ -39,6 +39,5 @@ object RiichiHelper {
       config = config,
       table.points
     )
-    game
   }
 }
