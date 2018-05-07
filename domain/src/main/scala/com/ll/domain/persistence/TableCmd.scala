@@ -19,16 +19,20 @@ object TableCmd {
   case class GetState[GT <: GameType](tableId: TableId, position: Option[PlayerPosition[Riichi]]) extends TableCmd[GT]
 
   sealed trait RiichiCmd extends TableCmd[Riichi] {
-    //TODO add position, turn, gameId
+    def position: PlayerPosition[Riichi]
   }
 
 
   object RiichiCmd {
-    case class StartGame(tableId: TableId, gameId: GameId, config: RiichiConfig) extends RiichiCmd
+    case class StartGame(tableId: TableId, gameId: GameId, config: RiichiConfig) extends RiichiCmd {
+      def position =  PlayerPosition.RiichiPosition.EastPosition
+    }
 
-    case class PauseGame(tableId: TableId, gameId: GameId) extends RiichiCmd
+    case class PauseGame(tableId: TableId, gameId: GameId) extends RiichiCmd {
+      def position =  PlayerPosition.RiichiPosition.EastPosition
+    }
 
-    case class SkipAction(tableId: TableId, gameId: GameId, turn: Int, playerPosition: PlayerPosition[Riichi]) extends RiichiCmd
+    case class SkipAction(tableId: TableId, gameId: GameId, turn: Int, position: PlayerPosition[Riichi]) extends RiichiCmd
 
     case class DiscardTile(
       tableId: TableId,
@@ -37,7 +41,7 @@ object TableCmd {
       turn: Int,
       position: PlayerPosition[Riichi]) extends RiichiCmd
 
-    case class GetTileFromWall(
+    case class GetTileFromTheWall(
       tableId: TableId,
       gameId: GameId,
       turn: Int,
@@ -65,6 +69,7 @@ object TableCmd {
     case class DeclareRon(
       tableId: TableId,
       gameId: GameId,
+      from: PlayerPosition[Riichi],
       turn: Int,
       position: PlayerPosition[Riichi]
     ) extends RiichiCmd
@@ -73,11 +78,6 @@ object TableCmd {
       tableId: TableId,
       gameId: GameId,
       position: PlayerPosition[Riichi]
-    ) extends RiichiCmd
-
-    case class ScoreGame(
-      tableId: TableId,
-      gameId: GameId
     ) extends RiichiCmd
   }
 }

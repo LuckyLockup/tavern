@@ -38,7 +38,7 @@ object WsMsgInProjector {
       case WsRiichiCmd.DiscardTile(tableId, gameId, tile, turn) =>
         RiichiCmd.DiscardTile(tableId, gameId, tile, turn, position)
       case WsRiichiCmd.GetTileFromWall(tableId, gameId, turn) =>
-        RiichiCmd.GetTileFromWall(tableId, gameId, turn, position)
+        RiichiCmd.GetTileFromTheWall(tableId, gameId, turn, position)
       case WsRiichiCmd.SkipAction(tableId, gameId, turn) =>
         RiichiCmd.SkipAction(tableId, gameId, turn, position)
     }

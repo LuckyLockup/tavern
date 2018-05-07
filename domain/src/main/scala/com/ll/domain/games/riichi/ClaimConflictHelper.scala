@@ -6,51 +6,72 @@ import com.ll.domain.persistence.TableCmd.RiichiCmd
 import com.ll.domain.persistence.TableCmd.RiichiCmd.{ClaimChow, ClaimPung, DeclareRon}
 import com.ll.domain.persistence.{RiichiEvent, TableCmd, TableEvent}
 
-
 object ClaimConflictHelper {
   type Actions = Map[PlayerPosition[Riichi], List[RiichiCmd]]
 
   def resolveRon(
-    possibleActions: Actions,
-    pendingCmds: List[RiichiCmd],
-    cmd: DeclareRon,
-    config: RiichiConfig
-  ): Either[(Actions, List[TableCmd[Riichi]]), TableEvent[Riichi]] = {
-    val possibleActionsForOtherPlayers: List[RiichiCmd] = possibleActions.flatMap {
-      case (pos, _) if pos == cmd.position => Nil
-      case (_, cmds)                       => cmds
-    }.toList
-    val rons = possibleActionsForOtherPlayers.collect { case c: DeclareRon => c }.size
-    if (rons != 0) {
-      Left((possibleActions - cmd.position, cmd :: pendingCmds))
-    } else {
-      //TODO double Ron and triple ron.
-      Right(resolveCommands(cmd :: pendingCmds))
-    }
+    possibleCmds: List[RiichiCmd],
+    pendingEvents: PendingEvents,
+    config: RiichiConfig,
+    ron: DeclareRon,
+  ): Either[(List[TableCmd[Riichi]], PendingEvents), TableEvent[Riichi]] = {
+    val rons = possibleCmds
+      .collect { case cmd: RiichiCmd.DeclareRon => cmd }
+      .map(ron => RiichiEvent.RonDeclared(ron.tableId, ron.gameId, ron.turn, ron.position, ron.from))
+    Right(resolveEvents(pendingEvents.copy(rons = rons), config))
   }
 
   def resolvePung(
-    possibleActions: Actions,
-    pendingCmds: List[RiichiCmd],
-    cmd: ClaimPung,
-    config: RiichiConfig
-  ): Either[(Actions, List[TableCmd[Riichi]]), RiichiCmd] = {
-   ???
+    possibleCmds: List[RiichiCmd],
+    pendingEvents: PendingEvents,
+    config: RiichiConfig,
+    pung: ClaimPung,
+  ): Either[(List[TableCmd[Riichi]], PendingEvents), TableEvent[Riichi]] = {
+    val newCmds = possibleCmds.filter(cmd => cmd.position != pung.position)
+    val rons = newCmds.collect { case cmd: RiichiCmd.DeclareRon => cmd }
+    val newPendingEvent = pendingEvents.copy(pung = Some(RiichiEvent.PungClaimed(pung.tableId, pung.gameId, pung.turn, pung.position, pung.tiles, pung.from)))
+    if (rons.nonEmpty) {
+      Left((newCmds, newPendingEvent))
+    } else {
+      Right(resolveEvents(newPendingEvent, config))
+    }
   }
 
-  def resolveCommands(pendingCmds: List[RiichiCmd]): TableEvent[Riichi] = {
-    lazy val rons = pendingCmds.collect { case c: DeclareRon => c }
-    lazy val chows = pendingCmds.collect { case c: ClaimChow => c }
-    lazy val pungs = pendingCmds.collect { case c: ClaimPung => c }
-    lazy val scheduledCommand = pendingCmds.last
-
-    (rons, pungs, chows) match {
-      case (Nil, Nil, Nil) => ??? //TODO scheduled command
-      case (Nil, Nil, chow :: tail) => ??? //TODO declare chow
-      case (Nil, pung :: tail, _) => ??? //TOOD declare pung
-      case (ron :: Nil, _, _) => RiichiEvent.RonDeclared(ron.tableId, ron.gameId, ron.turn, ron.from, ron.position)
-      case (ron1 :: ron2 :: Nil, _, _)=> ??? // TODO declare double ron
-      case (ron1 :: ron2 :: ron3 :: Nil, _, _) => ??? // TODO declare draw
+  def resolveChow(
+    possibleCmds: List[RiichiCmd],
+    pendingEvents: PendingEvents,
+    config: RiichiConfig,
+    chow: ClaimChow,
+  ): Either[(List[TableCmd[Riichi]], PendingEvents), TableEvent[Riichi]] = {
+    val newCmds = possibleCmds.filter(cmd => cmd.position != chow.position)
+    val rons = newCmds.collect { case cmd: RiichiCmd.DeclareRon => cmd }
+    val pungs = newCmds.collect { case cmd: RiichiCmd.ClaimPung => cmd }
+    val newPendingEvents = pendingEvents.copy(chow = Some(RiichiEvent.ChowClaimed(chow.tableId, chow.gameId, chow.turn, chow.position, chow.tiles, chow.from)))
+    if (rons.nonEmpty || pungs.nonEmpty) {
+      Left((newCmds, newPendingEvents))
+    } else {
+      Right(resolveEvents(newPendingEvents, config))
     }
+  }
+
+  def resolveEvents(events: PendingEvents, config: RiichiConfig): TableEvent[Riichi] = events match {
+    case PendingEvents(nextTile, Nil, None, None)    => nextTile
+    case PendingEvents(_, Nil, None, Some(chow))     => chow
+    case PendingEvents(_, Nil, Some(pung), _)        => pung
+    case PendingEvents(_, ron :: Nil, _, _)          => RiichiEvent.RonDeclared(
+      ron.tableId,
+      ron.gameId,
+      ron.turn,
+      ron.position,
+      ron.from
+    )
+    case PendingEvents(_, ron1 :: ron2 :: Nil, _, _) => RiichiEvent.DoubleRonDeclared(
+      ron1.tableId,
+      ron1.gameId,
+      ron1.turn,
+      ron1.from,
+      (ron1.position, ron2.position)
+    )
+    case PendingEvents(nextTile, rons, _, _)         => RiichiEvent.DrawDeclared(nextTile.tableId, nextTile.gameId, nextTile.turn)
   }
 }
