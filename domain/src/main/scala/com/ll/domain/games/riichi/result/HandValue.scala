@@ -27,10 +27,10 @@ object HandValue extends CaseClassCodec {
     }
   }
 
-  def computeTsumoOnTile(tile: Tile, state: PlayerState): Option[HandValue] = {
+  def computeTsumoOnTile(tile: String, state: PlayerState): Option[HandValue] = {
     TileSetsHelper
       .tenpai(state.closedHand)
-      .filter(combination => combination.waitingOn.contains(tile.repr))
+      .filter(combination => combination.waitingOn.contains(tile))
       .map(_ => HandValue(1, 1))
       .headOption
 
@@ -38,7 +38,7 @@ object HandValue extends CaseClassCodec {
 
   def computeWin(state: PlayerState): Option[(PlayerState, HandValue)] = {
     state.currentTile match {
-      case Some(tile) => computeTsumoOnTile(tile, state).map(v => (state, v))
+      case Some(tile) => computeTsumoOnTile(tile.repr, state).map(v => (state, v))
       case None       => //ron
         None
     }

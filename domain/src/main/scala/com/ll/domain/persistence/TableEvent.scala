@@ -1,10 +1,12 @@
 package com.ll.domain.persistence
 
 import com.ll.domain.games.GameType.Riichi
+import com.ll.domain.games.deck.Tile
 import com.ll.domain.games.position.PlayerPosition
 import com.ll.domain.games.riichi.RiichiConfig
 import com.ll.domain.games.riichi.result.GameScore
 import com.ll.domain.games.{GameId, GameType, Player, TableId}
+import com.ll.domain.persistence.TableCmd.RiichiCmd
 import com.ll.domain.ws.WsMsgIn.WsRiichiCmd
 
 sealed trait TableEvent[GT <: GameType] {def tableId: TableId}
@@ -46,13 +48,22 @@ object RiichiEvent {
     position: PlayerPosition[Riichi]
   ) extends RiichiGameEvent
 
+  case class PendingEvent(
+    event: RiichiGameEvent
+  ) extends RiichiGameEvent {
+    def tableId = event.tableId
+    def gameId = event.gameId
+    def turn = event.turn
+    def position = event.position
+  }
+
   case class TileDiscared(
     tableId: TableId,
     gameId: GameId,
     turn: Int,
     position: PlayerPosition[Riichi],
-    tile: String,
-    commands: Map[PlayerPosition[Riichi], List[WsRiichiCmd]]
+    tile: Tile,
+    commands: List[RiichiCmd]
   ) extends RiichiGameEvent
 
   case class TileFromTheWallTaken(
@@ -61,7 +72,7 @@ object RiichiEvent {
     turn: Int,
     position: PlayerPosition[Riichi],
     tile: String,
-    commands: List[WsRiichiCmd]
+    commands: List[RiichiCmd]
   ) extends RiichiGameEvent
 
   case class TsumoDeclared(
