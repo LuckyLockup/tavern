@@ -3,21 +3,17 @@ package com.ll.domain.games.riichi
 import com.ll.domain.Const
 import com.ll.domain.auth.{User, UserId}
 import com.ll.domain.games.GameType.Riichi
-import com.ll.domain.games.Player.{AIPlayer, HumanPlayer}
 import com.ll.domain.games.deck.{DeclaredSet, DiscardedTile, Tile}
-import com.ll.domain.games.position.PlayerPosition.RiichiPosition.EastPosition
 import com.ll.domain.games.position.{PlayerPosition, PositionUtility}
 import com.ll.domain.games.riichi.result.{GameScore, HandValue, Points, TablePoints}
 import com.ll.domain.games.{GameId, Player, ScheduledCommand, TableId}
 import com.ll.domain.persistence._
 import com.ll.domain.ops.EitherOps._
 import com.ll.domain.persistence.TableCmd.RiichiCmd
-import com.ll.domain.ws.WsMsgIn.WsRiichiCmd
-import com.ll.domain.ws.{WsMsgInProjector, WsMsgOut}
+import com.ll.domain.ws.WsMsgOut
 import com.ll.domain.ws.WsMsgOut.ValidationError
 import com.ll.domain.ws.WsRiichi.RiichiPlayerState
 
-import scala.collection.immutable
 import scala.concurrent.duration._
 
 sealed trait RiichiTableState extends TableState[Riichi, RiichiTableState]
@@ -107,7 +103,7 @@ case class GameStarted(
         _ <- (commandTurn == turn).asEither(s"Actual turn $turn, but command turn $commandTurn")
       } yield {
         pendingEvents match {
-          case None          => List(this.nextTileEvent(turn))
+          case None          => List(this.nextTileEvent(turn, position))
           case Some(pending) => ClaimConflictHelper.resolveEvents(pending, this.config)
         }
       }
@@ -129,14 +125,7 @@ case class GameStarted(
         tileInHand <- (state.closedHand ::: state.currentTile.toList).find(t => t.repr == tile)
           .asEither(s"Tile $tile is not in hand")
         cmds = predictsCommandsOnDiscard(DiscardedTile(tileInHand, turn, position))
-      } yield {
-        val discarded = RiichiEvent.TileDiscared(tableId, gameId, turn, position, tileInHand, cmds)
-        if (cmds.isEmpty) {
-          List(discarded, this.nextTileEvent(turn + 1))
-        } else {
-          List(discarded)
-        }
-      }
+      } yield List(RiichiEvent.TileDiscared(tableId, gameId, turn, position, tileInHand, cmds))
 
     case RiichiCmd.SkipAction(_, _, commandTurn, position) =>
       for {
@@ -150,16 +139,15 @@ case class GameStarted(
         }
       }
 
-    case RiichiCmd.ClaimPung(_, _, commandTurn, position, from, tiles) =>
+    case RiichiCmd.ClaimPung(_, _, commandTurn, position) =>
       for {
         _ <- (commandTurn == turn).asEither(s"Actual turn $turn, but command turn $commandTurn")
         playerState = getPlayerState(position)
-        _ <- (tiles.size == 3).asEither("Pung should contain 3 elements")
-        discardedTile <- lastDiscard().find(d => d.position != position && tiles.contains(d.tile.repr))
-          .asEither("Discarded tile is not found")
-        pung <- playerState.pungOn(discardedTile.tile).asEither(s"Can't claim pung on ${tiles.head}")
+        discardedTile <- discardToClaim().find(d => d.position != position).asEither("Discarded tile is not found")
+        pung <- playerState.pungOn(discardedTile.tile).asEither(s"Can't claim pung on ${discardedTile.tile.repr}")
       } yield {
-        val pungClaimed = RiichiEvent.PungClaimed(tableId, gameId, turn, position, tiles, from)
+        val pungTiles = List(pung.x, pung.y, pung.z).filter(t => t != discardedTile.tile)
+        val pungClaimed = RiichiEvent.PungClaimed(tableId, gameId, turn, position, discardedTile.position, discardedTile.tile, pungTiles)
         this.pendingEvents match {
           case None           => List(pungClaimed)
           case Some(pendging) => ClaimConflictHelper.resolvePung(this.possibleCmds, pendging, this.config, pungClaimed)
@@ -168,6 +156,23 @@ case class GameStarted(
   }
 
   def applyEvent(e: TableEvent[Riichi]): (List[ScheduledCommand[Riichi]], RiichiTableState) = e match {
+    case RiichiEvent.ActionSkipped(_, _, _, position) =>
+      (Nil, this.copy(possibleCmds = possibleCmds.filter(c => c.position != position)))
+
+    case RiichiEvent.PendingEvent(ev) =>
+      val newPending = pendingEvents.map(pending =>
+        ev match {
+          case ron: RiichiEvent.RonDeclared  => pending.copy(rons = ron :: pending.rons)
+          case pung: RiichiEvent.PungClaimed => pending.copy(pung = Some(pung))
+          case chow: RiichiEvent.ChowClaimed => pending.copy(chow = Some(chow))
+          case _                             => pending
+        }
+      )
+      (Nil, this.copy(
+        pendingEvents = newPending,
+        possibleCmds = possibleCmds.filter(c => c.position != ev.position
+        )))
+
     case RiichiEvent.TileDiscared(_, _, _, position, tile, actions) =>
       val updatedStates = this.playerStates.map {
         case st if st.player.position != position => st
@@ -182,7 +187,7 @@ case class GameStarted(
       }
       val nextTurn = this.turn + 1
       val nextAutoCmd = RiichiCmd.GetTileFromTheWall(tableId, gameId, nextTurn, position.nextPosition)
-      val nextEvent = this.nextTileEvent(nextTurn)
+      val nextEvent = this.nextTileEvent(nextTurn, position.nextPosition)
 
       if (actions.isEmpty) {
         val updatedState = this.copy(
@@ -191,7 +196,7 @@ case class GameStarted(
           possibleCmds = Nil,
           pendingEvents = None
         )
-        (Nil, updatedState)
+        (List(ScheduledCommand(0.seconds, nextAutoCmd)), updatedState)
       } else {
         val updatedState = this.copy(
           playerStates = updatedStates,
@@ -202,73 +207,57 @@ case class GameStarted(
         (List(ScheduledCommand(config.nextTileDelay, nextAutoCmd)), updatedState)
       }
 
-    case RiichiEvent.TileFromTheWallTaken(_, _, tile, _, position, _) =>
+    case RiichiEvent.TileFromTheWallTaken(_, _, _, position, tile, _) =>
       val updatedStates = this.playerStates.map {
         case st if st.player.position != position => st
         case st if st.player.position == position => st.copy(currentTile = Some(tile))
       }
       val updatedState = this.copy(
+        pendingEvents = None,
+        possibleCmds = Nil,
         playerStates = updatedStates,
         turn = this.turn + 1,
-        deck = deck.drop(1),
-        possibleActions = Map(),
-        pendingCmds = Nil
+        deck = deck.drop(1)
       )
-      //TODO schedule autoDiscard
-      (List(), updatedState)
+      val autoDiscard = RiichiCmd.DiscardTile(tableId, gameId, tile.repr, turn + 1, position)
+      (List(ScheduledCommand(config.turnDuration, autoDiscard)), updatedState)
 
     case RiichiEvent.TsumoDeclared(_, _, _, position) =>
-      //open doras
+      //TODO open doras
       val scoreGame = RiichiCmd.ScoreGame(tableId, gameId)
       (List(ScheduledCommand(0.seconds, scoreGame)), this)
 
-    //    case RiichiEvent.GameScored(_, _, _, score)                       =>
-    //      //TODO remove command
-    //      val winingHand = this.playerStates.flatMap(st => HandValue.computeWin(st)).headOption
-    //      winingHand match {
-    //        case Some((winner, value)) =>
-    //          val score = GameScore(
-    //            Right(winner.player.position),
-    //            this.playerStates
-    //              .map {
-    //                case `winner` => winner.player.position -> Points(value.yakus * 1000)
-    //                case state    => state.player.position -> Points(0)
-    //              }.toMap
-    //          )
-    //          val event = RiichiEvent.GameScored(tableId, gameId, turn, score)
-    //          Right(List(event))
-    //        case None                  => Left(ValidationError("No winniing hand"))
-    //        //TODO add few players in tempai
-    //      }
-    //      (Nil, NoGameOnTable(
-    //        this.admin,
-    //        this.tableId,
-    //        this.players,
-    //        this.points.addGameScore(score))
-    //      )
-    case RiichiEvent.TileClaimed(_, _, set, position) =>
+    case RiichiEvent.GameScored(_, _, _, score) =>
+      (Nil, NoGameOnTable(
+        this.admin,
+        this.tableId,
+        this.players,
+        this.points.addGameScore(score))
+      )
+
+    case RiichiEvent.PungClaimed(_, _, _, position, from, claimedTile, tiles) =>
       val updatedStates = this.playerStates.map {
         case st if st.player.position != position => st
-        case st if st.player.position == position => st.copy(openHand = set :: st.openHand)
+        case st if st.player.position == from     => st.copy(discard = st.discard.tail)
+        case st if st.player.position == position =>
+          val openedSet = DeclaredSet(claimedTile, tiles, from, turn)
+          st.copy(
+            closedHand = st.closedHand.filterNot(t => tiles.contains(t)),
+            openHand = openedSet :: st.openHand
+          )
       }
       val updatedState = this.copy(
+        pendingEvents = None,
+        possibleCmds = Nil,
         playerStates = updatedStates,
         turn = this.turn + 1,
-        deck = deck,
-        possibleActions = Map(),
-        pendingCmds = Nil
+        deck = deck
       )
-      //TODO schedule autoDiscard
-      (Nil, updatedState)
-    case RiichiEvent.ActionSkipped(_, _, position, _) =>
-      val updatedActions = this.possibleActions - position
-      if (updatedActions.nonEmpty) {
-        (Nil, this.copy(possibleActions = updatedActions))
-      } else {
-        //TODO decide discard, pon, chi, double ron and others
-        val nextCmds = this.pendingCmds.map(cmd => ScheduledCommand(0.seconds, cmd))
-        (nextCmds, this.copy(possibleActions = updatedActions, pendingCmds = Nil))
-      }
+      val autoDiscard = RiichiCmd.DiscardTile(tableId, gameId,
+        getPlayerState(position).closedHand.head.repr,
+        turn + 1,
+        position)
+      (List(ScheduledCommand(config.turnDuration, autoDiscard)), updatedState)
   }
 
   def projection(position: Option[PlayerPosition[Riichi]]): WsMsgOut.Riichi.RiichiState =
@@ -282,7 +271,7 @@ case class GameStarted(
             player = state.player,
             closedHand = state.closedHand.map(hideTiles),
             currentTile = state.currentTile.map(hideTiles),
-            discard = state.discard.map(_.repr),
+            discard = state.discard.map(_.tile.repr),
             online = state.online
           )
       },
@@ -297,33 +286,30 @@ case class GameStarted(
   def getPlayerState(position: PlayerPosition[Riichi]): PlayerState = playerStates
     .find(st => st.player.position == position).get
 
-  def lastDiscard(): Option[DiscardedTile[Riichi]] = playerStates
-    .flatMap(_.discard.headOption)
-    .sortBy(_.turn)
-    .lastOption
+  def discardToClaim(): Option[DiscardedTile[Riichi]] = {
+    val hasToDiscardFirst = playerStates
+      .exists(st => st.currentTile.nonEmpty || st.openHand.headOption.map(_.turn).contains(turn - 1))
+    if (hasToDiscardFirst) {
+      None
+    } else {
+      playerStates
+        .flatMap(_.discard.headOption)
+        .sortBy(_.turn)
+        .lastOption
+    }
+  }
 
-  def nextTileEvent(forTurn: Int): TableEvent[Riichi] = deck match {
+  def nextTileEvent(forTurn: Int, forPosition: PlayerPosition[Riichi]): TableEvent[Riichi] = deck match {
     case Nil          => RiichiEvent.DrawDeclared(tableId, gameId, turn)
     case tile :: tail =>
-      lastDiscard() match {
-        case Some(DiscardedTile(_, _, discardedPosition)) =>
-          RiichiEvent.TileFromTheWallTaken(
-            tableId,
-            gameId,
-            forTurn,
-            discardedPosition.nextPosition,
-            tile.repr,
-            predictCommandsOnTileFromTheWall(tile.repr, discardedPosition.nextPosition)
-          )
-        case None                                         => RiichiEvent.TileFromTheWallTaken(
-          tableId,
-          gameId,
-          forTurn,
-          EastPosition,
-          tile.repr,
-          predictCommandsOnTileFromTheWall(tile.repr, EastPosition)
-        )
-      }
+      RiichiEvent.TileFromTheWallTaken(
+        tableId,
+        gameId,
+        forTurn,
+        forPosition,
+        tile,
+        predictCommandsOnTileFromTheWall(tile.repr, forPosition)
+      )
   }
 
   def predictCommandsOnTileFromTheWall(tile: String, position: PlayerPosition[Riichi]): List[RiichiCmd] = {
@@ -334,6 +320,13 @@ case class GameStarted(
     //TODO open kong
     //TODO declare riichi
     tsumo
+  }
+
+  def updateTurn(ev: TableEvent[Riichi]): Int = ev match {
+    case _: RiichiEvent.ChowClaimed | _: RiichiEvent.PungClaimed |
+         _: RiichiEvent.RonDeclared | _: RiichiEvent.TsumoDeclared |
+         _: RiichiEvent.TileFromTheWallTaken | _: RiichiEvent.TileDiscared => turn + 1
+    case _                                                                 => turn
   }
 
   def predictsCommandsOnDiscard(discardedTile: DiscardedTile[Riichi]): List[RiichiCmd] = {
@@ -347,9 +340,7 @@ case class GameStarted(
             tableId,
             gameId,
             nextTurn,
-            st.player.position,
-            discardedTile.position,
-            pung.tiles)
+            st.player.position)
           )
 
         val declareChow = if (discardedTile.position.nextPosition == st.player.position) {
@@ -358,9 +349,7 @@ case class GameStarted(
             gameId,
             nextTurn,
             st.player.position,
-            discardedTile.position,
-            chow.tiles)
-          )
+            chow.tiles))
         } else {
           Nil
         }

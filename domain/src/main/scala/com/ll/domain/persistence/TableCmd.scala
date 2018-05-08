@@ -33,6 +33,10 @@ object TableCmd {
       def position =  PlayerPosition.RiichiPosition.EastPosition
     }
 
+    case class ScoreGame(tableId: TableId, gameId: GameId) extends RiichiCmd {
+      def position = PlayerPosition.RiichiPosition.EastPosition
+    }
+
     case class SkipAction(
       tableId: TableId,
       gameId: GameId,
@@ -59,9 +63,7 @@ object TableCmd {
       tableId: TableId,
       gameId: GameId,
       turn: Int,
-      position: PlayerPosition[Riichi],
-      from: PlayerPosition[Riichi],
-      tiles: List[String]
+      position: PlayerPosition[Riichi]
     ) extends RiichiCmd
 
     case class ClaimChow(
@@ -69,7 +71,6 @@ object TableCmd {
       gameId: GameId,
       turn: Int,
       position: PlayerPosition[Riichi],
-      from: PlayerPosition[Riichi],
       tiles: List[String]
     ) extends RiichiCmd
 

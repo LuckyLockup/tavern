@@ -57,6 +57,15 @@ object RiichiEvent {
     def position = event.position
   }
 
+  case class GameScored(
+    tableId: TableId,
+    gameId: GameId,
+    turn: Int,
+    gameScore: GameScore
+  ) extends RiichiGameEvent {
+    def position = PlayerPosition.RiichiPosition.EastPosition
+  }
+
   case class TileDiscared(
     tableId: TableId,
     gameId: GameId,
@@ -71,7 +80,7 @@ object RiichiEvent {
     gameId: GameId,
     turn: Int,
     position: PlayerPosition[Riichi],
-    tile: String,
+    tile: Tile,
     commands: List[RiichiCmd]
   ) extends RiichiGameEvent
 
@@ -95,8 +104,9 @@ object RiichiEvent {
     gameId: GameId,
     turn: Int,
     position: PlayerPosition[Riichi],
-    tiles: List[String],
-    from: PlayerPosition[Riichi]
+    from: PlayerPosition[Riichi],
+    claimedTile: Tile,
+    tiles: List[Tile]
   ) extends RiichiGameEvent
 
   case class ChowClaimed(
@@ -104,8 +114,9 @@ object RiichiEvent {
     gameId: GameId,
     turn: Int,
     position: PlayerPosition[Riichi],
-    tiles: List[String],
-    from: PlayerPosition[Riichi]
+    from: PlayerPosition[Riichi],
+    claimedTile: Tile,
+    tiles: List[Tile],
   ) extends RiichiGameEvent
 }
 

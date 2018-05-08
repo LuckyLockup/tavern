@@ -7,7 +7,8 @@ import com.ll.domain.json.CaseClassCodec
 import io.circe.{Decoder, Encoder}
 
 case class DeclaredSet[GT<: GameType](
-  set: TileSet,
+  claimedTile: Tile,
+  tails: List[Tile],
   from: PlayerPosition[GT],
   turn: Int
 )

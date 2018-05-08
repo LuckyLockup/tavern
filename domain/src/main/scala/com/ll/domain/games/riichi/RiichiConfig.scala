@@ -13,6 +13,7 @@ case class RiichiConfig(
   defaultWestAi: AIType[Riichi] = AIType.Riichi.Duck,
   defaultNorthAi: AIType[Riichi] = AIType.Riichi.Duck,
   nextTileDelay: FiniteDuration = 10.seconds,
+  turnDuration: FiniteDuration = 300.seconds,
   testingTiles: List[String] = Nil
 )
 
