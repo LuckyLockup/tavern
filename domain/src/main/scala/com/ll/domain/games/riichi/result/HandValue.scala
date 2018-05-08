@@ -15,7 +15,7 @@ object HandValue extends CaseClassCodec {
   implicit lazy val PauseGameDecoder: Decoder[HandValue] = decoder[HandValue]("HandValue")
 
   def computeRonOnTile(tile: Tile, state: PlayerState): Option[HandValue] = {
-    if (state.discard.exists(t => t.repr == tile.repr)) {
+    if (state.discard.exists(t => t.tile.repr == tile.repr)) {
       //Player can't ron on discarded tile
       None
     } else {

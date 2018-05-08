@@ -27,16 +27,16 @@ object WsMsgInProjector {
     wsMsg match {
       case WsRiichiCmd.StartWsGame(tableId, gameId, configOpt) =>
         RiichiCmd.StartGame(tableId, gameId, configOpt.getOrElse(RiichiConfig()))
-      case WsRiichiCmd.ClaimChow(tableId, gameId, from, turn, tiles) =>
-        RiichiCmd.ClaimChow(tableId, gameId, from, turn, tiles, position)
-      case WsRiichiCmd.ClaimPung(tableId, gameId, from, turn, tiles) =>
-        RiichiCmd.ClaimPung(tableId, gameId, from, turn, tiles,  position)
+      case WsRiichiCmd.ClaimChow(tableId, gameId, turn, tiles) =>
+        RiichiCmd.ClaimChow(tableId, gameId, turn, position, tiles)
+      case WsRiichiCmd.ClaimPung(tableId, gameId, turn) =>
+        RiichiCmd.ClaimPung(tableId, gameId, turn, position)
       case WsRiichiCmd.DeclareRon(tableId, gameId, turn, _) =>
-        RiichiCmd.DeclareRon(tableId, gameId, turn, position)
-      case WsRiichiCmd.DeclareTsumo(tableId, gameId, _) =>
-        RiichiCmd.DeclareTsumo(tableId, gameId, position)
+        RiichiCmd.DeclareRon(tableId, gameId, turn, position, None)
+      case WsRiichiCmd.DeclareTsumo(tableId, gameId, turn,  _) =>
+        RiichiCmd.DeclareTsumo(tableId, gameId, turn, position, None)
       case WsRiichiCmd.DiscardTile(tableId, gameId, tile, turn) =>
-        RiichiCmd.DiscardTile(tableId, gameId, tile, turn, position)
+        RiichiCmd.DiscardTile(tableId, gameId, turn, position, tile)
       case WsRiichiCmd.GetTileFromWall(tableId, gameId, turn) =>
         RiichiCmd.GetTileFromTheWall(tableId, gameId, turn, position)
       case WsRiichiCmd.SkipAction(tableId, gameId, turn) =>

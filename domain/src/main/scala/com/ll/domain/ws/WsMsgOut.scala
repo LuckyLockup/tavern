@@ -9,7 +9,7 @@ import com.ll.domain.games.riichi.result.{GameScore, TablePoints}
 import com.ll.domain.json.CaseClassCodec
 import com.ll.domain.ws.WsMsgIn.WsRiichiCmd
 import com.ll.domain.ws.WsMsgOut.Riichi.TileClaimed.{decoder, encoder}
-import com.ll.domain.ws.WsRiichi.RiichiPlayerState
+import com.ll.domain.ws.WsRiichi.{RiichiPlayerState, WsDeclaredSet}
 import io.circe.{Decoder, Encoder}
 import io.circe.syntax._
 
@@ -119,9 +119,9 @@ object WsMsgOut {
     case class TileFromWallTaken(
       tableId: TableId,
       gameId: GameId,
-      tile: String,
       turn: Int,
       position: PlayerPosition[Riichi],
+      tile: String,
       commands: List[WsRiichiCmd]
     ) extends RiichiGameEvent
 
@@ -135,9 +135,9 @@ object WsMsgOut {
     case class TileDiscarded(
       tableId: TableId,
       gameId: GameId,
-      tile: String,
       turn: Int,
       position: PlayerPosition[Riichi],
+      tile: String,
       commands: List[WsRiichiCmd]
     ) extends RiichiGameEvent
 
@@ -173,12 +173,12 @@ object WsMsgOut {
     case class TileClaimed(
       tableId: TableId,
       gameId: GameId,
-      set: String,
-      tiles: List[String],
-      from: PlayerPosition[Riichi],
-      turn: Int,
+      setName: String,
+      set: WsDeclaredSet,
       position: PlayerPosition[Riichi]
-    ) extends RiichiGameEvent
+    ) extends RiichiGameEvent {
+      def turn = set.turn
+    }
 
     object TileClaimed extends CaseClassCodec {
       implicit lazy val TileClaimedEncoder: Encoder[TileClaimed] = encoder[TileClaimed]("TileClaimed")

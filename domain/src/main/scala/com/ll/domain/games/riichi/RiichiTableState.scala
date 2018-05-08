@@ -12,7 +12,7 @@ import com.ll.domain.ops.EitherOps._
 import com.ll.domain.persistence.TableCmd.RiichiCmd
 import com.ll.domain.ws.WsMsgOut
 import com.ll.domain.ws.WsMsgOut.ValidationError
-import com.ll.domain.ws.WsRiichi.RiichiPlayerState
+import com.ll.domain.ws.WsRiichi.{RiichiPlayerState, WsDeclaredSet}
 
 import scala.concurrent.duration._
 
@@ -117,7 +117,7 @@ case class GameStarted(
         //TODO add open doras event and gameScored events
       } yield List(RiichiEvent.TsumoDeclared(tableId, gameId, turn, state.player.position))
 
-    case RiichiCmd.DiscardTile(_, _, tile, commandTurn, position) =>
+    case RiichiCmd.DiscardTile(_, _, commandTurn, position, tile) =>
       for {
         _ <- (commandTurn == turn).asEither(s"Actual turn $turn, but command turn $commandTurn")
         state = getPlayerState(position)
@@ -219,7 +219,7 @@ case class GameStarted(
         turn = this.turn + 1,
         deck = deck.drop(1)
       )
-      val autoDiscard = RiichiCmd.DiscardTile(tableId, gameId, tile.repr, turn + 1, position)
+      val autoDiscard = RiichiCmd.DiscardTile(tableId, gameId, turn + 1, position, tile.repr)
       (List(ScheduledCommand(config.turnDuration, autoDiscard)), updatedState)
 
     case RiichiEvent.TsumoDeclared(_, _, _, position) =>
@@ -253,10 +253,12 @@ case class GameStarted(
         turn = this.turn + 1,
         deck = deck
       )
-      val autoDiscard = RiichiCmd.DiscardTile(tableId, gameId,
-        getPlayerState(position).closedHand.head.repr,
+      val autoDiscard = RiichiCmd.DiscardTile(
+        tableId,
+        gameId,
         turn + 1,
-        position)
+        position,
+        getPlayerState(position).closedHand.head.repr)
       (List(ScheduledCommand(config.turnDuration, autoDiscard)), updatedState)
   }
 
@@ -270,6 +272,7 @@ case class GameStarted(
           RiichiPlayerState(
             player = state.player,
             closedHand = state.closedHand.map(hideTiles),
+            openHand = state.openHand.map(set => WsDeclaredSet(set)),
             currentTile = state.currentTile.map(hideTiles),
             discard = state.discard.map(_.tile.repr),
             online = state.online
@@ -360,7 +363,6 @@ case class GameStarted(
             gameId,
             nextTurn,
             st.player.position,
-            discardedTile.position,
             Some(handValue)
           )
         )

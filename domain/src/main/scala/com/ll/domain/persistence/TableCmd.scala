@@ -47,9 +47,9 @@ object TableCmd {
     case class DiscardTile(
       tableId: TableId,
       gameId: GameId,
-      tile: String,
       turn: Int,
-      position: PlayerPosition[Riichi]
+      position: PlayerPosition[Riichi],
+      tile: String,
     ) extends RiichiCmd
 
     case class GetTileFromTheWall(
@@ -79,7 +79,6 @@ object TableCmd {
       gameId: GameId,
       turn: Int,
       position: PlayerPosition[Riichi],
-      from: PlayerPosition[Riichi],
       handValue: Option[HandValue]
     ) extends RiichiCmd
 

@@ -13,14 +13,13 @@ object ClaimConflictHelper {
     pendingEvents: PendingEvents,
     config: RiichiConfig,
     ron: RiichiEvent.RonDeclared,
-  ): TableEvent[Riichi] = {
+  ): List[TableEvent[Riichi]] = {
     val rons = possibleCmds
       .collect { case cmd: RiichiCmd.DeclareRon => cmd }
-      .map(ron => RiichiEvent.RonDeclared(ron.tableId, ron.gameId, ron.turn, ron.position, ron.from))
     if (rons.nonEmpty) {
-      RiichiEvent.PendingEvent(ron)
+      List(RiichiEvent.PendingEvent(ron))
     } else {
-      resolveEvents(pendingEvents.copy(rons = rons), config)
+      resolveEvents(pendingEvents.copy(rons = ron :: pendingEvents.rons), config)
     }
   }
 
@@ -45,13 +44,14 @@ object ClaimConflictHelper {
     pendingEvents: PendingEvents,
     config: RiichiConfig,
     chow: RiichiEvent.ChowClaimed,
-  ): TableEvent[Riichi]  = {
+  ): List[TableEvent[Riichi]]  = {
     val newCmds = possibleCmds.filter(cmd => cmd.position != chow.position)
     val rons = newCmds.collect { case cmd: RiichiCmd.DeclareRon => cmd }
     val pungs = newCmds.collect { case cmd: RiichiCmd.ClaimPung => cmd }
-    val newPendingEvents = pendingEvents.copy(chow = Some(RiichiEvent.ChowClaimed(chow.tableId, chow.gameId, chow.turn, chow.position, chow.tiles, chow.from)))
+    val newPendingEvents = pendingEvents.copy(chow = Some(
+      RiichiEvent.ChowClaimed(chow.tableId, chow.gameId, chow.turn, chow.position, chow.from, chow.claimedTile, chow.tiles)))
     if (rons.nonEmpty || pungs.nonEmpty) {
-      RiichiEvent.PendingEvent(chow)
+      List(RiichiEvent.PendingEvent(chow))
     } else {
       resolveEvents(newPendingEvents, config)
     }
@@ -75,7 +75,12 @@ object ClaimConflictHelper {
       ron1.from,
       (ron1.position, ron2.position)
     ))
-    case PendingEvents(nextTile, rons, _, _)         => List(RiichiEvent.DrawDeclared(
+    case PendingEvents(nextTile: RiichiEvent.TileFromTheWallTaken, rons, _, _)         => List(RiichiEvent.DrawDeclared(
+      nextTile.tableId,
+      nextTile.gameId,
+      nextTile.turn)
+    )
+    case PendingEvents(nextTile: RiichiEvent.DrawDeclared, rons, _, _)         => List(RiichiEvent.DrawDeclared(
       nextTile.tableId,
       nextTile.gameId,
       nextTile.turn)

@@ -42,7 +42,7 @@ class TsumoTest extends Test {
       case fromTheWall: WsMsgOut.Riichi.TileFromWallTaken =>
         fromTheWall.position should be(RiichiPosition.EastPosition)
         fromTheWall.tile should be(wallTiles.head)
-        fromTheWall.commands.head should be(WsRiichiCmd.DeclareTsumo(tableId, gameId, Some(HandValue(1, 1))))
+        fromTheWall.commands.head should be(WsRiichiCmd.DeclareTsumo(tableId, gameId, 3, Some(HandValue(1, 1))))
         fromTheWall
     }
 

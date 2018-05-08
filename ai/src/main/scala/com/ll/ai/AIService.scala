@@ -28,12 +28,12 @@ case class AIService() {
     outEvent: WsMsgOut,
     state: WsMsgOut.TableState[Riichi]): Future[List[TableCmd[Riichi]]] = {
     outEvent match {
-      case WsMsgOut.Riichi.TileFromWallTaken(tableId, gameId, tile, turn, aiPlayer.position, _) =>
+      case WsMsgOut.Riichi.TileFromWallTaken(tableId, gameId, turn, aiPlayer.position, tile, _) =>
         log.info(s"$aiPlayer discarding: $tile")
         Future.successful {
-          List(RiichiCmd.DiscardTile(tableId, gameId, tile, turn + 1, aiPlayer.position))
+          List(RiichiCmd.DiscardTile(tableId, gameId, turn + 1, aiPlayer.position, tile))
         }
-      case WsMsgOut.Riichi.TileDiscarded(tableId, gameId, _, turn, _, head :: tail) =>
+      case WsMsgOut.Riichi.TileDiscarded(tableId, gameId, turn, _, _, head :: tail) =>
         log.info(s"${aiPlayer.position} skipping action...")
         Future.successful(List(RiichiCmd.SkipAction(tableId, gameId, turn + 1, aiPlayer.position)))
       case _                                                                            => Future.successful(Nil)

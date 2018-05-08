@@ -72,7 +72,6 @@ class DeclarePungTest extends Test {
 
     val declarePungOpt = discard.commands.collectFirst{case c: WsRiichiCmd.ClaimPung => c}
     declarePungOpt should not be empty
-    declarePungOpt.get.tiles should contain theSameElementsAs List("3_pin",  "3_pin",  "3_pin")
 
     player1.ws ! declarePungOpt.get
     player1.ws.expectWsMsg {

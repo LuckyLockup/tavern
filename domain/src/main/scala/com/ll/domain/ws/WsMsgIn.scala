@@ -130,9 +130,8 @@ object WsMsgIn {
     case class ClaimPung(
       tableId: TableId,
       gameId: GameId,
-      from: PlayerPosition[Riichi],
-      turn: Int,
-      tiles: List[String]) extends WsRiichiCmd
+      turn: Int
+    ) extends WsRiichiCmd
 
     object ClaimPung extends CaseClassCodec {
       implicit lazy val ClaimPungEncoder: Encoder[ClaimPung] = encoder[ClaimPung]("ClaimPung")
@@ -142,7 +141,6 @@ object WsMsgIn {
     case class ClaimChow(
       tableId: TableId,
       gameId: GameId,
-      from: PlayerPosition[Riichi],
       turn: Int,
       tiles: List[String]
     ) extends WsRiichiCmd
@@ -156,7 +154,7 @@ object WsMsgIn {
       tableId: TableId,
       gameId: GameId,
       turn: Int,
-      approximateHandValue: HandValue
+      approximateHandValue: Option[HandValue]
     ) extends WsRiichiCmd
 
     object DeclareRon extends CaseClassCodec {
@@ -167,6 +165,7 @@ object WsMsgIn {
     case class DeclareTsumo(
       tableId: TableId,
       gameId: GameId,
+      turn: Int,
       approxHandValue: Option[HandValue]
     ) extends WsRiichiCmd
 
