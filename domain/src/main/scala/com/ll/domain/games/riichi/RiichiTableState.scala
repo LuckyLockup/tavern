@@ -4,7 +4,9 @@ import com.ll.domain.Const
 import com.ll.domain.auth.{User, UserId}
 import com.ll.domain.games.GameType.Riichi
 import com.ll.domain.games.deck.{DeclaredSet, DiscardedTile, Tile}
+import com.ll.domain.games.position.PlayerPosition.RiichiPosition
 import com.ll.domain.games.position.{PlayerPosition, PositionUtility}
+import com.ll.domain.games.riichi.initialization.RiichiHelper
 import com.ll.domain.games.riichi.result.{GameScore, HandValue, Points, TablePoints}
 import com.ll.domain.games.{GameId, Player, ScheduledCommand, TableId}
 import com.ll.domain.persistence._
@@ -64,8 +66,9 @@ case class NoGameOnTable(
 
     case RiichiEvent.GameStarted(_, gameId, config) =>
       val game: GameStarted = RiichiHelper.initializeHands(this, config, gameId)
-      val nextCmd = RiichiCmd.GetTileFromTheWall(tableId, gameId, 1, PlayerPosition.RiichiPosition.EastPosition)
-      (List(ScheduledCommand(0.seconds, nextCmd)), game)
+      val nextAutoCmd = RiichiCmd.GetTileFromTheWall(tableId, gameId, 1, RiichiPosition.EastPosition)
+      (List(ScheduledCommand(config.turnDuration, nextAutoCmd)), game)
+
     case _                                          => (Nil, this)
   }
 
@@ -87,6 +90,7 @@ case class GameStarted(
   gameId: GameId,
   playerStates: List[PlayerState],
   uraDoras: List[Tile],
+  deadWall: List[Tile],
   deck: List[Tile],
   turn: Int = 1,
   config: RiichiConfig,
