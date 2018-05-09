@@ -6,7 +6,7 @@ import com.ll.domain.ws.WsMsgIn.WsRiichiCmd
 import com.ll.domain.ws.WsMsgOut
 import com.ll.utils.{CommonData, Test}
 
-class InitialStateTest extends Test{
+class InitialPartiallyDefinedStateTest extends Test{
   "Test initial state with predefined tiles" in new CommonData {
     val player1 = createNewPlayer()
     val player2 = createNewPlayer()
@@ -28,7 +28,24 @@ class InitialStateTest extends Test{
     player4.ws ! WsRiichiCmd.JoinAsPlayer(tableId)
     player4.ws.expectWsMsgT[WsMsgOut.Riichi.PlayerJoinedTable]()
 
-    player1.ws ! WsRiichiCmd.StartWsGame(tableId, gameId, Some(RiichiConfig()))
+    val st = TestingState(
+      eastHand = List(
+        "5_wan", "3_pin", "3_pin"
+      ),
+      southHand = List(
+        "1_wan", "2_wan"
+      ),
+      westHand = List(
+        "red", "red", "3_wan", "4_wan"
+      ),
+      northHand = List(
+        "green", "green", "3_wan", "4_wan", "5_wan", "6_wan", "7_wan", "8_wan", "9_wan", "5_sou", "6_sou", "7_sou", "8_sou"
+      ),
+      uraDoras = List(),
+      wall = List("red", "3_pin", "5_pin")
+    )
+
+    player1.ws ! WsRiichiCmd.StartWsGame(tableId, gameId, Some(RiichiConfig().copy(testingTiles = Some(st))))
     player1.ws.expectWsMsgT[WsMsgOut.Riichi.GameStarted]()
 
     player1.ws ! WsRiichiCmd.GetState(tableId)
@@ -39,9 +56,9 @@ class InitialStateTest extends Test{
         state.uraDoras.head should not contain "x"
         state.states.foreach{
           case pst if pst.player.position == PlayerPosition.RiichiPosition.EastPosition =>
-            pst.currentTile should not be empty
+            pst.currentTile should contain (st.eastHand.head)
             pst.closedHand.size should be (13)
-            pst.closedHand should not contain "x"
+            pst.closedHand should contain allElementsOf (st.eastHand.tail)
             pst.discard shouldBe empty
           case pst =>
             pst.closedHand should contain theSameElementsAs Array.fill(13)("x")
@@ -62,7 +79,7 @@ class InitialStateTest extends Test{
           case pst if pst.player.position == PlayerPosition.RiichiPosition.SouthPosition =>
             pst.currentTile shouldBe empty
             pst.closedHand.size should be (13)
-            pst.closedHand should not contain "x"
+            pst.closedHand should contain allElementsOf (st.southHand)
             pst.discard shouldBe empty
           case pst =>
             pst.closedHand should contain theSameElementsAs Array.fill(13)("x")
@@ -86,7 +103,7 @@ class InitialStateTest extends Test{
           case pst if pst.player.position == PlayerPosition.RiichiPosition.WestPosition =>
             pst.currentTile shouldBe empty
             pst.closedHand.size should be (13)
-            pst.closedHand should not contain "x"
+            pst.closedHand should contain allElementsOf (st.westHand)
             pst.discard shouldBe empty
           case pst =>
             pst.closedHand should contain theSameElementsAs Array.fill(13)("x")
@@ -110,7 +127,7 @@ class InitialStateTest extends Test{
           case pst if pst.player.position == PlayerPosition.RiichiPosition.NorthPosition =>
             pst.currentTile shouldBe empty
             pst.closedHand.size should be (13)
-            pst.closedHand should not contain "x"
+            pst.closedHand should contain allElementsOf (st.northHand)
             pst.discard shouldBe empty
           case pst =>
             pst.closedHand should contain theSameElementsAs Array.fill(13)("x")

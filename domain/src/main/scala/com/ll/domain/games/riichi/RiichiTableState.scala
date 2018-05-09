@@ -137,9 +137,10 @@ case class GameStarted(
         _ <- this.possibleCmds.exists(cmd => cmd.position == position).asEither(s"No actions to skip at $position")
         pending <- this.pendingEvents.asEither("No pending events")
       } yield {
+        val actionSkipped = RiichiEvent.ActionSkipped(tableId, gameId, turn, position)
         this.possibleCmds.filter(cmd => cmd.position == position) match {
-          case Nil => ClaimConflictHelper.resolveEvents(pending, this.config)
-          case _   => List(RiichiEvent.ActionSkipped(tableId, gameId, turn, position))
+          case Nil => actionSkipped :: ClaimConflictHelper.resolveEvents(pending, this.config)
+          case _   => List(actionSkipped)
         }
       }
 
@@ -192,7 +193,6 @@ case class GameStarted(
       val nextTurn = this.turn + 1
       val nextAutoCmd = RiichiCmd.GetTileFromTheWall(tableId, gameId, nextTurn, position.nextPosition)
       val nextEvent = this.nextTileEvent(nextTurn, position.nextPosition)
-
       if (actions.isEmpty) {
         val updatedState = this.copy(
           playerStates = updatedStates,
