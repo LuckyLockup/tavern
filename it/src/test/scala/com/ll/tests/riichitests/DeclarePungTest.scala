@@ -14,17 +14,12 @@ class DeclarePungTest extends Test {
     val player2 = createNewPlayer()
 
     player1.createTable(tableId)
-    player1.ws.expectWsMsgT[WsMsgOut.Riichi.RiichiState]()
-
-    player1.ws ! WsRiichiCmd.JoinAsPlayer(tableId)
-    player1.ws.expectWsMsgT[WsMsgOut.Riichi.PlayerJoinedTable]()
-
-    player2.ws ! WsRiichiCmd.JoinAsPlayer(tableId)
-    player2.ws.expectWsMsgT[WsMsgOut.Riichi.PlayerJoinedTable]()
+    player1.joinTable(tableId)
+    player2.joinTable(tableId)
 
     val st = TestingState(
       eastHand = List(
-        "3_pin", "3_pin", "4_pin", "4_pin", "1_sou", "2_sou", "3_sou", "1_sou", "2_sou", "3_sou", "1_sou", "2_sou", "3_sou"
+        "red", "3_pin", "3_pin", "4_pin", "4_pin", "1_sou", "2_sou", "3_sou", "1_sou", "2_sou", "3_sou", "1_sou", "2_sou", "3_sou"
       ),
       southHand = List(
         "1_wan", "2_wan", "3_wan", "4_wan", "5_wan", "6_wan", "7_wan", "8_wan", "9_wan", "5_sou", "6_sou", "7_sou", "8_sou"
@@ -36,24 +31,17 @@ class DeclarePungTest extends Test {
         "1_wan", "2_wan", "3_wan", "4_wan", "5_wan", "6_wan", "7_wan", "8_wan", "9_wan", "5_sou", "6_sou", "7_sou", "8_sou"
       ),
       uraDoras = List("2_sou"),
-      wall = List("red", "3_pin")
+      wall = List("3_pin")
     )
 
     player1.ws ! WsRiichiCmd.StartWsGame(tableId, gameId, Some(RiichiConfig().copy(testingTiles = Some(st))))
     player1.ws.expectWsMsgT[WsMsgOut.Riichi.GameStarted]()
 
-    player1.ws.expectWsMsg {
-      case fromTheWall: WsMsgOut.Riichi.TileFromWallTaken =>
-        fromTheWall.position should be(RiichiPosition.EastPosition)
-        fromTheWall.tile should be(st.wall.head)
-        fromTheWall
-    }
-
-    player1.ws ! WsRiichiCmd.DiscardTile(tableId, gameId, st.wall.head, 2)
+    player1.ws ! WsRiichiCmd.DiscardTile(tableId, gameId, st.eastHand.head, 1)
     player2.ws.expectWsMsg {
       case discard: WsMsgOut.Riichi.TileDiscarded =>
         discard.position should be(PlayerPosition.RiichiPosition.EastPosition)
-        discard.tile should be (st.wall.head)
+        discard.tile should be (st.eastHand.head)
         discard
     }
 
@@ -63,7 +51,7 @@ class DeclarePungTest extends Test {
         fromTheWall.tile should be(st.wall(1))
         fromTheWall
     }
-    player2.ws ! WsRiichiCmd.DiscardTile(tableId, gameId, st.wall(1), 4)
+    player2.ws ! WsRiichiCmd.DiscardTile(tableId, gameId, st.wall(1), 3)
     val discard = player1.ws.expectWsMsg {
       case discard: WsMsgOut.Riichi.TileDiscarded if discard.tile == st.wall(1) =>
         discard.position should be(PlayerPosition.RiichiPosition.SouthPosition)

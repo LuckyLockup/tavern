@@ -37,22 +37,13 @@ class FullGamePlayTillLastTile extends Test {
     player1.ws.expectWsMsgT[WsMsgOut.Pong]()
 
     player1.createTable(tableId)
-    player1.ws.expectWsMsgT[WsMsgOut.Riichi.RiichiState]()
-
-    player1.ws ! WsRiichiCmd.JoinAsPlayer(tableId)
-    player1.ws.expectWsMsgT[WsMsgOut.Riichi.PlayerJoinedTable]()
-
-    player2.ws ! WsRiichiCmd.JoinAsPlayer(tableId)
-    player2.ws.expectWsMsgT[WsMsgOut.Riichi.PlayerJoinedTable]()
-
-    player3.ws ! WsRiichiCmd.JoinAsPlayer(tableId)
-    player3.ws.expectWsMsgT[WsMsgOut.Riichi.PlayerJoinedTable]()
-
-    player4.ws ! WsRiichiCmd.JoinAsPlayer(tableId)
-    player4.ws.expectWsMsgT[WsMsgOut.Riichi.PlayerJoinedTable]()
+    player1.joinTable(tableId)
+    player2.joinTable(tableId)
+    player3.joinTable(tableId)
+    player4.joinTable(tableId)
 
     player1.ws ! WsRiichiCmd.StartWsGame(tableId, gameId, Some(RiichiConfig().copy(
-      nextTileDelay = 10.millis,
+      nextTileDelay = 0.millis,
       testingTiles = Some(st)
     )))
     player1.ws.expectWsMsgT[WsMsgOut.Riichi.GameStarted]()

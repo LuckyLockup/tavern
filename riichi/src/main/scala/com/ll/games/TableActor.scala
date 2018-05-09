@@ -80,6 +80,8 @@ class TableActor[GT <: GameType, S <: TableState[GT, S] : ClassTag](
           }
       }
     case cmd: TableCmd[GT]               => processCmd(cmd, None)
+    case msg =>
+      log.error(s"Unkonwn message $msg")
   }
 
   def processCmd(cmd: TableCmd[GT], senderId: Option[User]) = {
