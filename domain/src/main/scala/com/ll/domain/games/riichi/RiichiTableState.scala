@@ -13,6 +13,7 @@ import com.ll.domain.persistence._
 import com.ll.domain.ops.EitherOps._
 import com.ll.domain.persistence.TableCmd.RiichiCmd
 import com.ll.domain.ws.WsMsgOut
+import com.ll.domain.ws.WsMsgOut.Riichi.DrawDeclared
 import com.ll.domain.ws.WsMsgOut.ValidationError
 import com.ll.domain.ws.WsRiichi.{RiichiPlayerState, WsDeclaredSet}
 
@@ -96,11 +97,16 @@ case class GameStarted(
   config: RiichiConfig,
   points: TablePoints,
   possibleCmds: List[RiichiCmd] = Nil,
-  pendingEvents: Option[PendingEvents] = None
+  pendingEvents: Option[PendingEvents] = None,
+  windOfRound: PlayerPosition[Riichi] = RiichiPosition.EastPosition,
+  gameScore: Option[GameScore] = None
 ) extends RiichiTableState {
 
   def validateCmd(cmd: TableCmd[Riichi]): Either[WsMsgOut, List[TableEvent[Riichi]]] = cmd match {
-    case _: RiichiCmd.StartGame => Left(ValidationError("Game already started"))
+    case _: RiichiCmd.StartGame =>
+      for {
+        _ <- gameScore.nonEmpty.asEither("Game is not scored.")
+      } yield List(RiichiEvent.GameStarted(tableId, gameId, config))
 
     case RiichiCmd.GetTileFromTheWall(_, _, commandTurn, position) =>
       for {
@@ -158,6 +164,14 @@ case class GameStarted(
           case Some(pendging) => ClaimConflictHelper.resolvePung(this.possibleCmds, pendging, this.config, pungClaimed)
         }
       }
+    case RiichiCmd.ScoreGame(_, _, commandTurn) =>
+      for {
+        _ <- (commandTurn == turn).asEither(s"Actual turn $turn, but command turn $commandTurn")
+      } yield  {
+        val gameScore = GameScore(Right(RiichiPosition.EastPosition), Map())
+        List(RiichiEvent.GameScored(tableId, gameId, turn, gameScore))
+      }
+
   }
 
   def applyEvent(e: TableEvent[Riichi]): (List[ScheduledCommand[Riichi]], RiichiTableState) = e match {
@@ -228,16 +242,11 @@ case class GameStarted(
 
     case RiichiEvent.TsumoDeclared(_, _, _, position) =>
       //TODO open doras
-      val scoreGame = RiichiCmd.ScoreGame(tableId, gameId)
-      (List(ScheduledCommand(0.seconds, scoreGame)), this)
+      val scoreGame = RiichiCmd.ScoreGame(tableId, gameId, turn + 1)
+      (List(ScheduledCommand(0.seconds, scoreGame)), this.copy(turn = turn + 1))
 
     case RiichiEvent.GameScored(_, _, _, score) =>
-      (Nil, NoGameOnTable(
-        this.admin,
-        this.tableId,
-        this.players,
-        this.points.addGameScore(score))
-      )
+      (Nil, this.copy(gameScore = Some(score)))
 
     case RiichiEvent.PungClaimed(_, _, _, position, from, claimedTile, tiles) =>
       val updatedStates = this.playerStates.map {
@@ -264,6 +273,10 @@ case class GameStarted(
         position,
         getPlayerState(position).closedHand.head.repr)
       (List(ScheduledCommand(config.turnDuration, autoDiscard)), updatedState)
+
+    case RiichiEvent.DrawDeclared(_, _, _) =>
+      val scoreGame = RiichiCmd.ScoreGame(tableId, gameId, turn + 1)
+      (List(ScheduledCommand(0.seconds, scoreGame)), this.copy(turn = turn + 1))
   }
 
   def projection(position: Option[PlayerPosition[Riichi]]): WsMsgOut.Riichi.RiichiState =
@@ -272,10 +285,10 @@ case class GameStarted(
       admin = admin,
       states = playerStates.map {
         case state =>
-          val hideTiles = (tile: Tile) => if (position.contains(state.player.position)) tile.repr else Const.ClosedTile
+          val hideTiles = (tile: Tile) => if (position.contains(state.player.position) || gameScore.nonEmpty) tile.repr else Const.ClosedTile
           RiichiPlayerState(
             player = state.player,
-            closedHand = state.closedHand.map(hideTiles),
+            closedHand = state.closedHand.sortBy(_.order).map(hideTiles),
             openHand = state.openHand.map(set => WsDeclaredSet(set)),
             currentTile = state.currentTile.map(hideTiles),
             discard = state.discard.map(_.tile.repr),

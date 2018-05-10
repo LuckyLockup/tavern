@@ -33,7 +33,7 @@ object TableCmd {
       def position =  PlayerPosition.RiichiPosition.EastPosition
     }
 
-    case class ScoreGame(tableId: TableId, gameId: GameId) extends RiichiCmd {
+    case class ScoreGame(tableId: TableId, gameId: GameId, turn: Int) extends RiichiCmd {
       def position = PlayerPosition.RiichiPosition.EastPosition
     }
 

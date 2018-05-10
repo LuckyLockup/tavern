@@ -33,7 +33,7 @@ object InitialState {
     val (northHandAll, rem11) = fillTiles(northHand, 13, rem10)
 
     val (uraDorasAll, rem12) = fillTiles(uraDoras, 1, rem10)
-    val (deadWallAll, rem13) = fillTiles(deadWall, 9, rem10)
+    val (deadWallAll, rem13) = fillTiles(deadWall, 13, rem10)
     val wallAll = wall ::: rem13
     InitialState(
       eastHand = eastHandAll,

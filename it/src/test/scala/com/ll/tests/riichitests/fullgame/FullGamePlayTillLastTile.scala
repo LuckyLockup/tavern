@@ -49,7 +49,7 @@ class FullGamePlayTillLastTile extends Test {
     player1.ws.expectWsMsgT[WsMsgOut.Riichi.GameStarted]()
 
     var tileToDiscard = st.eastHand.head
-    0 until 18 foreach {round =>
+    0 until 17 foreach {round =>
       player1.ws ! WsRiichiCmd.DiscardTile(tableId, gameId, tileToDiscard, 8 * round + 1)
       player2.ws.expectWsMsg {
         case discarded: WsMsgOut.Riichi.TileDiscarded if discarded.position == RiichiPosition.EastPosition =>
@@ -97,18 +97,50 @@ class FullGamePlayTillLastTile extends Test {
       }
       tileToDiscard = eastTaken.tile
     }
-    player1.ws ! WsRiichiCmd.DiscardTile(tableId, gameId, tileToDiscard, 8 * 18 + 1)
-    player1.ws.expectWsMsg {
+    player1.ws ! WsRiichiCmd.DiscardTile(tableId, gameId, tileToDiscard, 8 * 17 + 1)
+    player2.ws.expectWsMsg {
       case discarded: WsMsgOut.Riichi.TileDiscarded if discarded.position == RiichiPosition.EastPosition =>
         discarded.tile should be(tileToDiscard)
         discarded
     }
+
+    val lastSouthTile =  player2.ws.expectWsMsg {
+      case taken: WsMsgOut.Riichi.TileFromWallTaken  =>
+        taken.position should be (RiichiPosition.SouthPosition)
+        taken
+    }
+    player2.ws ! WsRiichiCmd.DiscardTile(tableId, gameId, lastSouthTile.tile, 8 * 17 + 3)
+    player1.ws.expectWsMsg {
+      case discarded: WsMsgOut.Riichi.TileDiscarded if discarded.position == RiichiPosition.SouthPosition =>
+        discarded.tile should be(lastSouthTile.tile)
+        discarded
+    }
+
+    player1.ws.expectWsMsg {
+      case drawDeclared: WsMsgOut.Riichi.DrawDeclared =>
+        drawDeclared
+    }
+    player1.ws.expectWsMsg {
+      case drawDeclared: WsMsgOut.Riichi.GameScored =>
+        drawDeclared
+    }
+
 
     player1.ws ! WsRiichiCmd.GetState(tableId)
     val finalState = player1.ws.expectWsMsg {
       case state: WsMsgOut.Riichi.RiichiState =>
         state
     }
-    finalState.states.foreach{st => println(s"${st.player.position} has in hand: ${st.closedHand.size} + discard:  ${st.discard.size}")}
+
+    finalState.states.foreach{
+      case pst if pst.player.position == RiichiPosition.EastPosition =>
+        pst.closedHand should contain theSameElementsAs st.eastHand.tail
+      case pst if pst.player.position == RiichiPosition.SouthPosition =>
+        pst.closedHand should contain theSameElementsAs st.southHand
+      case pst if pst.player.position == RiichiPosition.WestPosition =>
+        pst.closedHand should contain theSameElementsAs st.westHand
+      case pst if pst.player.position == RiichiPosition.NorthPosition =>
+        pst.closedHand should contain theSameElementsAs st.northHand
+    }
   }
 }

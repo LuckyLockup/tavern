@@ -76,6 +76,8 @@ object WsMsgOutProjector {
         } else {
           None
         }
+      case RiichiEvent.DrawDeclared(tableId, gameId, turn) =>
+        WsMsgOut.Riichi.DrawDeclared(tableId, gameId,  turn).some
     }
   }
 

@@ -34,7 +34,7 @@ object RiichiHelper {
       deck = initial.wall,
       turn = 1,
       config = config,
-      table.points
+      points = table.points
     )
   }
 }
