@@ -31,7 +31,7 @@ abstract class Test extends TestKit(ActorSystem("MySpec")) with ImplicitSender
 
   val http: HttpExt = Http()
 
-  def createNewPlayer() = {
+  def createNewPlayer(): PlayerProbe = {
     val id = Stream.continually(Random.nextInt(10000)).find(id => connections.get(UserId(id)).isEmpty).get
     val userId = UserId(id)
     connections.get(userId).foreach(_.closeConnection())

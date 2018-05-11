@@ -12,17 +12,17 @@ import akka.stream.OverflowStrategy
 import akka.stream.scaladsl._
 import org.reactivestreams.Publisher
 import akka.stream.scaladsl.Sink
-import com.ll.domain.ai.ServiceId
 import com.ll.domain.games.CommandEnvelop
 import com.ll.domain.ws.{WsMsgCodec, WsMsgIn, WsMsgOut}
 import com.ll.games.TablesService
 
+import scala.collection.concurrent.TrieMap
 import scala.concurrent.Future
 
 class PubSub()(implicit system: ActorSystem, mat: Materializer) extends Logging {
   implicit val ec = system.dispatcher
 
-  private var wsConnections: Map[UserId, ActorRef] = Map.empty[UserId, ActorRef]
+  private val wsConnections: TrieMap[UserId, ActorRef] = TrieMap.empty[UserId, ActorRef]
 
   def getConnections = wsConnections.size
 

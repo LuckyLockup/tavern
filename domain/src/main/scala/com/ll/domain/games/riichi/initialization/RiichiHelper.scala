@@ -19,6 +19,7 @@ object RiichiHelper {
     val west = generatePlayer(RiichiPosition.WestPosition)
     val north = generatePlayer(RiichiPosition.NorthPosition)
 
+    assert(initial.wall.size == 69)
     GameStarted(
       admin = table.admin,
       tableId = table.tableId,

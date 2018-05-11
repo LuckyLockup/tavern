@@ -20,7 +20,6 @@ object WsMsgOutProjector {
   }
 
   private def riichiProjection(event: TableEvent[Riichi], position: Option[PlayerPosition[Riichi]] = None): Option[WsMsgOut] = {
-
     event match {
       case RiichiEvent.PlayerJoined(tableId, player) =>
         WsMsgOut.Riichi.PlayerJoinedTable(tableId, player).some

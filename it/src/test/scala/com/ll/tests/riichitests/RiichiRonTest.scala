@@ -12,10 +12,7 @@ class RiichiRonTest extends Test {
     val player1 = createNewPlayer()
 
     player1.createTable(tableId)
-    player1.ws.expectWsMsgT[WsMsgOut.Riichi.RiichiState]()
-
-    player1.ws ! WsRiichiCmd.JoinAsPlayer(tableId)
-    player1.ws.expectWsMsgT[WsMsgOut.Riichi.PlayerJoinedTable]()
+    player1.joinTable(tableId)
 
     val st = TestingState(
       eastHand = List(

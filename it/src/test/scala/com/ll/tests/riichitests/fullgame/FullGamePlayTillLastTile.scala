@@ -50,6 +50,7 @@ class FullGamePlayTillLastTile extends Test {
 
     var tileToDiscard = st.eastHand.head
     0 until 17 foreach {round =>
+      println(s"Round $round")
       player1.ws ! WsRiichiCmd.DiscardTile(tableId, gameId, tileToDiscard, 8 * round + 1)
       player2.ws.expectWsMsg {
         case discarded: WsMsgOut.Riichi.TileDiscarded if discarded.position == RiichiPosition.EastPosition =>

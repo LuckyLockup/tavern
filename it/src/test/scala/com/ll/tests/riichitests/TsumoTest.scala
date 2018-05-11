@@ -13,7 +13,6 @@ class TsumoTest extends Test {
     val player1 = createNewPlayer()
 
     player1.createTable(tableId)
-    player1.ws.expectWsMsgT[WsMsgOut.Riichi.RiichiState]()
 
     player1.ws ! WsRiichiCmd.JoinAsPlayer(tableId)
     player1.ws.expectWsMsgT[WsMsgOut.Riichi.PlayerJoinedTable]()
@@ -35,14 +34,6 @@ class TsumoTest extends Test {
       Some(st)
     )))
     player1.ws.expectWsMsgT[WsMsgOut.Riichi.GameStarted]()
-
-    val tileFromTheWall = player1.ws.expectWsMsg {
-      case fromTheWall: WsMsgOut.Riichi.TileFromWallTaken =>
-        fromTheWall.position should be(RiichiPosition.EastPosition)
-        fromTheWall.tile should be(st.wall.head)
-        fromTheWall.commands.head should be(WsRiichiCmd.DeclareTsumo(tableId, gameId, 3, Some(HandValue(1, 1))))
-        fromTheWall
-    }
 
     player1.ws ! WsRiichiCmd.GetState(tableId)
     val state1: WsMsgOut.Riichi.RiichiState = player1.ws.expectWsMsg {

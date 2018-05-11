@@ -144,7 +144,7 @@ case class GameStarted(
         pending <- this.pendingEvents.asEither("No pending events")
       } yield {
         val actionSkipped = RiichiEvent.ActionSkipped(tableId, gameId, turn, position)
-        this.possibleCmds.filter(cmd => cmd.position == position) match {
+        this.possibleCmds.filter(cmd => cmd.position != position) match {
           case Nil => actionSkipped :: ClaimConflictHelper.resolveEvents(pending, this.config)
           case _   => List(actionSkipped)
         }
