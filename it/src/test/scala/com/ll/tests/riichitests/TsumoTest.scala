@@ -43,7 +43,6 @@ class TsumoTest extends Test {
         state.states.head.closedHand should contain theSameElementsAs st.eastHand
         state
     }
-    player1.ws ! tileFromTheWall.commands.head.asInstanceOf[WsRiichiCmd.DeclareTsumo].copy(approxHandValue = None)
 
     player1.ws.expectWsMsg {
       case tsumo: WsMsgOut.Riichi.TsumoDeclared =>

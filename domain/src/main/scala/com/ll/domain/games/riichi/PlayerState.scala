@@ -36,5 +36,5 @@ case class PlayerState(
   }
 
   def shouldDiscardTile(turn: Int): Boolean = currentTile.nonEmpty ||
-    discard.headOption.map(_.turn).contains(turn - 1)
+    openHand.headOption.map(_.turn).contains(turn - 1)
 }

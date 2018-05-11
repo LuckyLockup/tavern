@@ -250,7 +250,6 @@ case class GameStarted(
 
     case RiichiEvent.PungClaimed(_, _, _, position, from, claimedTile, tiles) =>
       val updatedStates = this.playerStates.map {
-        case st if st.player.position != position => st
         case st if st.player.position == from     => st.copy(discard = st.discard.tail)
         case st if st.player.position == position =>
           val openedSet = DeclaredSet(claimedTile, tiles, from, turn)
@@ -258,6 +257,7 @@ case class GameStarted(
             closedHand = st.closedHand.filterNot(t => tiles.contains(t)),
             openHand = openedSet :: st.openHand
           )
+        case st => st
       }
       val updatedState = this.copy(
         pendingEvents = None,
