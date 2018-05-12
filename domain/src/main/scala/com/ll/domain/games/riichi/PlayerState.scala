@@ -26,15 +26,22 @@ case class PlayerState(
       .collect { case p@TileSet.Chow(_, _, _) => p }
   }
 
-  def ronOn(tile: Tile): Option[HandValue] = {
-    if (openHand.nonEmpty) {
-      None
-    } else {
-      //      TileSetsHelper.tenpai()
-      ???
-    }
-  }
-
   def shouldDiscardTile(turn: Int): Boolean = currentTile.nonEmpty ||
     openHand.headOption.map(_.turn).contains(turn - 1)
+
+  def ronOn(tile: Tile): Option[HandValue] = {
+    TileSetsHelper
+      .tenpai(closedHand)
+      .filter(combination => combination.waitingOn.contains(tile.repr))
+      .map(_ => HandValue(1, 1))
+      .headOption
+  }
+
+  def tsumoOn(tile: String): Option[HandValue] = {
+    TileSetsHelper
+      .tenpai(closedHand)
+      .filter(combination => combination.waitingOn.contains(tile))
+      .map(_ => HandValue(1, 1))
+      .headOption
+  }
 }

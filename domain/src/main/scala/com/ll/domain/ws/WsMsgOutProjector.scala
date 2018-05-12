@@ -44,9 +44,14 @@ object WsMsgOutProjector {
         } else {
           WsMsgOut.Riichi.TileFromWallTaken(tableId, gameId, turn, playerPosition, Const.ClosedTile, Nil).some
         }
+      case RiichiEvent.DrawDeclared(tableId, gameId, turn) =>
+        WsMsgOut.Riichi.DrawDeclared(tableId, gameId,  turn).some
 
       case RiichiEvent.TsumoDeclared(tableId, gameId, turn, pos) =>
         WsMsgOut.Riichi.TsumoDeclared(tableId, gameId, turn, pos).some
+
+      case RiichiEvent.RonDeclared(tableId, gameId, turn, pos, from) =>
+        WsMsgOut.Riichi.RonDeclared(tableId, gameId, turn, pos).some
 
       case RiichiEvent.GameScored(tableId, gameId, turn, gameScore) =>
         WsMsgOut.Riichi.GameScored(tableId, gameId, turn, gameScore).some
@@ -75,8 +80,7 @@ object WsMsgOutProjector {
         } else {
           None
         }
-      case RiichiEvent.DrawDeclared(tableId, gameId, turn) =>
-        WsMsgOut.Riichi.DrawDeclared(tableId, gameId,  turn).some
+      case RiichiEvent.PendingEvent(_) => None
     }
   }
 

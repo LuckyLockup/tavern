@@ -15,6 +15,7 @@ object ClaimConflictHelper {
     ron: RiichiEvent.RonDeclared,
   ): List[TableEvent[Riichi]] = {
     val rons = possibleCmds
+      .filter(cmd => cmd.position != ron.position)
       .collect { case cmd: RiichiCmd.DeclareRon => cmd }
     if (rons.nonEmpty) {
       List(RiichiEvent.PendingEvent(ron))

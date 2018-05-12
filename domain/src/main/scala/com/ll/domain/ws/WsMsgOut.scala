@@ -170,6 +170,18 @@ object WsMsgOut {
       implicit lazy val DrawDeclaredDecoder: Decoder[DrawDeclared] = decoder[DrawDeclared]("DrawDeclared")
     }
 
+    case class RonDeclared(
+      tableId: TableId,
+      gameId: GameId,
+      turn: Int,
+      position: PlayerPosition[Riichi]
+    ) extends RiichiGameEvent
+
+    object RonDeclared extends CaseClassCodec {
+      implicit lazy val RonDeclaredEncoder: Encoder[RonDeclared] = encoder[RonDeclared]("RonDeclared")
+      implicit lazy val RonDeclaredDecoder: Decoder[RonDeclared] = decoder[RonDeclared]("RonDeclared")
+    }
+
     case class GameScored(
       tableId: TableId,
       gameId: GameId,
@@ -215,10 +227,11 @@ object WsMsgOut {
       case c: PlayerLeftTable => c.asJson
       case c: TileFromWallTaken => c.asJson
       case c: TileDiscarded => c.asJson
-      case c: TsumoDeclared => c.asJson
       case c: GameScored => c.asJson
       case c: TileClaimed => c.asJson
       case c: ActionSkipped => c.asJson
+      case c: TsumoDeclared => c.asJson
+      case c: RonDeclared => c.asJson
       case c: DrawDeclared => c.asJson
     }
 
@@ -231,6 +244,7 @@ object WsMsgOut {
       TileFromWallTaken.TileFromWallTakenDecoder.apply(cur) orElse
       TileDiscarded.TileDiscardedDecoder.apply(cur) orElse
       TsumoDeclared.TsumoDeclaredDecoder.apply(cur) orElse
+      RonDeclared.RonDeclaredDecoder.apply(cur) orElse
       GameScored.GameScoredDecoder.apply(cur) orElse
       TileClaimed.TileClaimedDecoder.apply(cur) orElse
       ActionSkipped.ActionSkippedDecoder.apply(cur) orElse

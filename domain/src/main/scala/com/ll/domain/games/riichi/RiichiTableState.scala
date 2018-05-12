@@ -122,8 +122,7 @@ case class GameStarted(
         _ <- (commandTurn == turn).asEither(s"Actual turn $turn, but command turn $commandTurn")
         state = getPlayerState(position)
         newTile <- state.currentTile.asEither("You can declare tsumo only on your tile from the wall")
-        handValue <- HandValue.computeTsumoOnTile(newTile.repr, state).asEither("Your hand is not winning.")
-        //TODO add open doras event and gameScored events
+        handValue <- state.tsumoOn(newTile.repr).asEither("Your hand is not winning.")
       } yield List(RiichiEvent.TsumoDeclared(tableId, gameId, turn, state.player.position))
 
     case RiichiCmd.DiscardTile(_, _, commandTurn, position, tile) =>
@@ -168,7 +167,7 @@ case class GameStarted(
       for {
         _ <- (commandTurn == turn).asEither(s"Actual turn $turn, but command turn $commandTurn")
         playerState = getPlayerState(position)
-        discardedTile <- discardToClaim().find(d =>  d.tile.repr == onTile).asEither("Discarded tile is not found")
+        discardedTile <- discardToClaim().find(d => d.tile.repr == onTile).asEither("Discarded tile is not found")
         _ <- (position == discardedTile.position.nextPosition).asEither("You can only take Chow from the previous player")
         chowOpt = playerState.chowsOn(discardedTile.tile).find(chow => chow.tiles.toSet == (onTile :: tiles).toSet)
         chow <- chowOpt.asEither(s"Can't claim chow with $tiles")
@@ -178,6 +177,20 @@ case class GameStarted(
         this.pendingEvents match {
           case None           => List(chowClaimed)
           case Some(pendging) => ClaimConflictHelper.resolveChow(this.possibleCmds, pendging, this.config, chowClaimed)
+        }
+      }
+
+    case RiichiCmd.DeclareRon(_, _, commandTurn, position, _) =>
+      for {
+        _ <- (commandTurn == turn).asEither(s"Actual turn $turn, but command turn $commandTurn")
+        playerState = getPlayerState(position)
+        discardedTile <- discardToClaim().find(d => d.position != position).asEither("Discarded tile is not found")
+        ronValue <- playerState.ronOn(discardedTile.tile).asEither(s"Can't ron on ${discardedTile.tile.repr}")
+      } yield {
+        val ronDeclared = RiichiEvent.RonDeclared(tableId, gameId, turn, position, discardedTile.position)
+        this.pendingEvents match {
+          case None           => List(ronDeclared)
+          case Some(pendging) => ClaimConflictHelper.resolveRon(this.possibleCmds, pendging, this.config, ronDeclared)
         }
       }
 
@@ -257,11 +270,6 @@ case class GameStarted(
       val autoDiscard = RiichiCmd.DiscardTile(tableId, gameId, turn + 1, position, tile.repr)
       (List(ScheduledCommand(config.turnDuration, autoDiscard)), updatedState)
 
-    case RiichiEvent.TsumoDeclared(_, _, _, position) =>
-      //TODO open doras
-      val scoreGame = RiichiCmd.ScoreGame(tableId, gameId, turn + 1)
-      (List(ScheduledCommand(0.seconds, scoreGame)), this.copy(turn = turn + 1))
-
     case RiichiEvent.GameScored(_, _, _, score) =>
       (Nil, this.copy(gameScore = Some(score)))
 
@@ -320,6 +328,16 @@ case class GameStarted(
     case RiichiEvent.DrawDeclared(_, _, _) =>
       val scoreGame = RiichiCmd.ScoreGame(tableId, gameId, turn + 1)
       (List(ScheduledCommand(0.seconds, scoreGame)), this.copy(turn = turn + 1))
+
+    case RiichiEvent.TsumoDeclared(_, _, _, position) =>
+      //TODO open doras
+      val scoreGame = RiichiCmd.ScoreGame(tableId, gameId, turn + 1)
+      (List(ScheduledCommand(0.seconds, scoreGame)), this.copy(turn = turn + 1))
+
+    case RiichiEvent.RonDeclared(_, _, _, position, from) =>
+      //TODO open doras
+      val scoreGame = RiichiCmd.ScoreGame(tableId, gameId, turn + 1)
+      (List(ScheduledCommand(0.seconds, scoreGame)), this.copy(turn = turn + 1))
   }
 
   def projection(position: Option[PlayerPosition[Riichi]]): WsMsgOut.Riichi.RiichiState =
@@ -351,7 +369,7 @@ case class GameStarted(
 
   def discardToClaim(): Option[DiscardedTile[Riichi]] = {
     val hasToDiscardFirst = playerStates
-      .exists(st => st.currentTile.nonEmpty || st.openHand.headOption.map(_.turn).contains(turn - 1))
+      .exists(st => st.shouldDiscardTile(turn))
     if (hasToDiscardFirst) {
       None
     } else {
@@ -377,7 +395,7 @@ case class GameStarted(
 
   def predictCommandsOnTileFromTheWall(tile: String, position: PlayerPosition[Riichi]): List[RiichiCmd] = {
     val playerState = getPlayerState(position)
-    val tsumo = HandValue.computeTsumoOnTile(tile, playerState)
+    val tsumo = playerState.tsumoOn(tile)
       .toList
       .map(v => RiichiCmd.DeclareTsumo(tableId, gameId, this.turn + 1, playerState.player.position, Some(v)))
     //TODO open kong
@@ -419,7 +437,7 @@ case class GameStarted(
           Nil
         }
 
-        val declareRon = HandValue.computeRonOnTile(discardedTile.tile, st).map(handValue =>
+        val declareRon = st.ronOn(discardedTile.tile).map(handValue =>
           RiichiCmd.DeclareRon(
             tableId,
             gameId,
