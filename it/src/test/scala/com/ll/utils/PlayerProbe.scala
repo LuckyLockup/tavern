@@ -47,4 +47,11 @@ case class PlayerProbe(userId: UserId, ws: WsConnection, http: HttpExt, config: 
         joined
     }
   }
+
+  def skipAction(tableId: TableId, gameId: GameId, turn: Int): Unit = {
+    ws !  WsRiichiCmd.SkipAction(tableId, gameId, turn)
+    ws.expectWsMsg{
+      case msg@WsMsgOut.Riichi.ActionSkipped(`tableId`, `gameId`, `turn`) => msg
+    }
+  }
 }

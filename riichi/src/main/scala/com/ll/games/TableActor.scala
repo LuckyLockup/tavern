@@ -89,7 +89,8 @@ class TableActor[GT <: GameType, S <: TableState[GT, S] : ClassTag](
     _table.validateCmd(cmd) match {
       case Left(error)   => senderId.foreach(user => pubSub.sendToUser(user.id, error))
       case Right(events) =>
-        persistAll(events) { event =>
+        //TODO proper persisting.
+        events.foreach { event =>
           val (cmds, newState) = _table.applyEvent(event)
           _table = newState
           cmds.foreach {

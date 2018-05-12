@@ -80,20 +80,29 @@ object TileSetsHelper {
   }
 
   private def findChow(tile: Tile.Number, tiles: List[Tile]): List[(TileSet.Chow, List[Tile])] = {
-    val nextTile = tiles.collectFirst {
-      case t: Tile.Number if tile.number + 1 == t.number && tile.suit == t.suit=> t
+    val sameSuite = tiles.collect{
+      case t: Tile.Number if tile.suit == t.suit=> t
     }
-    val afterNextTile = tiles.collectFirst {
-      case t: Tile.Number if tile.number + 2 == t.number && tile.suit == t.suit => t
+
+    def findTiles(n1: Int, n2: Int): Option[(Tile.Number, Tile.Number)] = {
+      for {
+        t1 <- sameSuite.find(t => t.number == n1)
+        t2 <- sameSuite.find(t => t.number == n2)
+      } yield (t1, t2)
     }
-    (nextTile, afterNextTile) match {
-      case (Some(t1), Some(t2)) if TileSet.isChow(tile, t1, t2) =>
+
+    List(
+      findTiles(tile.number - 2, tile.number - 1),
+      findTiles(tile.number - 1, tile.number + 1),
+      findTiles(tile.number + 1, tile.number + 2)
+    ).flatten.map{
+      case (t1, t2) =>
         val i1 = tiles.indexOf(t1)
         val rem1 = tiles.patch(i1, Nil, 1)
         val i2 = rem1.indexOf(t2)
         val remaining = rem1.patch(i2, Nil, 1)
-        List((TileSet.Chow(tile, t1, t2), remaining))
-      case _                    => Nil
+        val ordered = List(tile, t1, t2).sortBy(_.number)
+        (TileSet.Chow(ordered(0), ordered(1), ordered(2)), remaining)
     }
   }
 

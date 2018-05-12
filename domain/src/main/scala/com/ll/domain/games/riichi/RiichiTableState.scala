@@ -142,9 +142,13 @@ case class GameStarted(
         pending <- this.pendingEvents.asEither("No pending events")
       } yield {
         val actionSkipped = RiichiEvent.ActionSkipped(tableId, gameId, turn, position)
-        this.possibleCmds.filter(cmd => cmd.position != position) match {
-          case Nil => actionSkipped :: ClaimConflictHelper.resolveEvents(pending, this.config)
-          case _   => List(actionSkipped)
+        val remainingCmds = this.possibleCmds.filter(cmd => cmd.position != position)
+        if (remainingCmds.isEmpty) {
+          actionSkipped :: ClaimConflictHelper.resolveEvents(pending, this.config)
+        } else if (remainingCmds.forall{c => c.isInstanceOf[RiichiCmd.ClaimChow]} && pendingEvents.flatMap(_.pung).nonEmpty) {
+          actionSkipped :: ClaimConflictHelper.resolveEvents(pending, this.config)
+        } else {
+         List(actionSkipped)
         }
       }
 
@@ -272,32 +276,6 @@ case class GameStarted(
 
     case RiichiEvent.GameScored(_, _, _, score) =>
       (Nil, this.copy(gameScore = Some(score)))
-
-    case RiichiEvent.PungClaimed(_, _, _, position, from, claimedTile, tiles) =>
-      val updatedStates = this.playerStates.map {
-        case st if st.player.position == from     => st.copy(discard = st.discard.tail)
-        case st if st.player.position == position =>
-          val openedSet = DeclaredSet(claimedTile, tiles, from, turn)
-          st.copy(
-            closedHand = st.closedHand.filterNot(t => tiles.contains(t)),
-            openHand = openedSet :: st.openHand
-          )
-        case st => st
-      }
-      val updatedState = this.copy(
-        pendingEvents = None,
-        possibleCmds = Nil,
-        playerStates = updatedStates,
-        turn = this.turn + 1,
-        deck = deck
-      )
-      val autoDiscard = RiichiCmd.DiscardTile(
-        tableId,
-        gameId,
-        turn + 1,
-        position,
-        getPlayerState(position).closedHand.head.repr)
-      (List(ScheduledCommand(config.turnDuration, autoDiscard)), updatedState)
 
     case ev: RiichiEvent.SetClaimed =>
       val updatedStates = this.playerStates.map {
