@@ -1,10 +1,10 @@
 {
   "type": "RiichiState",
   "payload": {
-    "tableId": "table_881",
+    "tableId": "table_656",
     "admin": {
-      "id": 0,
-      "nickname": "God"
+      "id": 8394,
+      "nickname": "Akagi"
     },
     "states": [
       {
@@ -14,28 +14,31 @@
             "type": "HumanPlayer",
             "payload": {
               "user": {
-                "id": 101,
-                "nickname": "tXfDIR"
+                "id": 8394,
+                "nickname": "Akagi"
               },
               "position": "EastPosition"
             }
           },
           "closedHand": [
-            "2_sou",
-            "2_sou",
-            "south",
-            "7_wan",
-            "3_wan",
+            "5_sou",
+            "6_sou",
+            "7_sou",
             "8_sou",
-            "5_wan",
             "1_wan",
-            "north",
-            "red",
-            "6_pin",
-            "5_pin",
-            "green"
+            "2_wan",
+            "3_wan",
+            "4_wan",
+            "5_wan",
+            "6_wan",
+            "7_wan",
+            "8_wan",
+            "9_wan"
           ],
-          "discard": [],
+          "openHand": [],
+          "discard": [
+            "3_pin"
+          ],
           "online": true
         }
       },
@@ -46,28 +49,41 @@
             "type": "HumanPlayer",
             "payload": {
               "user": {
-                "id": 102,
-                "nickname": "FzHD74"
+                "id": 315,
+                "nickname": "Akagi"
               },
               "position": "SouthPosition"
             }
           },
           "closedHand": [
-            "7_sou",
-            "6_pin",
-            "6_sou",
-            "7_wan",
-            "3_wan",
-            "3_sou",
-            "4_pin",
-            "3_wan",
-            "west",
-            "3_pin",
-            "7_sou",
-            "1_pin",
-            "3_pin"
+            "x",
+            "x",
+            "x",
+            "x",
+            "x",
+            "x",
+            "x",
+            "x",
+            "x",
+            "x"
           ],
-          "discard": [],
+          "openHand": [
+            {
+              "type": "WsDeclaredSet",
+              "payload": {
+                "claimedTile": "3_pin",
+                "tails": [
+                  "3_pin",
+                  "3_pin"
+                ],
+                "from": "EastPosition",
+                "turn": 2
+              }
+            }
+          ],
+          "discard": [
+            "red"
+          ],
           "online": true
         }
       },
@@ -78,27 +94,29 @@
             "type": "HumanPlayer",
             "payload": {
               "user": {
-                "id": 103,
-                "nickname": "tZYEqd"
+                "id": 8161,
+                "nickname": "Akagi"
               },
               "position": "WestPosition"
             }
           },
           "closedHand": [
-            "7_sou",
-            "6_pin",
-            "6_sou",
-            "7_wan",
-            "3_wan",
-            "3_sou",
-            "4_pin",
-            "3_wan",
-            "west",
-            "3_pin",
-            "7_sou",
-            "1_pin",
-            "3_pin"
+            "x",
+            "x",
+            "x",
+            "x",
+            "x",
+            "x",
+            "x",
+            "x",
+            "x",
+            "x",
+            "x",
+            "x",
+            "x"
           ],
+          "openHand": [],
+          "currentTile": "x",
           "discard": [],
           "online": true
         }
@@ -107,38 +125,48 @@
         "type": "RiichiPlayerState",
         "payload": {
           "player": {
-            "type": "HumanPlayer",
+            "type": "AIPlayer",
             "payload": {
-              "user": {
-                "id": 104,
-                "nickname": "T2Z2LL"
-              },
+              "ai": "Duck",
               "position": "NorthPosition"
             }
           },
           "closedHand": [
-            "4_sou",
-            "6_wan",
-            "2_pin",
-            "8_wan",
-            "5_wan",
-            "5_pin",
-            "9_wan",
-            "5_wan",
-            "white",
-            "south",
-            "5_sou",
-            "8_pin",
-            "3_pin"
+            "x",
+            "x",
+            "x",
+            "x",
+            "x",
+            "x",
+            "x",
+            "x",
+            "x",
+            "x",
+            "x",
+            "x",
+            "x"
           ],
+          "openHand": [],
           "discard": [],
           "online": true
         }
       }
     ],
     "uraDoras": [
-      "green"
+      "2_sou"
     ],
-    "deck": 83
+    "deck": 68,
+    "turn": 5,
+    "points": {
+      "type": "TablePoints",
+      "payload": {
+        "points": {
+          "EastPosition": 25000,
+          "SouthPosition": 25000,
+          "WestPosition": 25000,
+          "NorthPosition": 25000
+        }
+      }
+    }
   }
 }

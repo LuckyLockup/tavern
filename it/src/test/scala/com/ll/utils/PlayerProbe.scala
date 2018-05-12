@@ -27,16 +27,17 @@ case class PlayerProbe(userId: UserId, ws: WsConnection, http: HttpExt, config: 
   def !(msg: WsMsgIn): Unit = ws ! msg
 
   def createTable(id: TableId) = {
+    val request = CreateTable(id, userId).asJson.noSpaces
+    log.info(s"Http >> $request")
     var responseF = http.singleRequest(HttpRequest(
       method = HttpMethods.POST,
-
       uri = config.soloUrl,
       entity =
-        HttpEntity(ContentType(MediaTypes.`application/json`), CreateTable(id, userId).asJson.noSpaces)
+        HttpEntity(ContentType(MediaTypes.`application/json`), request)
         ))
 //      .flatMap(Unmarshal(_).to[Json])
     val response = Await.result(responseF, config.defaultTimeout)
-    log.info(s"Http << ${response}")
+    log.info(s"Http << $response")
     ws.expectWsMsgT[WsMsgOut.Riichi.RiichiState]()
   }
 
