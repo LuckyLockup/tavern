@@ -142,6 +142,7 @@ object WsMsgIn {
       tableId: TableId,
       gameId: GameId,
       turn: Int,
+      tile: String,
       tiles: List[String]
     ) extends WsRiichiCmd
 

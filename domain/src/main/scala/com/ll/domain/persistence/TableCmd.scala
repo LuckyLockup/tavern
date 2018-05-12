@@ -71,6 +71,7 @@ object TableCmd {
       gameId: GameId,
       turn: Int,
       position: PlayerPosition[Riichi],
+      tile: String,
       tiles: List[String]
     ) extends RiichiCmd
 

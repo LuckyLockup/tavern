@@ -87,8 +87,8 @@ object WsMsgOutProjector {
     case RiichiCmd.DeclareTsumo(tableId, gameId, turn, position, handValue) =>
       WsRiichiCmd.DeclareTsumo(tableId, gameId, turn, handValue).some
 
-    case RiichiCmd.ClaimChow(tableId, gameId, turn, position, tiles) =>
-      WsRiichiCmd.ClaimChow(tableId, gameId, turn, tiles).some
+    case RiichiCmd.ClaimChow(tableId, gameId, turn, position, onTile, tiles) =>
+      WsRiichiCmd.ClaimChow(tableId, gameId, turn, onTile, tiles).some
 
     case RiichiCmd.ClaimPung(tableId, gameId, turn, position) =>
       WsRiichiCmd.ClaimPung(tableId, gameId, turn).some

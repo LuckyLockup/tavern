@@ -1,19 +1,18 @@
 package com.ll.domain.games.riichi
 
 import com.ll.domain.Const
-import com.ll.domain.auth.{User, UserId}
+import com.ll.domain.auth.User
 import com.ll.domain.games.GameType.Riichi
 import com.ll.domain.games.deck.{DeclaredSet, DiscardedTile, Tile}
 import com.ll.domain.games.position.PlayerPosition.RiichiPosition
 import com.ll.domain.games.position.{PlayerPosition, PositionUtility}
 import com.ll.domain.games.riichi.initialization.RiichiHelper
-import com.ll.domain.games.riichi.result.{GameScore, HandValue, Points, TablePoints}
+import com.ll.domain.games.riichi.result.{GameScore, HandValue, TablePoints}
 import com.ll.domain.games.{GameId, Player, ScheduledCommand, TableId}
 import com.ll.domain.persistence._
 import com.ll.domain.ops.EitherOps._
 import com.ll.domain.persistence.TableCmd.RiichiCmd
 import com.ll.domain.ws.WsMsgOut
-import com.ll.domain.ws.WsMsgOut.Riichi.DrawDeclared
 import com.ll.domain.ws.WsMsgOut.ValidationError
 import com.ll.domain.ws.WsRiichi.{RiichiPlayerState, WsDeclaredSet}
 
@@ -164,6 +163,24 @@ case class GameStarted(
           case Some(pendging) => ClaimConflictHelper.resolvePung(this.possibleCmds, pendging, this.config, pungClaimed)
         }
       }
+
+    case RiichiCmd.ClaimChow(_, _, commandTurn, position, onTile, tiles) =>
+      for {
+        _ <- (commandTurn == turn).asEither(s"Actual turn $turn, but command turn $commandTurn")
+        playerState = getPlayerState(position)
+        discardedTile <- discardToClaim().find(d =>  d.tile.repr == onTile).asEither("Discarded tile is not found")
+        _ <- (position == discardedTile.position.nextPosition).asEither("You can only take Chow from the previous player")
+        chowOpt = playerState.chowsOn(discardedTile.tile).find(chow => chow.tiles.toSet == (onTile :: tiles).toSet)
+        chow <- chowOpt.asEither(s"Can't claim chow with $tiles")
+      } yield {
+        val otherTiles = List(chow.x, chow.y, chow.z).filter(t => t != discardedTile.tile)
+        val chowClaimed = RiichiEvent.ChowClaimed(tableId, gameId, turn, position, discardedTile.position, discardedTile.tile, otherTiles)
+        this.pendingEvents match {
+          case None           => List(chowClaimed)
+          case Some(pendging) => ClaimConflictHelper.resolveChow(this.possibleCmds, pendging, this.config, chowClaimed)
+        }
+      }
+
     case RiichiCmd.ScoreGame(_, _, commandTurn) =>
       for {
         _ <- (commandTurn == turn).asEither(s"Actual turn $turn, but command turn $commandTurn")
@@ -274,6 +291,32 @@ case class GameStarted(
         getPlayerState(position).closedHand.head.repr)
       (List(ScheduledCommand(config.turnDuration, autoDiscard)), updatedState)
 
+    case ev: RiichiEvent.SetClaimed =>
+      val updatedStates = this.playerStates.map {
+        case st if st.player.position == ev.from     => st.copy(discard = st.discard.tail)
+        case st if st.player.position == ev.position =>
+          val openedSet = DeclaredSet(ev.claimedTile, ev.tiles, ev.from, turn)
+          st.copy(
+            closedHand = st.closedHand.filterNot(t => ev.tiles.contains(t)),
+            openHand = openedSet :: st.openHand
+          )
+        case st => st
+      }
+      val updatedState = this.copy(
+        pendingEvents = None,
+        possibleCmds = Nil,
+        playerStates = updatedStates,
+        turn = this.turn + 1,
+        deck = deck
+      )
+      val autoDiscard = RiichiCmd.DiscardTile(
+        tableId,
+        gameId,
+        turn + 1,
+        ev.position,
+        getPlayerState(ev.position).closedHand.head.repr)
+      (List(ScheduledCommand(config.turnDuration, autoDiscard)), updatedState)
+
     case RiichiEvent.DrawDeclared(_, _, _) =>
       val scoreGame = RiichiCmd.ScoreGame(tableId, gameId, turn + 1)
       (List(ScheduledCommand(0.seconds, scoreGame)), this.copy(turn = turn + 1))
@@ -369,7 +412,9 @@ case class GameStarted(
             gameId,
             nextTurn,
             st.player.position,
-            chow.tiles))
+            discardedTile.tile.repr,
+            chow.tiles.filter(t => t != discardedTile.tile.repr))
+          )
         } else {
           Nil
         }

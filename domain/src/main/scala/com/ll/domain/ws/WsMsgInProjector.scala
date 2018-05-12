@@ -27,8 +27,8 @@ object WsMsgInProjector {
     wsMsg match {
       case WsRiichiCmd.StartWsGame(tableId, gameId, configOpt) =>
         RiichiCmd.StartGame(tableId, gameId, configOpt.getOrElse(RiichiConfig()))
-      case WsRiichiCmd.ClaimChow(tableId, gameId, turn, tiles) =>
-        RiichiCmd.ClaimChow(tableId, gameId, turn, position, tiles)
+      case WsRiichiCmd.ClaimChow(tableId, gameId, turn, onTile, tiles) =>
+        RiichiCmd.ClaimChow(tableId, gameId, turn, position, onTile, tiles)
       case WsRiichiCmd.ClaimPung(tableId, gameId, turn) =>
         RiichiCmd.ClaimPung(tableId, gameId, turn, position)
       case WsRiichiCmd.DeclareRon(tableId, gameId, turn, _) =>

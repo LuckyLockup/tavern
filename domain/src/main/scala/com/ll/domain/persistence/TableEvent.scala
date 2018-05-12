@@ -99,6 +99,12 @@ object RiichiEvent {
     from: PlayerPosition[Riichi],
   ) extends RiichiGameEvent
 
+  sealed trait SetClaimed extends RiichiGameEvent {
+    def from: PlayerPosition[Riichi]
+    def claimedTile: Tile
+    def tiles: List[Tile]
+  }
+
   case class PungClaimed(
     tableId: TableId,
     gameId: GameId,
@@ -107,7 +113,7 @@ object RiichiEvent {
     from: PlayerPosition[Riichi],
     claimedTile: Tile,
     tiles: List[Tile]
-  ) extends RiichiGameEvent
+  ) extends SetClaimed
 
   case class ChowClaimed(
     tableId: TableId,
@@ -117,6 +123,6 @@ object RiichiEvent {
     from: PlayerPosition[Riichi],
     claimedTile: Tile,
     tiles: List[Tile],
-  ) extends RiichiGameEvent
+  ) extends SetClaimed
 }
 
